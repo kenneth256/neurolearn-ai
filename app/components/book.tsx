@@ -14,7 +14,25 @@ import ConceptSection from "./ui/concept";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import TutorBot from "./ui/tutorChat";
 
-// ... (Interfaces remain identical to your provided file)
+interface DailyLesson {
+  day: number;
+  title: string;
+  duration: string;
+  learningObjectives: string[];
+  coreContent: { concepts: any[] };
+}
+
+interface LessonsData {
+  moduleTitle: string;
+  moduleNumber: number;
+  totalDuration: string;
+  dailyLessons: DailyLesson[];
+}
+
+interface CourseBookUIProps {
+  course: any;
+  lessons: LessonsData | null;
+}
 
 const bookFlipVariants: Variants = {
   initial: (direction: number) => ({
