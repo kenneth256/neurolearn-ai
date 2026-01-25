@@ -154,6 +154,7 @@ Include:
 - Realistic timeline for deadline: ${deadline}
 - Adaptation guidelines for pacing
 - Final capstone project in the last module
+- provide enough information so one can learn and master the topic even if it means going passed their allocated time
 `;
 
 export interface LessonDesignParams {
@@ -174,6 +175,7 @@ Do not just provide information. You must provide a **Learning Experience**. Thi
 2. **Active Inquiry**: Socratic questions mid-explanation to make the student think.
 3. **The "Gotcha"**: A non-obvious edge case or common misconception.
 4. **Interactive Validation**: Knowledge checks that test logic, not just memorization.
+5.povide enough information even if it means extending beyond provided time, goal is to make one understand
 
 ### Student Profile:
 - Expertise: ${userLevel}
