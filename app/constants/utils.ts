@@ -164,28 +164,30 @@ export interface LessonDesignParams {
   availableTime: string;
 }
 
+
 export const lessonDesignPrompt = ({ module, userLevel, learningStyle, availableTime }: LessonDesignParams): string => {
   const moduleData = JSON.stringify(module, null, 2);
   
-  return `You are a world-class Instructional Designer. Your task is to generate a **Full, Interactive Course Module**. 
+  return `You are a world-class Instructional Designer. Your task is to generate an **Exhaustive, Deep-Dive Interactive Course Module**. 
 
-### THE "NO-BOOK" RULE:
-Do not just provide information. You must provide a **Learning Experience**. This means every concept must be paired with:
-1. **The "Why"**: A real-world scenario where this concept solves a problem.
-2. **Active Inquiry**: Socratic questions mid-explanation to make the student think.
-3. **The "Gotcha"**: A non-obvious edge case or common misconception.
-4. **Interactive Validation**: Knowledge checks that test logic, not just memorization.
-5.povide enough information even if it means extending beyond provided time, goal is to make one understand
+### CRITICAL FIDELITY RULES:
+1. **EXHAUSTIVE DETAIL**: The "narrativeExplanation" for each concept must be a minimum of 500-800 words. Do not summarize. Treat this as a definitive textbook chapter.
+2. **THE "NO-BOOK" RULE**: Pair every concept with a "Why" scenario, Socratic inquiry, and "The Gotcha" edge case.
+3. **EXTENDED SCOPE**: If the provided time (${availableTime}) is insufficient for true mastery, ignore the limit and provide the full depth required for a ${userLevel} student.
+4. **PEDAGOGICAL DENSITY**: Every code walkthrough must analyze the "Big O" complexity and architectural trade-offs.
 
 ### Student Profile:
 - Expertise: ${userLevel}
 - Style: ${learningStyle}
-- Time: ${availableTime}
 
 ### Source Material:
 ${moduleData}
 
-### JSON STRUCTURE:
+### JSON STRUCTURE REQUIREMENTS:
+- You MUST provide at least 3 distinct "concepts" per daily lesson.
+- Each "narrativeExplanation" must be multi-paragraph, using Markdown for bolding and lists within the string.
+- The "analysis" in codeWalkthrough must be line-by-line.
+
 {
   "moduleTitle": "string",
   "moduleNumber": 1,
@@ -193,75 +195,134 @@ ${moduleData}
     {
       "day": 1,
       "title": "string",
-      "duration": "${availableTime}",
-      "learningObjectives": [
-        {
-          "objective": "string",
-          "measurable": "A specific task the student will perform to prove mastery",
-          "timebound": "Minutes"
-        }
-      ],
+      "duration": "Extended",
+      "learningObjectives": [...],
       "coreContent": {
         "concepts": [
           {
             "title": "string",
-            "narrativeExplanation": "Deep dive tutorial content. Start with a problem, explain the theory, and end with a 'Check for Understanding' question.",
-            "interactiveAnalogy": "A relatable comparison that requires the student to visualize the logic.",
+            "narrativeExplanation": "ESSENTIAL: Provide 5+ paragraphs of deep theory, historical context, and technical implementation details.",
+            "interactiveAnalogy": "string",
             "codeWalkthrough": {
-              "code": "Production-grade, fully commented code.",
-              "analysis": "Explain what happens on specific lines. Why did we choose this pattern over another?",
+              "code": "string",
+              "analysis": "A deep architectural breakdown of the code provided.",
               "language": "string"
             },
-            "edgeCase": "Explain a scenario where this concept might fail or behave unexpectedly."
+            "edgeCase": "string"
           }
         ]
       },
-      "handsOnPractice": {
-        "exercises": [
-          {
-            "title": "string",
-            "challenge": "A problem statement that doesn't give away the answer.",
-            "constraints": ["Required tools/methods to use"],
-            "starterCode": "Partial code with 'TODO' comments",
-            "hints": ["Clues that guide logic without providing the solution"],
-            "fullSolution": "The 'Gold Standard' code for this exercise",
-            "explanationOfSolution": "Why this specific implementation is the most efficient."
-          }
-        ]
-      },
-      "knowledgeChecks": {
-        "questions": [
-          {
-            "type": "multiple-choice",
-            "question": "A logic-based question (e.g., 'What happens if we change X to Y?')",
-            "options": ["string"],
-            "correctAnswer": "string",
-            "feedback": "Detailed explanation of why the correct answer is right AND why distractors are wrong."
-          }
-        ]
-      },
-      "commonPitfalls": [
-        {
-          "mistake": "The common error",
-          "mentalModelFix": "The shift in thinking needed to avoid this",
-          "debuggingHack": "The specific log or tool to use to catch this early"
-        }
-      ]
+      ...
     }
   ],
-  "assessmentBlueprint": {
-    "finalProject": {
-      "prompt": "A cumulative challenge",
-      "requirements": ["Must include X", "Must handle Y"],
-      "rubric": ["Criterion: How to grade it"]
-    }
-  }
+  ...
 }
 
 IMPORTANT: 
-- Escape all JSON strings.
-- Prioritize ${learningStyle} activities.
-- Make the content challenging enough for ${userLevel} level.
-- Ensure the total time to complete matches ${availableTime}.
+- Return ONLY valid JSON.
+- DO NOT use placeholders like "similar to before" or "content goes here".
+- If you run out of space, prioritize the depth of the first two lessons over providing five shallow ones.
 `;
 };
+
+// export const lessonDesignPrompt = ({ module, userLevel, learningStyle, availableTime }: LessonDesignParams): string => {
+//   const moduleData = JSON.stringify(module, null, 2);
+  
+//   return `You are a world-class Instructional Designer. Your task is to generate a **Full, Interactive Course Module**. 
+
+// ### THE "NO-BOOK" RULE:
+// Do not just provide information. You must provide a **Learning Experience**. This means every concept must be paired with:
+// 1. **The "Why"**: A real-world scenario where this concept solves a problem.
+// 2. **Active Inquiry**: Socratic questions mid-explanation to make the student think.
+// 3. **The "Gotcha"**: A non-obvious edge case or common misconception.
+// 4. **Interactive Validation**: Knowledge checks that test logic, not just memorization.
+// 5.povide enough information even if it means extending beyond provided time, goal is to make one understand
+
+// ### Student Profile:
+// - Expertise: ${userLevel}
+// - Style: ${learningStyle}
+// - Time: ${availableTime}
+
+// ### Source Material:
+// ${moduleData}
+
+// ### JSON STRUCTURE:
+// {
+//   "moduleTitle": "string",
+//   "moduleNumber": 1,
+//   "dailyLessons": [
+//     {
+//       "day": 1,
+//       "title": "string",
+//       "duration": "${availableTime}",
+//       "learningObjectives": [
+//         {
+//           "objective": "string",
+//           "measurable": "A specific task the student will perform to prove mastery",
+//           "timebound": "Minutes"
+//         }
+//       ],
+//       "coreContent": {
+//         "concepts": [
+//           {
+//             "title": "string",
+//             "narrativeExplanation": "Deep dive tutorial content. Start with a problem, explain the theory, and end with a 'Check for Understanding' question.",
+//             "interactiveAnalogy": "A relatable comparison that requires the student to visualize the logic.",
+//             "codeWalkthrough": {
+//               "code": "Production-grade, fully commented code.",
+//               "analysis": "Explain what happens on specific lines. Why did we choose this pattern over another?",
+//               "language": "string"
+//             },
+//             "edgeCase": "Explain a scenario where this concept might fail or behave unexpectedly."
+//           }
+//         ]
+//       },
+//       "handsOnPractice": {
+//         "exercises": [
+//           {
+//             "title": "string",
+//             "challenge": "A problem statement that doesn't give away the answer.",
+//             "constraints": ["Required tools/methods to use"],
+//             "starterCode": "Partial code with 'TODO' comments",
+//             "hints": ["Clues that guide logic without providing the solution"],
+//             "fullSolution": "The 'Gold Standard' code for this exercise",
+//             "explanationOfSolution": "Why this specific implementation is the most efficient."
+//           }
+//         ]
+//       },
+//       "knowledgeChecks": {
+//         "questions": [
+//           {
+//             "type": "multiple-choice",
+//             "question": "A logic-based question (e.g., 'What happens if we change X to Y?')",
+//             "options": ["string"],
+//             "correctAnswer": "string",
+//             "feedback": "Detailed explanation of why the correct answer is right AND why distractors are wrong."
+//           }
+//         ]
+//       },
+//       "commonPitfalls": [
+//         {
+//           "mistake": "The common error",
+//           "mentalModelFix": "The shift in thinking needed to avoid this",
+//           "debuggingHack": "The specific log or tool to use to catch this early"
+//         }
+//       ]
+//     }
+//   ],
+//   "assessmentBlueprint": {
+//     "finalProject": {
+//       "prompt": "A cumulative challenge",
+//       "requirements": ["Must include X", "Must handle Y"],
+//       "rubric": ["Criterion: How to grade it"]
+//     }
+//   }
+// }
+
+// IMPORTANT: 
+// - Escape all JSON strings.
+// - Prioritize ${learningStyle} activities.
+// - Make the content challenging enough for ${userLevel} level.
+// - Ensure the total time to complete matches ${availableTime}.
+// `;
+// };
