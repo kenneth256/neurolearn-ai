@@ -13,6 +13,7 @@ import {
 import ConceptSection from "./ui/concept";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import TutorBot from "./ui/tutorChat";
+import CapstoneProject, { ProjectData } from "./ui/protocol";
 
 interface DailyLesson {
   day: number;
@@ -27,11 +28,12 @@ interface LessonsData {
   moduleNumber: number;
   totalDuration: string;
   dailyLessons: DailyLesson[];
+  moduleCapstone?: ProjectData;
 }
 
 interface CourseBookUIProps {
-  course: any;
-  lessons: LessonsData | null;
+  course: any[];
+  lessons: Record<number, LessonsData>;
 }
 
 const bookFlipVariants: Variants = {
@@ -65,27 +67,35 @@ const bookFlipVariants: Variants = {
 const CourseBookUI: React.FC<CourseBookUIProps> = ({ course, lessons }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [direction, setDirection] = useState(0);
+  const [data, setData] = useState<ProjectData | undefined>(undefined);
 
   const modules = useMemo(
     () => course?.filter((item: any) => item.moduleNumber) || [],
     [course],
   );
   const currentModule = modules[currentPage];
+  const currentLessons = lessons[currentModule?.moduleNumber];
   const totalPages = modules.length;
-
   const handlePageChange = (index: number) => {
     if (index === currentPage || index < 0 || index >= totalPages) return;
     setDirection(index > currentPage ? 1 : -1);
     setCurrentPage(index);
+    const nextModule = modules[index];
+    setData(lessons[nextModule?.moduleNumber]?.moduleCapstone);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  console.log("Current Module:", currentModule);
+  console.log("Current Module Number:", currentModule?.moduleNumber);
+  console.log("All Lessons:", lessons);
+  console.log("Current Lessons:", currentLessons);
 
   return (
     <div className="min-h-screen bg-[#d6d2c4] text-slate-900 font-sans selection:bg-amber-200">
       {/* Immersive Background Texture */}
       <div className="fixed inset-0 opacity-10 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/asfalt-dark.png')]" />
 
-      <div className="max-w-[1600px] mx-auto flex flex-col lg:flex-row relative">
+      <div className="max-w-400 mx-auto flex flex-col lg:flex-row relative">
         {/* --- STICKY & SCROLLABLE INDEX (The Spine) --- */}
         <aside className="w-full lg:w-[320px] lg:h-screen lg:sticky lg:top-0 bg-[#1a1a1a] text-white z-40 flex flex-col shrink-0 border-r border-black/20">
           <div className="p-10 border-b border-white/10 bg-[#1a1a1a] z-50">
@@ -142,8 +152,8 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({ course, lessons }) => {
           style={{ perspective: "3000px" }}
         >
           {/* THE BINDING GAPS & SHADOWS (Visual connection between Index and Page) */}
-          <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-black/40 via-black/5 to-transparent z-30 pointer-events-none" />
-          <div className="absolute left-6 top-0 bottom-0 w-[1px] bg-white/10 z-30 pointer-events-none" />
+          <div className="absolute left-0 top-0 bottom-0 w-20 bg-linear-to-r from-black/40 via-black/5 to-transparent z-30 pointer-events-none" />
+          <div className="absolute left-6 top-0 bottom-0 w-px bg-white/10 z-30 pointer-events-none" />
 
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
@@ -202,29 +212,59 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({ course, lessons }) => {
 
                   {/* Main Content Render */}
                   <article className="prose prose-slate max-w-none pt-12">
-                    {lessons?.dailyLessons?.map((lesson: any, i: number) => (
-                      <div key={i} className="mb-32 last:mb-0">
-                        <div className="flex items-center gap-6 mb-12 border-b border-slate-100 pb-6">
-                          <span className="font-serif italic text-amber-600 text-3xl font-bold">
-                            Cap. {lesson.day}
-                          </span>
-                          <h2 className="text-4xl font-bold font-serif text-slate-800 tracking-tight">
-                            {lesson.title}
-                          </h2>
-                        </div>
-                        <div className="space-y-20">
-                          {lesson.coreContent.concepts.map(
-                            (concept: any, idx: number) => (
+                    {currentLessons?.dailyLessons?.map(
+                      (lesson: any, lessonIndex: number) => (
+                        <div key={lessonIndex} className="mb-32 last:mb-0">
+                          {/* Lesson Header */}
+                          <div className="flex items-center gap-6 mb-12 border-b border-slate-100 pb-6">
+                            <span className="font-serif italic text-amber-600 text-3xl font-bold">
+                              Cap. {lesson.day}
+                            </span>
+                            <h2 className="text-4xl font-bold font-serif text-slate-800 tracking-tight">
+                              {lesson.title}
+                            </h2>
+                          </div>
+
+                          {/* Theoretical Concepts */}
+                          {lesson.theoreticalFoundation?.concepts?.map(
+                            (concept: any, conceptIndex: number) => (
                               <ConceptSection
-                                key={idx}
-                                concept={concept}
-                                index={idx}
+                                key={`${lesson.day}-${conceptIndex}`}
+                                index={conceptIndex}
+                                concept={{
+                                  // raw fields (ConceptSection now understands these)
+                                  conceptTitle: concept.conceptTitle,
+                                  deepDive: concept.deepDive,
+                                  realWorldApplication:
+                                    concept.realWorldApplication,
+                                  commonMisconceptions:
+                                    concept.commonMisconceptions,
+                                  codeWalkthrough: lesson.practicalDemonstration
+                                    ?.codeOrFormula
+                                    ? {
+                                        code: lesson.practicalDemonstration
+                                          .codeOrFormula.content,
+                                        language:
+                                          lesson.practicalDemonstration
+                                            .codeOrFormula.language,
+                                        analysis:
+                                          lesson.practicalDemonstration.codeOrFormula.lineByLineAnalysis
+                                            ?.map(
+                                              (line: any) =>
+                                                `${line.line}: ${line.technicalDetail}`,
+                                            )
+                                            .join("\n") ?? "",
+                                      }
+                                    : undefined,
+                                }}
                               />
                             ),
                           )}
                         </div>
-                      </div>
-                    ))}
+                      ),
+                    )}
+
+                    {data && <CapstoneProject data={data} />}
                   </article>
                 </div>
 

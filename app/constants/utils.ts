@@ -1,3 +1,5 @@
+import { ProjectData } from "../components/ui/protocol";
+
 export interface CourseGenParams {
   subject: string;
   level: string;
@@ -31,6 +33,7 @@ export interface LessonsData {
   weeklyMilestones: any[];
   differentiatedLearning: any;
   assessmentBlueprint: any;
+  moduleCapstone: ProjectData
 }
 
 
@@ -168,61 +171,143 @@ export interface LessonDesignParams {
 export const lessonDesignPrompt = ({ module, userLevel, learningStyle, availableTime }: LessonDesignParams): string => {
   const moduleData = JSON.stringify(module, null, 2);
   
-  return `You are a world-class Instructional Designer. Your task is to generate an **Exhaustive, Deep-Dive Interactive Course Module**. 
-
-### CRITICAL FIDELITY RULES:
-1. **EXHAUSTIVE DETAIL**: The "narrativeExplanation" for each concept must be a minimum of 500-800 words. Do not summarize. Treat this as a definitive textbook chapter.
-2. **THE "NO-BOOK" RULE**: Pair every concept with a "Why" scenario, Socratic inquiry, and "The Gotcha" edge case.
-3. **EXTENDED SCOPE**: If the provided time (${availableTime}) is insufficient for true mastery, ignore the limit and provide the full depth required for a ${userLevel} student.
-4. **PEDAGOGICAL DENSITY**: Every code walkthrough must analyze the "Big O" complexity and architectural trade-offs.
+  return `You are an expert Instructional Designer capable of creating deep, comprehensive course modules for ANY subject domain.
 
 ### Student Profile:
-- Expertise: ${userLevel}
-- Style: ${learningStyle}
+- Level: ${userLevel}
+- Learning Style: ${learningStyle}
+- Available Time: ${availableTime}
 
-### Source Material:
+### Module to Design:
 ${moduleData}
 
-### JSON STRUCTURE REQUIREMENTS:
-- You MUST provide at least 3 distinct "concepts" per daily lesson.
-- Each "narrativeExplanation" must be multi-paragraph, using Markdown for bolding and lists within the string.
-- The "analysis" in codeWalkthrough must be line-by-line.
+### Your Mission:
+Transform this module into daily lessons with DEEP, THOROUGH explanations that match the subject matter. Each lesson should provide complete understanding, not surface-level summaries.
 
+### UNIVERSAL JSON STRUCTURE:
 {
   "moduleTitle": "string",
-  "moduleNumber": 1,
+  "moduleNumber": number,
+  "subjectDomain": "string (e.g., 'Programming', 'Culinary Arts', 'Mathematics', 'Languages')",
+  "totalDays": number,
   "dailyLessons": [
     {
-      "day": 1,
+      "day": number,
       "title": "string",
-      "duration": "Extended",
-      "learningObjectives": [...],
-      "coreContent": {
+      "estimatedDuration": "string",
+      "learningObjectives": ["string"],
+      "theoreticalFoundation": {
         "concepts": [
           {
-            "title": "string",
-            "narrativeExplanation": "ESSENTIAL: Provide 5+ paragraphs of deep theory, historical context, and technical implementation details.",
-            "interactiveAnalogy": "string",
-            "codeWalkthrough": {
-              "code": "string",
-              "analysis": "A deep architectural breakdown of the code provided.",
-              "language": "string"
-            },
-            "edgeCase": "string"
+            "conceptTitle": "string",
+            "deepDive": "string (3-4 paragraphs: What it is, Why it matters, How it works, When to use it)",
+            "historicalContext": "string (origin, evolution, or foundational theory)",
+            "realWorldApplication": "string (concrete examples from industry/practice)",
+            "commonMisconceptions": ["string"]
           }
         ]
       },
-      ...
+      "practicalDemonstration": {
+        "title": "string",
+        "setup": "string (materials, prerequisites, or environment setup)",
+        "stepByStep": [
+          {
+            "step": number,
+            "instruction": "string",
+            "explanation": "string (WHY this step matters)",
+            "visualCue": "string (what to look for, expected result)"
+          }
+        ],
+        "codeOrFormula": {
+          "content": "string (code, recipe, formula, or procedure)",
+          "language": "string (programming language, 'Recipe', 'Formula', 'Procedure', etc.)",
+          "lineByLineAnalysis": [
+            {
+              "line": "string (the actual line/step)",
+              "purpose": "string (what it does)",
+              "technicalDetail": "string (deeper insight, optimization, or technique)"
+            }
+          ]
+        },
+        "expectedOutcome": "string",
+        "troubleshooting": [
+          {
+            "problem": "string",
+            "cause": "string",
+            "solution": "string"
+          }
+        ]
+      },
+      "handsOnPractice": {
+        "exerciseTitle": "string",
+        "objective": "string",
+        "instructions": ["string"],
+        "successCriteria": ["string"],
+        "timeEstimate": "string",
+        "extensionChallenge": "string (for advanced learners)"
+      },
+      "knowledgeCheck": [
+        {
+          "type": "string (multiple-choice, practical, or open-ended)",
+          "question": "string",
+          "options": ["string"] || null,
+          "correctAnswer": "string or number",
+          "detailedExplanation": "string (why this answer is correct AND why others are wrong)"
+        }
+      ],
+      "additionalResources": {
+        "mustRead": ["string (articles, book chapters, documentation)"],
+        "videoTutorials": ["string (if applicable)"],
+        "practiceProblems": ["string"]
+      }
     }
   ],
-  ...
+  "moduleCapstone": {
+    "projectTitle": "string",
+    "description": "string",
+    "requirements": ["string"],
+    "assessmentRubric": [
+      {
+        "criterion": "string",
+        "excellent": "string",
+        "satisfactory": "string",
+        "needsWork": "string"
+      }
+    ]
+  }
 }
 
-IMPORTANT: 
-- Return ONLY valid JSON.
-- DO NOT use placeholders like "similar to before" or "content goes here".
-- If you run out of space, prioritize the depth of the first two lessons over providing five shallow ones.
-`;
+### CRITICAL INSTRUCTIONS:
+
+**Content Depth Guidelines:**
+- "deepDive": 250-400 words of substantive explanation
+- "lineByLineAnalysis": Analyze EVERY significant line/step
+- "detailedExplanation": 100-150 words explaining the reasoning
+
+**Universal Adaptability:**
+- **Programming/Tech**: Use "codeOrFormula.content" for actual code with language specification
+- **Culinary Arts**: Use it for recipes with ingredients and techniques
+- **Mathematics/Science**: Use it for formulas, proofs, or experimental procedures  
+- **Languages**: Use it for grammar rules, sentence structures, or dialogues
+- **Arts/Music**: Use it for notation, compositions, or technique descriptions
+- **Business/Soft Skills**: Use it for frameworks, templates, or process diagrams
+
+**Quality Standards:**
+1. NO placeholders - every field must have complete, actionable content
+2. NO vague language - be specific and technical
+3. Balance theory with practice - every concept gets a hands-on application
+4. Progressive complexity - each day builds on previous knowledge
+5. Design for mastery, not completion - depth over breadth
+
+**Realistic Scoping:**
+- If the module requires more time than "${availableTime}" for true mastery, extend the "totalDays" accordingly
+- Each daily lesson should be completable in one focused session
+- Include buffer time for review and practice
+
+**Output Format:**
+Return ONLY the JSON object. No markdown code fences, no preamble, no explanations outside the JSON structure.
+
+Generate a complete, production-ready module that a student could follow independently to achieve mastery.`;
 };
 
 // export const lessonDesignPrompt = ({ module, userLevel, learningStyle, availableTime }: LessonDesignParams): string => {
