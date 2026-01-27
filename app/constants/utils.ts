@@ -25,15 +25,18 @@ export interface DailyLesson {
   exitCriteria: any;
 }
 
+
 export interface LessonsData {
   moduleTitle: string;
   moduleNumber: number;
   totalDuration: string;
   dailyLessons: DailyLesson[];
-  weeklyMilestones: any[];
-  differentiatedLearning: any;
-  assessmentBlueprint: any;
-  moduleCapstone: ProjectData
+  moduleCapstone?: ProjectData;
+  // Index signature to allow accessing nested lesson data by module number
+  [key: number]: {
+    dailyLessons: DailyLesson[];
+    moduleCapstone?: ProjectData;
+  };
 }
 
 
@@ -70,7 +73,7 @@ export interface CourseModule {
 }
 
 export const courseGenPrompt = ({ subject, level, goals, time, style, deadline }: CourseGenParams) => `
-You are an expert instructional designer and learning strategist with deep knowledge of mastery-based learning, spaced repetition, and cognitive science across all domains. I want you to design a personalized learning course for me with strict mastery requirements before progression.
+You are an expert instructional designer and learning strategist with deep knowledge of mastery-based learning.
 
 Here are my details:
 
@@ -106,23 +109,13 @@ Required JSON structure:
   {
     "moduleNumber": 1,
     "moduleName": "Module Title",
-    "learningObjectives": [
-      "Specific objective 1",
-      "Specific objective 2",
-      "Specific objective 3"
-    ],
+    "learningObjectives": ["Specific objective 1", "Specific objective 2", "Specific objective 3"],
     "masteryRequirements": {
       "threshold": "90%",
-      "criteria": [
-        "Specific criterion 1",
-        "Specific criterion 2"
-      ]
+      "criteria": ["Specific criterion 1", "Specific criterion 2"]
     },
     "assessmentMethods": [
-      {
-        "type": "Coding Challenge",
-        "description": "Detailed description of the assessment"
-      }
+      {"type": "Coding Challenge", "description": "Detailed description of the assessment"}
     ],
     "weeklyLearningPlan": {
       "totalHours": 15,
@@ -131,10 +124,7 @@ Required JSON structure:
         "Sat-Sun": "2.5 hours (project work)"
       },
       "reviewCycle": "Spaced Repetition: Day 1, 3, 7, 14, 30",
-      "tasks": [
-        "Specific task 1",
-        "Specific task 2"
-      ]
+      "tasks": ["Specific task 1", "Specific task 2"]
     },
     "resources": {
       "documentation": ["URL or resource name"],
@@ -157,7 +147,7 @@ Include:
 - Realistic timeline for deadline: ${deadline}
 - Adaptation guidelines for pacing
 - Final capstone project in the last module
-- provide enough information so one can learn and master the topic even if it means going passed their allocated time
+- Provide enough information to fully master the topic
 `;
 
 export interface LessonDesignParams {
@@ -171,143 +161,74 @@ export interface LessonDesignParams {
 export const lessonDesignPrompt = ({ module, userLevel, learningStyle, availableTime }: LessonDesignParams): string => {
   const moduleData = JSON.stringify(module, null, 2);
   
-  return `You are an expert Instructional Designer capable of creating deep, comprehensive course modules for ANY subject domain.
+  return `You are a world-class Instructional Designer. Your task is to generate a **Full, Interactive Course Module**. 
+
+### THE "NO-BOOK" RULE:
+Every concept must be paired with:
+1. **The "Why"**: A real-world scenario where this concept solves a problem.
+2. **Active Inquiry**: Socratic questions mid-explanation.
+3. **The "Gotcha"**: A non-obvious edge case or common misconception.
+4. **Mastery Focus**: Information must be exhaustive to ensure 100% understanding, even if it exceeds the suggested time.
 
 ### Student Profile:
-- Level: ${userLevel}
-- Learning Style: ${learningStyle}
-- Available Time: ${availableTime}
+- Expertise: ${userLevel}
+- Style: ${learningStyle}
+- Time: ${availableTime}
 
-### Module to Design:
+### Source Material:
 ${moduleData}
 
-### Your Mission:
-Transform this module into daily lessons with DEEP, THOROUGH explanations that match the subject matter. Each lesson should provide complete understanding, not surface-level summaries.
+### MANDATORY JSON STRUCTURE:
+Return a JSON object where the root key is "${module.moduleNumber}". 
 
-### UNIVERSAL JSON STRUCTURE:
 {
-  "moduleTitle": "string",
-  "moduleNumber": number,
-  "subjectDomain": "string (e.g., 'Programming', 'Culinary Arts', 'Mathematics', 'Languages')",
-  "totalDays": number,
-  "dailyLessons": [
-    {
-      "day": number,
-      "title": "string",
-      "estimatedDuration": "string",
-      "learningObjectives": ["string"],
-      "theoreticalFoundation": {
-        "concepts": [
-          {
-            "conceptTitle": "string",
-            "deepDive": "string (3-4 paragraphs: What it is, Why it matters, How it works, When to use it)",
-            "historicalContext": "string (origin, evolution, or foundational theory)",
-            "realWorldApplication": "string (concrete examples from industry/practice)",
-            "commonMisconceptions": ["string"]
-          }
-        ]
-      },
-      "practicalDemonstration": {
-        "title": "string",
-        "setup": "string (materials, prerequisites, or environment setup)",
-        "stepByStep": [
-          {
-            "step": number,
-            "instruction": "string",
-            "explanation": "string (WHY this step matters)",
-            "visualCue": "string (what to look for, expected result)"
-          }
-        ],
-        "codeOrFormula": {
-          "content": "string (code, recipe, formula, or procedure)",
-          "language": "string (programming language, 'Recipe', 'Formula', 'Procedure', etc.)",
-          "lineByLineAnalysis": [
+  "${module.moduleNumber}": {
+    "moduleTitle": "${module.moduleName}",
+    "moduleNumber": ${module.moduleNumber},
+    "dailyLessons": [
+      {
+        "day": 1,
+        "title": "Day Theme Title",
+        "duration": "${availableTime}",
+        "coreContent": {
+          "concepts": [
             {
-              "line": "string (the actual line/step)",
-              "purpose": "string (what it does)",
-              "technicalDetail": "string (deeper insight, optimization, or technique)"
+              "concept": "Concept Title",
+              "narrativeExplanation": "Multi-paragraph deep dive tutorial.",
+              "whyScenario": "Real-world application scenario.",
+              "socraticInquiry": "Question to make them think.",
+              "gotcha": "Non-obvious edge case.",
+              "codeWalkthrough": {
+                "code": "Production-grade code.",
+                "analysis": "Line-by-line reasoning.",
+                "language": "string"
+              }
             }
           ]
         },
-        "expectedOutcome": "string",
-        "troubleshooting": [
-          {
-            "problem": "string",
-            "cause": "string",
-            "solution": "string"
-          }
-        ]
-      },
-      "handsOnPractice": {
-        "exerciseTitle": "string",
-        "objective": "string",
-        "instructions": ["string"],
-        "successCriteria": ["string"],
-        "timeEstimate": "string",
-        "extensionChallenge": "string (for advanced learners)"
-      },
-      "knowledgeCheck": [
-        {
-          "type": "string (multiple-choice, practical, or open-ended)",
-          "question": "string",
-          "options": ["string"] || null,
-          "correctAnswer": "string or number",
-          "detailedExplanation": "string (why this answer is correct AND why others are wrong)"
+        "knowledgeChecks": {
+          "questions": [
+            {
+              "question": "Logic-based question",
+              "options": ["A", "B", "C", "D"],
+              "correctAnswer": "Exact string of correct option",
+              "feedback": "Why it's right/wrong."
+            }
+          ]
+        },
+        "handsOnPractice": {
+          "tasks": ["Specific task 1", "Specific task 2"]
         }
-      ],
-      "additionalResources": {
-        "mustRead": ["string (articles, book chapters, documentation)"],
-        "videoTutorials": ["string (if applicable)"],
-        "practiceProblems": ["string"]
-      }
-    }
-  ],
-  "moduleCapstone": {
-    "projectTitle": "string",
-    "description": "string",
-    "requirements": ["string"],
-    "assessmentRubric": [
-      {
-        "criterion": "string",
-        "excellent": "string",
-        "satisfactory": "string",
-        "needsWork": "string"
       }
     ]
   }
 }
 
-### CRITICAL INSTRUCTIONS:
-
-**Content Depth Guidelines:**
-- "deepDive": 250-400 words of substantive explanation
-- "lineByLineAnalysis": Analyze EVERY significant line/step
-- "detailedExplanation": 100-150 words explaining the reasoning
-
-**Universal Adaptability:**
-- **Programming/Tech**: Use "codeOrFormula.content" for actual code with language specification
-- **Culinary Arts**: Use it for recipes with ingredients and techniques
-- **Mathematics/Science**: Use it for formulas, proofs, or experimental procedures  
-- **Languages**: Use it for grammar rules, sentence structures, or dialogues
-- **Arts/Music**: Use it for notation, compositions, or technique descriptions
-- **Business/Soft Skills**: Use it for frameworks, templates, or process diagrams
-
-**Quality Standards:**
-1. NO placeholders - every field must have complete, actionable content
-2. NO vague language - be specific and technical
-3. Balance theory with practice - every concept gets a hands-on application
-4. Progressive complexity - each day builds on previous knowledge
-5. Design for mastery, not completion - depth over breadth
-
-**Realistic Scoping:**
-- If the module requires more time than "${availableTime}" for true mastery, extend the "totalDays" accordingly
-- Each daily lesson should be completable in one focused session
-- Include buffer time for review and practice
-
-**Output Format:**
-Return ONLY the JSON object. No markdown code fences, no preamble, no explanations outside the JSON structure.
-
-Generate a complete, production-ready module that a student could follow independently to achieve mastery.`;
+IMPORTANT: 
+- Escape all JSON strings.
+- Root key MUST be "${module.moduleNumber}".
+- Return ONLY valid JSON.
+`;
 };
 
 // export const lessonDesignPrompt = ({ module, userLevel, learningStyle, availableTime }: LessonDesignParams): string => {

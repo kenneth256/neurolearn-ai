@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   BookOpen,
   ChevronLeft,
@@ -29,11 +29,17 @@ interface LessonsData {
   totalDuration: string;
   dailyLessons: DailyLesson[];
   moduleCapstone?: ProjectData;
+  [key: number]: {
+    dailyLessons: DailyLesson[];
+    moduleCapstone?: ProjectData;
+  };
 }
 
 interface CourseBookUIProps {
   course: any[];
   lessons: Record<number, LessonsData>;
+  onModuleSelect: (module: any) => void;
+  onReset?: () => void;
 }
 
 const bookFlipVariants: Variants = {
@@ -64,24 +70,56 @@ const bookFlipVariants: Variants = {
   }),
 };
 
-const CourseBookUI: React.FC<CourseBookUIProps> = ({ course, lessons }) => {
+const CourseBookUI: React.FC<CourseBookUIProps> = ({
+  course,
+  lessons,
+  onModuleSelect,
+  onReset,
+}) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [direction, setDirection] = useState(0);
   const [data, setData] = useState<ProjectData | undefined>(undefined);
+  const [showAnswers, setShowAnswers] = useState<Record<string, boolean>>({});
 
   const modules = useMemo(
     () => course?.filter((item: any) => item.moduleNumber) || [],
     [course],
   );
   const currentModule = modules[currentPage];
-  const currentLessons = lessons[currentModule?.moduleNumber];
+
   const totalPages = modules.length;
+  const moduleNumber: number | undefined = currentModule?.moduleNumber;
+
+  const currentLessons = moduleNumber ? lessons[moduleNumber] : undefined;
+  const dailyLessons =
+    moduleNumber && currentLessons?.[moduleNumber]?.dailyLessons
+      ? currentLessons[moduleNumber].dailyLessons
+      : [];
+
+  // Auto-trigger module generation when page changes
+  useEffect(() => {
+    if (currentModule && typeof currentModule.moduleNumber === "number") {
+      const moduleLessons = lessons[currentModule.moduleNumber];
+
+      // If lessons don't exist for this module, trigger generation
+      if (!moduleLessons) {
+        console.log(
+          `🎯 Triggering generation for Module ${currentModule.moduleNumber}...`,
+        );
+        onModuleSelect(currentModule);
+      } else {
+        // Update capstone data if lessons exist
+        setData(moduleLessons?.moduleCapstone);
+      }
+    }
+  }, [currentModule, lessons, onModuleSelect]);
+
   const handlePageChange = (index: number) => {
     if (index === currentPage || index < 0 || index >= totalPages) return;
+
     setDirection(index > currentPage ? 1 : -1);
     setCurrentPage(index);
-    const nextModule = modules[index];
-    setData(lessons[nextModule?.moduleNumber]?.moduleCapstone);
+
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -116,33 +154,54 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({ course, lessons }) => {
 
           {/* Scrollable Navigation Area */}
           <nav className="flex-1 overflow-y-auto p-6 space-y-2 custom-scrollbar">
-            {modules.map((mod: any, idx: number) => (
-              <button
-                key={idx}
-                onClick={() => handlePageChange(idx)}
-                className={`w-full text-left flex items-center gap-4 transition-all p-3 rounded-xl border border-transparent ${
-                  idx === currentPage
-                    ? "bg-white/10 text-amber-400 border-white/5 shadow-inner"
-                    : "text-slate-500 hover:text-slate-200 hover:bg-white/5"
-                }`}
-              >
-                <span className="font-mono text-[10px] opacity-30 shrink-0">
-                  {String(idx + 1).padStart(2, "0")}
-                </span>
-                <span
-                  className={`text-[11px] font-black uppercase tracking-widest leading-tight transition-transform ${idx === currentPage ? "translate-x-1" : ""}`}
+            {modules.map((mod: any, idx: number) => {
+              const hasLessons =
+                typeof mod.moduleNumber === "number"
+                  ? lessons[mod.moduleNumber]
+                  : false;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => handlePageChange(idx)}
+                  className={`w-full text-left flex items-center gap-4 transition-all p-3 rounded-xl border border-transparent ${
+                    idx === currentPage
+                      ? "bg-white/10 text-amber-400 border-white/5 shadow-inner"
+                      : "text-slate-500 hover:text-slate-200 hover:bg-white/5"
+                  }`}
                 >
-                  {mod.moduleName}
-                </span>
-              </button>
-            ))}
+                  <span className="font-mono text-[10px] opacity-30 shrink-0">
+                    {String(idx + 1).padStart(2, "0")}
+                  </span>
+                  <span
+                    className={`text-[11px] font-black uppercase tracking-widest leading-tight transition-transform ${idx === currentPage ? "translate-x-1" : ""}`}
+                  >
+                    {mod.moduleName}
+                  </span>
+                  {!hasLessons && (
+                    <Sparkles
+                      size={12}
+                      className="text-amber-500 animate-pulse ml-auto"
+                    />
+                  )}
+                </button>
+              );
+            })}
           </nav>
-
-          <div className="p-8 border-t border-white/10 opacity-30 flex items-center gap-2 bg-[#1a1a1a]">
-            <Sparkles size={12} className="text-amber-500" />
-            <p className="text-[9px] font-mono uppercase tracking-tighter">
-              Gemini 3 Architected
-            </p>
+          <div className="p-6 border-t border-white/10 bg-[#1a1a1a] space-y-3">
+            {onReset && (
+              <button
+                onClick={onReset}
+                className="w-full py-3 px-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs font-bold uppercase tracking-wider text-slate-400 hover:text-amber-400 transition-all"
+              >
+                Start New Course
+              </button>
+            )}
+            <div className="opacity-30 flex items-center gap-2 justify-center">
+              <Sparkles size={12} className="text-amber-500" />
+              <p className="text-[9px] font-mono uppercase tracking-tighter">
+                Gemini 3 Architected
+              </p>
+            </div>
           </div>
         </aside>
 
@@ -188,7 +247,6 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({ course, lessons }) => {
                     {currentModule.moduleName}
                   </h1>
 
-                  {/* Objective Annotation Box */}
                   <div className="bg-[#fcf8ee] border-l-[6px] border-amber-300 p-10 rounded-r-3xl shadow-sm italic font-serif text-slate-700">
                     <h4 className="not-italic text-[10px] font-black uppercase tracking-widest text-slate-400 mb-8 flex items-center gap-2">
                       <Award size={14} /> Key Objectives
@@ -210,12 +268,22 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({ course, lessons }) => {
                     )}
                   </div>
 
-                  {/* Main Content Render */}
-                  <article className="prose prose-slate max-w-none pt-12">
-                    {currentLessons?.dailyLessons?.map(
-                      (lesson: any, lessonIndex: number) => (
+                  {/* Loading state when lessons are being generated */}
+                  {!currentLessons || dailyLessons.length === 0 ? (
+                    <div className="py-20 flex flex-col items-center justify-center space-y-4">
+                      <Sparkles className="w-12 h-12 text-amber-500 animate-pulse" />
+                      <p className="text-xl font-serif italic text-slate-600">
+                        Crafting your lessons...
+                      </p>
+                      <p className="text-sm text-slate-400">
+                        The AI architect is building deep-dive content for this
+                        module
+                      </p>
+                    </div>
+                  ) : (
+                    <article className="prose prose-slate max-w-none pt-12">
+                      {dailyLessons.map((lesson: any, lessonIndex: number) => (
                         <div key={lessonIndex} className="mb-32 last:mb-0">
-                          {/* Lesson Header */}
                           <div className="flex items-center gap-6 mb-12 border-b border-slate-100 pb-6">
                             <span className="font-serif italic text-amber-600 text-3xl font-bold">
                               Cap. {lesson.day}
@@ -225,47 +293,85 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({ course, lessons }) => {
                             </h2>
                           </div>
 
-                          {/* Theoretical Concepts */}
-                          {lesson.theoreticalFoundation?.concepts?.map(
-                            (concept: any, conceptIndex: number) => (
+                          <p className="text-slate-600 mb-4">
+                            Duration: {lesson.duration}
+                          </p>
+
+                          {lesson.coreContent?.concepts?.map(
+                            (concept: any, idx: number) => (
                               <ConceptSection
-                                key={`${lesson.day}-${conceptIndex}`}
-                                index={conceptIndex}
+                                key={idx}
+                                index={idx}
                                 concept={{
-                                  // raw fields (ConceptSection now understands these)
-                                  conceptTitle: concept.conceptTitle,
-                                  deepDive: concept.deepDive,
-                                  realWorldApplication:
-                                    concept.realWorldApplication,
-                                  commonMisconceptions:
-                                    concept.commonMisconceptions,
-                                  codeWalkthrough: lesson.practicalDemonstration
-                                    ?.codeOrFormula
+                                  conceptTitle: concept.concept,
+                                  deepDive: concept.narrativeExplanation,
+                                  realWorldApplication: concept.whyScenario,
+                                  commonMisconceptions: concept.gotcha,
+                                  codeWalkthrough: concept.codeWalkthrough
                                     ? {
-                                        code: lesson.practicalDemonstration
-                                          .codeOrFormula.content,
+                                        code: concept.codeWalkthrough.code,
                                         language:
-                                          lesson.practicalDemonstration
-                                            .codeOrFormula.language,
+                                          concept.codeWalkthrough.language,
                                         analysis:
-                                          lesson.practicalDemonstration.codeOrFormula.lineByLineAnalysis
-                                            ?.map(
-                                              (line: any) =>
-                                                `${line.line}: ${line.technicalDetail}`,
-                                            )
-                                            .join("\n") ?? "",
+                                          concept.codeWalkthrough.analysis,
                                       }
                                     : undefined,
                                 }}
                               />
                             ),
                           )}
-                        </div>
-                      ),
-                    )}
 
-                    {data && <CapstoneProject data={data} />}
-                  </article>
+                          {lesson.knowledgeChecks?.questions?.map(
+                            (q: any, qIdx: any) => (
+                              <div
+                                key={qIdx}
+                                className="my-6 p-6 bg-amber-50 rounded-lg"
+                              >
+                                <p className="font-bold mb-3">{q.question}</p>
+                                {showAnswers[`${lessonIndex}-${qIdx}`] ? (
+                                  <ul className="space-y-2">
+                                    {q.options.map(
+                                      (option: string, oIdx: number) => (
+                                        <li key={oIdx}>{option}</li>
+                                      ),
+                                    )}
+                                  </ul>
+                                ) : (
+                                  <p
+                                    className="text-m text-black/75 cursor-pointer"
+                                    onClick={() =>
+                                      setShowAnswers((prev) => ({
+                                        ...prev,
+                                        [`${lessonIndex}-${qIdx}`]: true,
+                                      }))
+                                    }
+                                  >
+                                    show answers!
+                                  </p>
+                                )}
+                              </div>
+                            ),
+                          )}
+
+                          {lesson.handsOnPractice?.tasks && (
+                            <div className="my-6 p-6 bg-blue-50 rounded-lg">
+                              <h3 className="font-bold mb-3">
+                                Practice Tasks:
+                              </h3>
+                              <ul className="space-y-2">
+                                {lesson.handsOnPractice.tasks.map(
+                                  (task: string, tIdx: number) => (
+                                    <li key={tIdx}>{task}</li>
+                                  ),
+                                )}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      {data && <CapstoneProject data={data} />}
+                    </article>
+                  )}
                 </div>
 
                 {/* Folio Footer */}

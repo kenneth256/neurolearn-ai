@@ -123,9 +123,9 @@ const TutorBot: React.FC<TutorBotProps> = ({
 
       {/* Main Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-[28rem] h-[42rem] bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col z-50 overflow-hidden">
+        <div className="fixed bottom-24 right-6 w-md h-168 bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col z-50 overflow-hidden">
           {/* Header */}
-          <div className="p-6 bg-gradient-to-br from-slate-900 to-slate-800 text-white">
+          <div className="p-6 bg-linear-to-br from-slate-900 to-slate-800 text-white">
             <div className="flex justify-between items-start mb-3">
               <div className="flex items-start gap-3">
                 <div className="p-2 bg-amber-500 rounded-lg text-slate-900">
@@ -258,7 +258,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
                   ))}
                   <button
                     onClick={handleGenerateVideo}
-                    className="text-xs p-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all font-semibold flex items-center gap-2"
+                    className="text-xs p-3 bg-linear-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all font-semibold flex items-center gap-2"
                   >
                     <svg
                       width="16"

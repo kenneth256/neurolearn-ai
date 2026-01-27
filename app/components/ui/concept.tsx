@@ -1,21 +1,30 @@
 "use client";
-import React from "react";
-import { Lightbulb, AlertCircle, Terminal, Copy } from "lucide-react";
+import React, { useState } from "react";
+import {
+  Lightbulb,
+  AlertCircle,
+  Terminal,
+  Copy,
+  Check,
+  Info,
+  HelpCircle,
+  Zap,
+} from "lucide-react";
 
-// Allow BOTH refined + raw concept shapes
 export interface Concept {
-  // refined / UI-ready
+  // Refined / UI-ready
   title?: string;
   narrativeExplanation?: string;
   interactiveAnalogy?: string;
   edgeCase?: string;
 
-  // raw dataset support
+  // Raw dataset support
   conceptTitle?: string;
   deepDive?: string;
   realWorldApplication?: string;
   commonMisconceptions?: string[];
 
+  // Code support
   codeWalkthrough?: {
     code: string;
     analysis: string;
@@ -29,94 +38,175 @@ export interface ConceptSectionProps {
 }
 
 const ConceptSection: React.FC<ConceptSectionProps> = ({ concept, index }) => {
-  const handleCopyCode = (code: string) => {
-    navigator.clipboard.writeText(code);
+  const [copied, setCopied] = useState(false);
+
+  // 🔒 GREEDY NORMALIZATION LOGIC
+  // We check every possible key variation to ensure 0% data loss.
+
+  const title =
+    concept.title ??
+    concept.conceptTitle ??
+    (concept as any).concept ??
+    "Untitled Concept";
+
+  const narrative =
+    concept.narrativeExplanation ??
+    concept.deepDive ??
+    (concept as any).description ??
+    "No detailed explanation provided.";
+
+  const analogy =
+    (concept as any).whyScenario ??
+    concept.realWorldApplication ??
+    concept.interactiveAnalogy ??
+    "This concept applies in various real-world scenarios.";
+
+  const edgeCase =
+    (concept as any).gotcha ??
+    concept.commonMisconceptions?.[0] ??
+    concept.edgeCase ??
+    "Observe context to avoid common pitfalls.";
+
+  const codeData = concept.codeWalkthrough;
+  const inquiry = (concept as any).socraticInquiry;
+  const task = (concept as any).handsOnTask;
+
+  const handleCopy = () => {
+    if (codeData?.code) {
+      navigator.clipboard.writeText(codeData.code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
-  // 🔒 Normalized access (THIS is the fix)
-  const title = concept.title ?? concept.conceptTitle ?? "Untitled Concept";
-  const narrative = concept.narrativeExplanation ?? concept.deepDive ?? "";
-  const analogy =
-    concept.interactiveAnalogy ??
-    concept.realWorldApplication ??
-    "This concept applies in real-world scenarios.";
-  const edgeCase =
-    concept.edgeCase ??
-    concept.commonMisconceptions?.[0] ??
-    "Be aware of contextual limitations.";
-
   return (
-    <div className="mb-16 last:mb-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <span className="flex-none w-10 h-10 rounded-full bg-slate-900 text-amber-400 flex items-center justify-center font-serif text-lg border-2 border-amber-400/20 shadow-sm">
-          {index + 1}
-        </span>
-        <h3 className="text-2xl md:text-3xl font-serif font-bold text-slate-900 tracking-tight">
-          {title}
-        </h3>
+    <div className="mb-24 last:mb-0 animate-in fade-in slide-in-from-bottom-6 duration-700">
+      {/* 1. Header & Indexing */}
+      <div className="flex items-start gap-5 mb-8">
+        <div className="shrink-0 w-10 h-10 rounded-2xl bg-slate-900 text-amber-400 flex items-center justify-center font-mono text-sm font-black shadow-lg shadow-slate-200">
+          {String(index + 1).padStart(2, "0")}
+        </div>
+        <div className="space-y-1">
+          <h3 className="text-3xl md:text-4xl font-serif font-bold text-slate-800 leading-tight">
+            {title}
+          </h3>
+          <div className="h-1 w-20 bg-amber-400 rounded-full" />
+        </div>
       </div>
 
-      {/* Narrative */}
-      <div className="prose prose-slate max-w-none mb-8">
-        <p className="text-lg text-slate-700 leading-relaxed first-letter:text-4xl first-letter:font-serif first-letter:mr-2 first-letter:float-left">
+      {/* 2. The Deep Dive (Narrative) */}
+      <div className="mb-10">
+        <p className="text-xl text-slate-600 leading-relaxed font-serif first-letter:text-5xl first-letter:font-bold first-letter:text-slate-900 first-letter:mr-3 first-letter:float-left">
           {narrative}
         </p>
       </div>
 
-      {/* Analogy */}
-      <div className="bg-amber-50/50 rounded-2xl p-6 border border-amber-100 mb-8 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-1 h-full bg-amber-400"></div>
-        <div className="flex gap-2 text-amber-700 font-bold text-xs uppercase tracking-widest mb-3">
-          <Lightbulb size={16} className="fill-amber-100" />
-          Conceptual Bridge
+      {/* 3. Real-World Bridge (Analogy) */}
+      <div className="bg-amber-50/40 rounded-4xl p-8 border border-amber-100/50 mb-10 relative overflow-hidden group">
+        <div className="absolute top-0 left-0 w-2 h-full bg-amber-400 opacity-50" />
+        <div className="flex items-center gap-3 text-amber-700 font-black text-[11px] uppercase tracking-[0.2em] mb-4">
+          <Lightbulb size={18} className="fill-amber-200 animate-pulse" />
+          The Conceptual Bridge
         </div>
-        <p className="text-slate-800 italic font-medium">"{analogy}"</p>
+        <p className="text-slate-800 text-lg italic font-medium leading-relaxed font-serif">
+          "{analogy}"
+        </p>
       </div>
 
-      {/* Code walkthrough (unchanged) */}
-      {concept.codeWalkthrough && (
-        <div className="my-8 rounded-2xl overflow-hidden shadow-lg border border-slate-200">
-          <div className="bg-slate-800 px-5 py-3 flex justify-between items-center border-b border-slate-700">
-            <div className="flex items-center gap-2">
-              <Terminal size={14} className="text-slate-400" />
-              <span className="text-xs font-mono text-slate-300 uppercase">
-                {concept.codeWalkthrough.language}
+      {/* 4. Code / Technical Logic Walkthrough */}
+      {codeData && (
+        <div className="mb-10 rounded-3xl overflow-hidden border border-slate-200 shadow-xl shadow-slate-200/50">
+          <div className="bg-slate-900 px-6 py-4 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="flex gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-rose-500" />
+                <div className="w-3 h-3 rounded-full bg-amber-500" />
+                <div className="w-3 h-3 rounded-full bg-emerald-500" />
+              </div>
+              <span className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest ml-4 border-l border-slate-700 pl-4">
+                {codeData.language || "System.logic"}
               </span>
             </div>
             <button
-              onClick={() => handleCopyCode(concept.codeWalkthrough!.code)}
-              className="text-slate-400 hover:text-white"
+              onClick={handleCopy}
+              className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-all active:scale-90"
             >
-              <Copy size={14} />
+              {copied ? (
+                <Check size={18} className="text-emerald-400" />
+              ) : (
+                <Copy size={18} />
+              )}
             </button>
           </div>
-
-          <pre className="p-6 bg-[#0d0d0d] text-slate-100 overflow-x-auto text-sm font-mono">
-            <code>{concept.codeWalkthrough.code}</code>
-          </pre>
-
-          <div className="p-5 bg-slate-50 border-t">
-            <div className="text-xs font-bold text-slate-400 uppercase mb-2">
-              Technical Analysis
+          <div className="p-0">
+            <pre className="p-8 bg-slate-950 text-amber-100 font-mono text-sm overflow-x-auto leading-relaxed">
+              <code>{codeData.code}</code>
+            </pre>
+            <div className="bg-slate-50 p-6 border-t border-slate-200 flex gap-4">
+              <Info size={20} className="text-slate-400 shrink-0" />
+              <div>
+                <span className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
+                  Logical Decomposition
+                </span>
+                <p className="text-sm text-slate-600 leading-relaxed font-medium">
+                  {codeData.analysis}
+                </p>
+              </div>
             </div>
-            <p className="text-sm text-slate-600">
-              {concept.codeWalkthrough.analysis}
-            </p>
           </div>
         </div>
       )}
 
-      {/* Edge case */}
-      <div className="bg-slate-50 border rounded-xl p-4 flex gap-4">
-        <AlertCircle className="text-amber-600 shrink-0" size={20} />
+      {/* 5. The "Gotcha" (Edge Cases) */}
+      <div className="bg-rose-50/30 border border-rose-100/50 rounded-2xl p-6 flex gap-5 mb-10 transition-colors hover:bg-rose-50/50">
+        <div className="bg-rose-100 p-3 rounded-xl shrink-0 h-fit">
+          <AlertCircle className="text-rose-600" size={24} />
+        </div>
         <div>
-          <span className="block text-xs font-bold text-slate-500 uppercase mb-1">
-            Important Edge Case
+          <span className="block text-xs font-black text-rose-500 uppercase tracking-widest mb-2">
+            Critical Limitation / Edge Case
           </span>
-          <p className="text-sm text-slate-600">{edgeCase}</p>
+          <p className="text-slate-700 leading-relaxed font-medium">
+            {edgeCase}
+          </p>
         </div>
       </div>
+
+      {/* 6. Interaction Layer (Socratic & Hands-on) */}
+      {(inquiry || task) && (
+        <div className="grid md:grid-cols-2 gap-6 mt-12 pt-10 border-t border-slate-100">
+          {inquiry && (
+            <div className="group p-6 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-indigo-50 rounded-lg text-indigo-500">
+                  <HelpCircle size={18} />
+                </div>
+                <span className="font-black text-slate-400 uppercase text-[10px] tracking-widest">
+                  Socratic Inquiry
+                </span>
+              </div>
+              <p className="text-slate-700 italic leading-relaxed font-serif text-lg">
+                {inquiry}
+              </p>
+            </div>
+          )}
+          {task && (
+            <div className="group p-6 bg-slate-900 rounded-2xl shadow-xl border border-slate-800 hover:bg-slate-800 transition-all">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-amber-500/10 rounded-lg text-amber-500">
+                  <Zap size={18} />
+                </div>
+                <span className="font-black text-amber-500 uppercase text-[10px] tracking-widest">
+                  Hands-on Protocol
+                </span>
+              </div>
+              <p className="font-mono text-[13px] text-slate-300 leading-relaxed">
+                {task}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

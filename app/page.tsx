@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FormData, generateCourse, generateLessons } from "./constants/actions";
 import CourseBookUI from "./components/book";
@@ -10,12 +10,11 @@ import {
   Clock,
   Sparkles,
   ChevronRight,
-  Loader2,
   Calendar,
   BrainCircuit,
 } from "lucide-react";
-import { LessonsData } from "./constants/utils";
-import CapstoneProject, { ProjectData } from "./components/ui/protocol";
+// Import from constants/utils to match what book.tsx uses
+import type { LessonsData } from "./constants/utils";
 
 const Page = () => {
   const [step, setStep] = useState(1);
@@ -23,30 +22,10 @@ const Page = () => {
   const [lessons, setLessons] = useState<Record<number, LessonsData>>({});
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(true);
+  const [hydrated, setHydrated] = useState(false);
 
-  // 1. Persistence Layer: Hydration Logic
-  useEffect(() => {
-    try {
-      const savedCourse = localStorage.getItem("course_cache");
-      const savedLessons = localStorage.getItem("lessons_cache");
-
-      if (savedCourse && savedLessons) {
-        setCourse(JSON.parse(savedCourse));
-        setLessons(JSON.parse(savedLessons));
-        setShowForm(false);
-      }
-    } catch (e) {
-      console.error("Failed to hydrate from local storage", e);
-      localStorage.clear();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (course) localStorage.setItem("course_cache", JSON.stringify(course));
-    if (lessons) {
-      localStorage.setItem("lessons_cache", JSON.stringify(lessons));
-    }
-  }, [course, lessons]);
+  // Store metadata to provide context for on-demand lesson generation
+  const [metadata, setMetadata] = useState<any>(null);
 
   const [formData, setFormData] = useState<FormData>({
     subject: "",
@@ -57,104 +36,146 @@ const Page = () => {
     style: "",
   });
 
+  // Load data from localStorage on mount
+  useEffect(() => {
+    const loadData = () => {
+      try {
+        const savedCourse = localStorage.getItem("course_cache");
+        const savedLessons = localStorage.getItem("lessons_cache");
+        const savedMeta = localStorage.getItem("meta_cache");
+
+        if (savedCourse && savedLessons) {
+          setCourse(JSON.parse(savedCourse));
+          setLessons(JSON.parse(savedLessons));
+          if (savedMeta) setMetadata(JSON.parse(savedMeta));
+          setShowForm(false);
+        }
+      } catch (e) {
+        console.error("Failed to load saved data:", e);
+        localStorage.clear();
+      } finally {
+        setHydrated(true);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  // Save data to localStorage whenever it changes
+  useEffect(() => {
+    if (!hydrated) return; // Don't save during initial load
+
+    try {
+      if (course) localStorage.setItem("course_cache", JSON.stringify(course));
+      if (Object.keys(lessons).length > 0) {
+        localStorage.setItem("lessons_cache", JSON.stringify(lessons));
+      }
+      if (metadata)
+        localStorage.setItem("meta_cache", JSON.stringify(metadata));
+    } catch (error) {
+      console.error("Failed to save data:", error);
+    }
+  }, [course, lessons, metadata, hydrated]);
+
+  const fetchModuleContent = useCallback(
+    async (moduleToFetch: any, activeMeta: any) => {
+      const modNum = moduleToFetch.moduleNumber;
+      if (lessons[modNum] || !activeMeta) return;
+
+      console.log(
+        `🚀 AI Architect: Drafting deep-dive for Module ${modNum}...`,
+      );
+
+      try {
+        const response = await generateLessons({
+          course: {
+            ...moduleToFetch,
+            userLevel: activeMeta.level,
+            learningStyle: activeMeta.style,
+            availableTime: activeMeta.time,
+            subject: activeMeta.subject,
+          },
+        });
+
+        if (response?.success && response.lessons) {
+          setLessons((prev) => ({
+            ...prev,
+            [modNum]: response.lessons,
+          }));
+        }
+      } catch (error) {
+        console.error(`Fetch failed for module ${modNum}:`, error);
+      }
+    },
+    [lessons],
+  );
+
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const nextStep = () => setStep((s) => s + 1);
-  const prevStep = () => setStep((s) => s - 1);
-
   const handleGenerate = async () => {
     setLoading(true);
     try {
-      // 1. Generate the Course Structure (Modules)
       const results = await generateCourse(formData);
       if (!results?.data) throw new Error("Course generation failed.");
 
       const courseData = JSON.parse(results.data.course);
+      const meta = results.data.metadata;
+
       setCourse(courseData);
-
-      if (!courseData || courseData.length === 0) {
-        throw new Error("No modules found.");
-      }
-
-      // 2. Transition to the Book UI immediately
-      // This lets the user see the Table of Contents while lessons generate
+      setMetadata(meta);
       setShowForm(false);
       setLoading(false);
 
-      // 3. Loop through modules and generate lessons one-by-one
-      for (let i = 0; i < courseData.length; i++) {
-        const module = courseData[i];
-
-        try {
-          const response = await generateLessons({
-            course: {
-              ...module,
-              userLevel: results.data.metadata.level,
-              learningStyle: results.data.metadata.style,
-              availableTime: results.data.metadata.time,
-              subject: results.data.metadata.subject,
-            },
-          });
-
-          if (response?.success && response.lessons) {
-            const moduleNum = response.lessons.moduleNumber;
-
-            // 4. Update state INCREMENTALLY
-            // This triggers a re-render so the Book UI shows the new lesson instantly
-            setLessons((prev) => ({
-              ...prev,
-              [moduleNum]: response.lessons,
-            }));
-
-            console.log(`✅ Module ${moduleNum} loaded.`);
-          }
-
-          // Small delay to prevent API rate limiting (429 errors)
-          if (i < courseData.length - 1) {
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-          }
-        } catch (error) {
-          console.error(
-            `Failed to generate lessons for module ${i + 1}:`,
-            error,
-          );
-        }
+      // Immediately start generating Module 1
+      if (courseData.length > 0) {
+        await fetchModuleContent(courseData[0], meta);
       }
     } catch (error) {
       console.error("Architect Error:", error);
       setLoading(false);
-      alert(
-        "The AI Architect hit a snag. Please check your connection and try again.",
-      );
+      alert("The AI Architect hit a snag. Please try again.");
     }
   };
 
-  // IF GENERATION IS COMPLETE, SHOW THE BOOK
+  const handleReset = () => {
+    try {
+      localStorage.removeItem("course_cache");
+      localStorage.removeItem("lessons_cache");
+      localStorage.removeItem("meta_cache");
+
+      setCourse(null);
+      setLessons({});
+      setMetadata(null);
+      setShowForm(true);
+    } catch (error) {
+      console.error("Failed to reset data:", error);
+    }
+  };
+
   if (!showForm && course) {
     return (
-      <>
-        <CourseBookUI course={course} lessons={lessons} />
-      </>
+      <CourseBookUI
+        course={course}
+        lessons={lessons}
+        onModuleSelect={(mod) => fetchModuleContent(mod, metadata)}
+        onReset={handleReset}
+      />
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#fcfbf7] flex items-center justify-center p-6 text-slate-900">
+    <div className="min-h-screen bg-[#fcfbf7] flex items-center justify-center p-6 text-slate-900 font-sans">
       <div className="w-full max-w-xl">
         {!loading && (
           <div className="flex justify-center gap-2 mb-10">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className={`h-1.5 rounded-full transition-all duration-500 ${
-                  step === i ? "w-8 bg-amber-500" : "w-2 bg-slate-200"
-                }`}
+                className={`h-1.5 rounded-full transition-all duration-500 ${step === i ? "w-8 bg-amber-500" : "w-2 bg-slate-200"}`}
               />
             ))}
           </div>
@@ -165,33 +186,18 @@ const Page = () => {
             {loading ? (
               <motion.div
                 key="loading"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="py-12 flex flex-col items-center justify-center space-y-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="py-12 flex flex-col items-center space-y-6"
               >
-                <div className="relative">
-                  <div className="absolute inset-0 bg-amber-400 blur-2xl opacity-20 animate-pulse" />
-                  <BrainCircuit className="w-16 h-16 text-amber-500 animate-bounce" />
-                </div>
+                <BrainCircuit className="w-16 h-16 text-amber-500 animate-pulse" />
                 <div className="text-center">
                   <h3 className="text-xl font-serif font-bold italic">
                     Building your masterpiece...
                   </h3>
                   <p className="text-sm text-slate-400 mt-2">
-                    Architecting modules and concepts
+                    Architecting modules and learning paths
                   </p>
-                </div>
-                <div className="w-48 h-1 bg-slate-100 rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full bg-amber-500"
-                    animate={{ x: [-192, 192] }}
-                    transition={{
-                      repeat: Infinity,
-                      duration: 1.5,
-                      ease: "linear",
-                    }}
-                  />
                 </div>
               </motion.div>
             ) : (
@@ -202,13 +208,11 @@ const Page = () => {
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-8"
               >
-                <header className="space-y-2">
-                  <h2 className="text-3xl font-serif font-bold tracking-tight">
-                    {step === 1 && "What's the mission?"}
-                    {step === 2 && "The Logistics"}
-                    {step === 3 && "Fine-tuning"}
-                  </h2>
-                </header>
+                <h2 className="text-3xl font-serif font-bold tracking-tight">
+                  {step === 1 && "What's the mission?"}
+                  {step === 2 && "The Logistics"}
+                  {step === 3 && "Fine-tuning"}
+                </h2>
 
                 <div className="space-y-6">
                   {step === 1 && (
@@ -219,30 +223,26 @@ const Page = () => {
                         </label>
                         <input
                           name="subject"
-                          autoFocus
                           value={formData.subject}
                           onChange={handleChange}
-                          placeholder="e.g. Behavioral Economics"
-                          className="w-full p-5 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-amber-500 transition-all"
+                          placeholder="e.g. Quantum Physics"
+                          className="w-full p-5 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-amber-500 transition-all text-slate-900"
                         />
                       </div>
                       <div className="space-y-3">
                         <label className="text-xs font-black uppercase tracking-widest text-slate-400">
-                          Current Proficiency
+                          Proficiency
                         </label>
                         <div className="grid grid-cols-3 gap-3">
                           {["Beginner", "Intermediate", "Advanced"].map(
                             (lvl) => (
                               <button
                                 key={lvl}
+                                type="button"
                                 onClick={() =>
                                   setFormData((p) => ({ ...p, level: lvl }))
                                 }
-                                className={`p-4 rounded-2xl border text-sm font-bold transition-all ${
-                                  formData.level === lvl
-                                    ? "bg-slate-900 text-white border-slate-900 shadow-lg"
-                                    : "bg-white border-slate-200 text-slate-500"
-                                }`}
+                                className={`p-4 rounded-2xl border text-sm font-bold transition-all ${formData.level === lvl ? "bg-slate-900 text-white border-slate-900 shadow-lg" : "bg-white border-slate-200 text-slate-500"}`}
                               >
                                 {lvl}
                               </button>
@@ -265,19 +265,19 @@ const Page = () => {
                           onChange={handleChange}
                           rows={3}
                           placeholder="What do you want to achieve?"
-                          className="w-full p-5 bg-slate-50 rounded-2xl outline-none"
+                          className="w-full p-5 bg-slate-50 rounded-2xl outline-none text-slate-900"
                         />
                       </div>
                       <div className="space-y-3">
                         <label className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                          <Clock size={14} /> Weekly Hours
+                          <Clock size={14} /> Time Commitment
                         </label>
                         <input
                           name="time"
                           value={formData.time}
                           onChange={handleChange}
-                          placeholder="e.g. 5 hours"
-                          className="w-full p-5 bg-slate-50 rounded-2xl outline-none"
+                          placeholder="e.g. 10 hours total"
+                          className="w-full p-5 bg-slate-50 rounded-2xl outline-none text-slate-900"
                         />
                       </div>
                     </>
@@ -286,27 +286,27 @@ const Page = () => {
                   {step === 3 && (
                     <>
                       <div className="space-y-3">
-                        <label className="text-xs font-black uppercase tracking-widest text-slate-400">
-                          Learning Style
+                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                          <Sparkles size={14} /> Learning Style
                         </label>
                         <input
                           name="style"
                           value={formData.style}
                           onChange={handleChange}
-                          placeholder="e.g. Visual, Practical"
-                          className="w-full p-5 bg-slate-50 rounded-2xl outline-none"
+                          placeholder="e.g. Practical, Visual"
+                          className="w-full p-5 bg-slate-50 rounded-2xl outline-none text-slate-900"
                         />
                       </div>
                       <div className="space-y-3">
                         <label className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                          <Calendar size={14} /> Target Deadline
+                          <Calendar size={14} /> Deadline
                         </label>
                         <input
                           name="deadline"
                           value={formData.deadline}
                           onChange={handleChange}
-                          placeholder="When do you finish?"
-                          className="w-full p-5 bg-slate-50 rounded-2xl outline-none"
+                          placeholder="Target completion date"
+                          className="w-full p-5 bg-slate-50 rounded-2xl outline-none text-slate-900"
                         />
                       </div>
                     </>
@@ -316,18 +316,20 @@ const Page = () => {
                 <div className="pt-6 flex gap-4">
                   {step > 1 && (
                     <button
-                      onClick={prevStep}
-                      className="flex-1 py-5 rounded-2xl font-bold border border-slate-200 hover:bg-slate-50"
+                      onClick={() => setStep((s) => s - 1)}
+                      className="flex-1 py-5 rounded-2xl font-bold border border-slate-200"
                     >
                       Back
                     </button>
                   )}
                   <button
-                    onClick={step === 3 ? handleGenerate : nextStep}
+                    onClick={
+                      step === 3 ? handleGenerate : () => setStep((s) => s + 1)
+                    }
                     disabled={step === 1 && !formData.subject}
                     className="flex-2 py-5 px-6 bg-amber-500 text-white rounded-2xl font-bold hover:bg-slate-900 transition-all flex items-center justify-center gap-2 disabled:opacity-30"
                   >
-                    {step === 3 ? "Generate Curriculum" : "Continue"}
+                    {step === 3 ? "Generate Curriculum" : "Continue"}{" "}
                     <ChevronRight size={18} />
                   </button>
                 </div>
