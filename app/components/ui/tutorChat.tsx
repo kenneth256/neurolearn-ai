@@ -4,6 +4,7 @@ import { useVideoLecture } from "./videotutor";
 import ThinkingIndicator from "./thinking";
 import CodeEditBlock from "./codeEdit";
 import VideoTutorModal from "../videotutor";
+import { Cross, EyeClosed, X } from "lucide-react";
 
 interface TutorBotProps {
   lessonContext: string;
@@ -103,7 +104,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 p-4 bg-slate-900 text-white rounded-2xl shadow-2xl hover:bg-amber-600 transition-all flex items-center gap-2 group z-50 border border-slate-700"
+        className="fixed bottom-6 right-6 p-4 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-2xl shadow-2xl hover:bg-amber-600 dark:hover:bg-amber-500 transition-all flex items-center gap-2 group z-50 border border-slate-700 dark:border-slate-300"
         style={{ display: isOpen ? "none" : "flex" }}
       >
         <svg
@@ -123,12 +124,12 @@ const TutorBot: React.FC<TutorBotProps> = ({
 
       {/* Main Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-md h-168 bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col z-50 overflow-hidden">
+        <div className="fixed bottom-24 right-6 w-md h-168 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col z-50 overflow-hidden">
           {/* Header */}
-          <div className="p-6 bg-linear-to-br from-slate-900 to-slate-800 text-white">
+          <div className="p-6 bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-950 dark:to-slate-900 text-white">
             <div className="flex justify-between items-start mb-3">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-amber-500 rounded-lg text-slate-900">
+              <div className="flex items-start gap-3 relative">
+                <div className="p-2 bg-amber-500 dark:bg-amber-600 rounded-lg text-slate-900 dark:text-slate-100">
                   <svg
                     width="18"
                     height="18"
@@ -142,11 +143,11 @@ const TutorBot: React.FC<TutorBotProps> = ({
                 </div>
                 <div>
                   <h3 className="text-sm font-bold">Gemini 3 Tutor</h3>
-                  <p className="text-[9px] text-slate-400 uppercase">
+                  <p className="text-[9px] text-slate-400 dark:text-slate-500 uppercase">
                     Level: {thinkingLevel}
                   </p>
                   {fileName && (
-                    <p className="text-xs text-amber-400 flex items-center gap-1 mt-1">
+                    <p className="text-xs text-amber-400 dark:text-amber-500 flex items-center gap-1 mt-1">
                       <svg
                         width="10"
                         height="10"
@@ -166,7 +167,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
               <div className="flex gap-2">
                 <button
                   onClick={handleGenerateVideo}
-                  className="hover:text-amber-500 p-2 transition-colors"
+                  className="hover:text-amber-500 dark:hover:text-amber-400 p-2 transition-colors"
                   title="Generate Video Lecture"
                 >
                   <svg
@@ -182,7 +183,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
                 </button>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="hover:text-amber-500 p-2 transition-colors"
+                  className="hover:text-amber-500 dark:hover:text-amber-400 p-2 transition-colors"
                 >
                   <svg
                     width="20"
@@ -200,15 +201,15 @@ const TutorBot: React.FC<TutorBotProps> = ({
             </div>
 
             {/* Thinking Level Selector */}
-            <div className="flex bg-slate-800 p-0.5 rounded-full gap-0.5 border border-slate-700">
+            <div className="flex bg-slate-800 dark:bg-slate-950 p-0.5 rounded-full gap-0.5 border border-slate-700 dark:border-slate-600">
               {(["minimal", "low", "medium", "high"] as const).map((level) => (
                 <button
                   key={level}
                   onClick={() => setThinkingLevel(level)}
                   className={`text-[7px] px-2 py-1 rounded-full transition-all uppercase font-black ${
                     thinkingLevel === level
-                      ? "bg-amber-500 text-slate-900 shadow-sm"
-                      : "text-slate-500 hover:text-white"
+                      ? "bg-amber-500 dark:bg-amber-600 text-slate-900 dark:text-slate-100 shadow-sm"
+                      : "text-slate-500 dark:text-slate-400 hover:text-white dark:hover:text-slate-200"
                   }`}
                 >
                   {level}
@@ -230,12 +231,12 @@ const TutorBot: React.FC<TutorBotProps> = ({
           {/* Chat Body */}
           <div
             ref={scrollRef}
-            className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50"
+            className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50 dark:bg-slate-950"
           >
             {messages.length === 0 && (
               <div className="text-center py-6 space-y-4">
                 <svg
-                  className="mx-auto text-amber-400 animate-pulse"
+                  className="mx-auto text-amber-400 dark:text-amber-500 animate-pulse"
                   width="32"
                   height="32"
                   viewBox="0 0 24 24"
@@ -243,7 +244,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
                 >
                   <polygon points="12 2 15 8.5 22 9.5 17 14.5 18 21.5 12 18 6 21.5 7 14.5 2 9.5 9 8.5" />
                 </svg>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                   Suggested Questions
                 </p>
                 <div className="flex flex-wrap gap-2 justify-center">
@@ -251,14 +252,14 @@ const TutorBot: React.FC<TutorBotProps> = ({
                     <button
                       key={i}
                       onClick={() => handleSend(q)}
-                      className="text-xs p-3 bg-white border border-slate-200 rounded-xl hover:border-amber-500 transition-all text-slate-600 shadow-sm"
+                      className="text-xs p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-amber-500 dark:hover:border-amber-600 transition-all text-slate-600 dark:text-slate-300 shadow-sm"
                     >
                       {q}
                     </button>
                   ))}
                   <button
                     onClick={handleGenerateVideo}
-                    className="text-xs p-3 bg-linear-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all font-semibold flex items-center gap-2"
+                    className="text-xs p-3 bg-gradient-to-r from-purple-500 to-pink-500 dark:from-purple-600 dark:to-pink-600 text-white rounded-xl hover:shadow-lg transition-all font-semibold flex items-center gap-2"
                   >
                     <svg
                       width="16"
@@ -275,7 +276,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
                       onClick={() =>
                         handleSend("Can you help me improve this code?")
                       }
-                      className="text-xs p-3 bg-amber-50 border border-amber-300 rounded-xl hover:border-amber-500 transition-all text-amber-700 shadow-sm font-semibold"
+                      className="text-xs p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 rounded-xl hover:border-amber-500 dark:hover:border-amber-600 transition-all text-amber-700 dark:text-amber-400 shadow-sm font-semibold"
                     >
                       💡 Improve my code
                     </button>
@@ -295,8 +296,8 @@ const TutorBot: React.FC<TutorBotProps> = ({
                   <div
                     className={`p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${
                       m.role === "user"
-                        ? "bg-slate-900 text-white rounded-tr-none"
-                        : "bg-white border border-slate-200 text-slate-800 rounded-tl-none"
+                        ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-tr-none"
+                        : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-tl-none"
                     }`}
                   >
                     {m.text}
@@ -316,14 +317,14 @@ const TutorBot: React.FC<TutorBotProps> = ({
           </div>
 
           {/* Input Footer */}
-          <div className="p-6 bg-white border-t border-slate-100">
+          <div className="p-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-2">
               <button
                 onClick={startListening}
                 className={`p-4 rounded-2xl transition-all ${
                   isListening
-                    ? "bg-red-500 text-white animate-pulse"
-                    : "bg-slate-100 text-slate-400 hover:bg-amber-100 hover:text-amber-600"
+                    ? "bg-red-500 dark:bg-red-600 text-white animate-pulse"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:bg-amber-100 dark:hover:bg-amber-950/30 hover:text-amber-600 dark:hover:text-amber-400"
                 }`}
               >
                 <svg
@@ -347,12 +348,12 @@ const TutorBot: React.FC<TutorBotProps> = ({
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
                 placeholder="Ask anything or request code changes..."
                 disabled={isThinking}
-                className="flex-1 bg-slate-100 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-amber-500 outline-none transition-all disabled:opacity-50"
+                className="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:ring-2 focus:ring-amber-500 dark:focus:ring-amber-600 outline-none transition-all disabled:opacity-50"
               />
               <button
                 onClick={() => handleSend()}
                 disabled={isThinking || !input.trim()}
-                className="p-4 bg-slate-900 text-white rounded-2xl hover:bg-amber-600 transition-colors shadow-lg disabled:bg-slate-400 disabled:cursor-not-allowed"
+                className="p-4 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-2xl hover:bg-amber-600 dark:hover:bg-amber-500 transition-colors shadow-lg disabled:bg-slate-400 dark:disabled:bg-slate-600 disabled:cursor-not-allowed"
               >
                 <svg
                   width="20"
