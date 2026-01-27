@@ -29,30 +29,28 @@ interface CourseBookUIProps {
   onReset?: () => void;
 }
 
+// Realistic book page flip animation - like turning pages in a real book
 const bookFlipVariants: Variants = {
   initial: (direction: number) => ({
-    rotateY: direction > 0 ? 0 : -95,
+    rotateY: direction > 0 ? 180 : -180,
     opacity: 0,
-    transformOrigin: "left center",
-    z: -100,
+    transformOrigin: direction > 0 ? "left center" : "right center",
   }),
   animate: {
     rotateY: 0,
     opacity: 1,
-    z: 0,
     transition: {
       duration: 0.8,
-      ease: [0.645, 0.045, 0.355, 1],
+      ease: [0.25, 0.46, 0.45, 0.94], // Custom smooth curve
     },
   },
   exit: (direction: number) => ({
-    rotateY: direction > 0 ? -95 : 0,
+    rotateY: direction > 0 ? -180 : 180,
     opacity: 0,
-    z: -100,
-    transformOrigin: "left center",
+    transformOrigin: direction > 0 ? "right center" : "left center",
     transition: {
-      duration: 0.6,
-      ease: [0.645, 0.045, 0.355, 1],
+      duration: 0.8,
+      ease: [0.25, 0.46, 0.45, 0.94],
     },
   }),
 };
@@ -149,7 +147,7 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
     : dailyLessons;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 font-sans selection:bg-amber-200 dark:selection:bg-amber-900 transition-colors">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 dark:from-gray-950 dark:to-gray-900 text-gray-900 dark:text-gray-100 font-sans selection:bg-amber-200 dark:selection:bg-amber-900 transition-colors">
       {/* Reading Progress Bar */}
       <div className="fixed top-0 left-0 right-0 h-1 bg-gray-200 dark:bg-gray-800 z-50">
         <motion.div
@@ -158,11 +156,11 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
         />
       </div>
 
-      {/* Background Texture - Reduced opacity for better readability */}
+      {/* Background Texture */}
       <div className="fixed inset-0 opacity-5 dark:opacity-10 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/asfalt-dark.png')]" />
 
       <div className="max-w-400 mx-auto flex flex-col lg:flex-row relative">
-        {/* SIDEBAR - Improved contrast */}
+        {/* SIDEBAR */}
         <aside className="w-full lg:w-[320px] lg:h-screen lg:sticky lg:top-0 bg-gray-900 dark:bg-black text-white z-40 flex flex-col shrink-0 border-r-2 border-gray-800 dark:border-gray-900">
           <div className="p-10 border-b-2 border-gray-800 dark:border-gray-900 bg-gray-900 dark:bg-black z-50">
             <div className="flex items-center justify-between mb-4">
@@ -182,7 +180,7 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
               <ThemeToggle />
             </div>
 
-            {/* Search - Better contrast */}
+            {/* Search */}
             <div className="relative mt-4">
               <Search
                 size={16}
@@ -198,7 +196,7 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
             </div>
           </div>
 
-          {/* Progress Tracker - Enhanced visibility */}
+          {/* Progress Tracker */}
           <div className="p-6 border-b-2 border-gray-800 dark:border-gray-900">
             <div className="bg-gray-800 dark:bg-gray-950 rounded-2xl p-4 border-2 border-gray-700 dark:border-gray-800">
               <div className="flex items-center gap-2 mb-3">
@@ -227,7 +225,7 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
             </div>
           </div>
 
-          {/* Navigation - Better contrast for active/inactive states */}
+          {/* Navigation */}
           <nav className="flex-1 overflow-y-auto p-6 space-y-2 custom-scrollbar">
             {modules.map((mod: any, idx: number) => {
               const hasLessons =
@@ -286,15 +284,14 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
           </div>
         </aside>
 
-        {/* MAIN CONTENT - Improved readability */}
+        {/* MAIN CONTENT - Book page with 3D perspective */}
         <main
-          className="flex-1 relative bg-white dark:bg-gray-950 min-h-screen overflow-x-hidden"
-          style={{ perspective: "3000px" }}
+          className="flex-1 relative bg-transparent min-h-screen"
+          style={{
+            perspective: "2000px",
+            perspectiveOrigin: "50% 50%",
+          }}
         >
-          {/* Reduced shadow for better readability */}
-          <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-black/20 dark:from-black/40 via-black/5 to-transparent z-30 pointer-events-none" />
-          <div className="absolute left-6 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800 z-30 pointer-events-none" />
-
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={currentPage}
@@ -303,115 +300,128 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
               initial="initial"
               animate="animate"
               exit="exit"
-              className="relative w-full"
+              className="relative w-full min-h-screen"
+              style={{
+                transformStyle: "preserve-3d",
+                backfaceVisibility: "hidden",
+              }}
             >
-              {/* Reduced texture opacity */}
-              <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.08] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/natural-paper.png')]" />
+              {/* Book page with shadow and texture */}
+              <div className="relative w-full min-h-screen bg-white dark:bg-gray-900 shadow-2xl">
+                {/* Book spine shadow */}
+                <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-black/30 dark:from-black/50 via-black/10 dark:via-black/20 to-transparent pointer-events-none" />
 
-              <div className="p-8 md:p-20 relative z-10 max-w-5xl mx-auto">
-                <header className="flex justify-between items-center mb-16 border-b-2 border-gray-200 dark:border-gray-800 pb-6">
-                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.5em] text-gray-600 dark:text-gray-400">
-                    <Target
-                      size={14}
-                      className="text-amber-500 dark:text-amber-400"
-                    />
-                    Curriculum Folio
-                  </div>
-                  <div className="font-serif italic text-gray-600 dark:text-gray-400 text-sm font-bold">
-                    Page {currentPage + 1} of {totalPages}
-                  </div>
-                </header>
+                {/* Vertical book binding line */}
+                <div className="absolute left-6 top-0 bottom-0 w-[2px] bg-gray-300 dark:bg-gray-700 pointer-events-none" />
 
-                <div className="space-y-12">
-                  <div className="text-amber-600 dark:text-amber-400 font-mono text-[11px] font-black uppercase tracking-[0.3em]">
-                    Section {currentModule.moduleNumber}
-                  </div>
+                {/* Paper texture */}
+                <div className="absolute inset-0 opacity-[0.04] dark:opacity-[0.08] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/natural-paper.png')]" />
 
-                  <h1 className="text-5xl md:text-8xl font-serif font-bold leading-[1.05] tracking-tight text-gray-900 dark:text-gray-100">
-                    {currentModule.moduleName}
-                  </h1>
-
-                  {/* Learning Objectives - Better contrast */}
-                  <div className="bg-amber-50 dark:bg-gray-900 border-l-[6px] border-amber-500 dark:border-amber-400 p-10 rounded-r-3xl shadow-sm">
-                    <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-700 dark:text-gray-300 mb-8 flex items-center gap-2">
-                      <Award
+                <div className="p-8 md:p-20 relative z-10 max-w-5xl mx-auto">
+                  <header className="flex justify-between items-center mb-16 border-b-2 border-gray-200 dark:border-gray-800 pb-6">
+                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.5em] text-gray-600 dark:text-gray-400">
+                      <Target
                         size={14}
                         className="text-amber-500 dark:text-amber-400"
                       />
-                      Key Objectives
-                    </h4>
-                    {currentModule.learningObjectives?.map(
-                      (obj: string, i: number) => (
-                        <div
-                          key={i}
-                          className="flex gap-4 mb-4 items-start group"
-                        >
-                          <span className="text-amber-600 dark:text-amber-400 font-bold leading-none text-xl">
-                            ❧
-                          </span>
-                          <p className="text-xl leading-relaxed text-gray-800 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors font-serif italic">
-                            {obj}
+                      Curriculum Folio
+                    </div>
+                    <div className="font-serif italic text-gray-600 dark:text-gray-400 text-sm font-bold">
+                      Page {currentPage + 1} of {totalPages}
+                    </div>
+                  </header>
+
+                  <div className="space-y-12">
+                    <div className="text-amber-600 dark:text-amber-400 font-mono text-[11px] font-black uppercase tracking-[0.3em]">
+                      Section {currentModule.moduleNumber}
+                    </div>
+
+                    <h1 className="text-5xl md:text-8xl font-serif font-bold leading-[1.05] tracking-tight text-gray-900 dark:text-gray-100">
+                      {currentModule.moduleName}
+                    </h1>
+
+                    {/* Learning Objectives */}
+                    <div className="bg-amber-50 dark:bg-amber-950/20 border-l-[6px] border-amber-500 dark:border-amber-400 p-10 rounded-r-3xl shadow-sm">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-700 dark:text-gray-300 mb-8 flex items-center gap-2">
+                        <Award
+                          size={14}
+                          className="text-amber-500 dark:text-amber-400"
+                        />
+                        Key Objectives
+                      </h4>
+                      {currentModule.learningObjectives?.map(
+                        (obj: string, i: number) => (
+                          <div
+                            key={i}
+                            className="flex gap-4 mb-4 items-start group"
+                          >
+                            <span className="text-amber-600 dark:text-amber-400 font-bold leading-none text-xl">
+                              ❧
+                            </span>
+                            <p className="text-xl leading-relaxed text-gray-800 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors font-serif italic">
+                              {obj}
+                            </p>
+                          </div>
+                        ),
+                      )}
+                    </div>
+
+                    {/* Loading or Content */}
+                    {!currentLessons || filteredLessons.length === 0 ? (
+                      <div className="py-20 flex flex-col items-center justify-center space-y-4">
+                        <Sparkles className="w-12 h-12 text-amber-500 dark:text-amber-400 animate-pulse" />
+                        <p className="text-xl font-serif italic text-gray-700 dark:text-gray-300 font-bold">
+                          {searchQuery
+                            ? "No lessons match your search"
+                            : "Crafting your lessons..."}
+                        </p>
+                        {!searchQuery && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            The AI architect is building deep-dive content for
+                            this module
                           </p>
-                        </div>
-                      ),
+                        )}
+                      </div>
+                    ) : (
+                      <article className="prose prose-slate dark:prose-invert prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-p:text-gray-700 dark:prose-p:text-gray-300 max-w-none pt-12">
+                        {filteredLessons.map(
+                          (lesson: any, lessonIndex: number) => (
+                            <LessonSection
+                              key={lessonIndex}
+                              lesson={lesson}
+                              lessonIndex={lessonIndex}
+                              showAnswers={showAnswers}
+                              setShowAnswers={setShowAnswers}
+                            />
+                          ),
+                        )}
+                        {data && <CapstoneProject data={data} />}
+                      </article>
                     )}
                   </div>
 
-                  {/* Loading or Content */}
-                  {!currentLessons || filteredLessons.length === 0 ? (
-                    <div className="py-20 flex flex-col items-center justify-center space-y-4">
-                      <Sparkles className="w-12 h-12 text-amber-500 dark:text-amber-400 animate-pulse" />
-                      <p className="text-xl font-serif italic text-gray-700 dark:text-gray-300 font-bold">
-                        {searchQuery
-                          ? "No lessons match your search"
-                          : "Crafting your lessons..."}
-                      </p>
-                      {!searchQuery && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          The AI architect is building deep-dive content for
-                          this module
-                        </p>
-                      )}
+                  {/* Footer */}
+                  <footer className="mt-40 pt-10 border-t-2 border-gray-200 dark:border-gray-800 flex justify-between items-center">
+                    <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400">
+                      <Clock
+                        size={14}
+                        className="text-amber-500 dark:text-amber-400"
+                      />
+                      Time:{" "}
+                      {currentModule.weeklyLearningPlan?.totalHours || "10h"}
+                      <Award
+                        size={14}
+                        className="text-amber-500 dark:text-amber-400 ml-6"
+                      />
+                      Mastery Grade Required POWERED BY GEMINI
                     </div>
-                  ) : (
-                    <article className="prose prose-slate dark:prose-invert prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-p:text-gray-700 dark:prose-p:text-gray-300 max-w-none pt-12">
-                      {filteredLessons.map(
-                        (lesson: any, lessonIndex: number) => (
-                          <LessonSection
-                            key={lessonIndex}
-                            lesson={lesson}
-                            lessonIndex={lessonIndex}
-                            showAnswers={showAnswers}
-                            setShowAnswers={setShowAnswers}
-                          />
-                        ),
-                      )}
-                      {data && <CapstoneProject data={data} />}
-                    </article>
-                  )}
+                  </footer>
                 </div>
-
-                {/* Footer - Better visibility */}
-                <footer className="mt-40 pt-10 border-t-2 border-gray-200 dark:border-gray-800 flex justify-between items-center">
-                  <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400">
-                    <Clock
-                      size={14}
-                      className="text-amber-500 dark:text-amber-400"
-                    />
-                    Time:{" "}
-                    {currentModule.weeklyLearningPlan?.totalHours || "10h"}
-                    <Award
-                      size={14}
-                      className="text-amber-500 dark:text-amber-400 ml-6"
-                    />
-                    Mastery Grade Required POWERED BY GEMININI
-                  </div>
-                </footer>
               </div>
             </motion.div>
           </AnimatePresence>
 
-          {/* Navigation Buttons - Enhanced visibility */}
+          {/* Navigation Buttons */}
           <div className="fixed bottom-10 right-10 flex gap-4 z-50">
             <button
               onClick={() => handlePageChange(currentPage - 1)}
@@ -444,7 +454,7 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
   );
 };
 
-// Lesson Section Component with Better Contrast
+// Lesson Section Component
 const LessonSection: React.FC<{
   lesson: any;
   lessonIndex: number;
@@ -482,27 +492,39 @@ const LessonSection: React.FC<{
         Duration: {lesson.duration}
       </p>
 
-      {lesson.coreContent?.concepts?.map((concept: any, idx: number) => (
-        <ConceptSection
-          key={idx}
-          index={idx}
-          concept={{
-            conceptTitle: concept.concept,
-            deepDive: concept.narrativeExplanation,
-            realWorldApplication: concept.whyScenario,
-            commonMisconceptions: concept.gotcha,
-            codeWalkthrough: concept.codeWalkthrough
-              ? {
-                  code: concept.codeWalkthrough.code,
-                  language: concept.codeWalkthrough.language,
-                  analysis: concept.codeWalkthrough.analysis,
-                }
-              : undefined,
-          }}
-        />
-      ))}
+      {lesson.coreContent?.concepts?.map((concept: any, idx: number) => {
+        
+        const conceptTitle = concept.concept;
+        const uniqueId = `concept-${lessonIndex}-${idx}`;
 
-      {/* Interactive Quiz - Better contrast */}
+        return (
+          <div
+            key={idx}
+            data-concept-block
+            data-concept-id={uniqueId}
+            data-concept-title={conceptTitle}
+          >
+            <ConceptSection
+              index={idx}
+              concept={{
+                conceptTitle: concept.concept,
+                deepDive: concept.narrativeExplanation,
+                realWorldApplication: concept.whyScenario,
+                commonMisconceptions: concept.gotcha,
+                codeWalkthrough: concept.codeWalkthrough
+                  ? {
+                      code: concept.codeWalkthrough.code,
+                      language: concept.codeWalkthrough.language,
+                      analysis: concept.codeWalkthrough.analysis,
+                    }
+                  : undefined,
+              }}
+            />
+          </div>
+        );
+      })}
+
+      {/* Interactive Quiz */}
       {lesson.knowledgeChecks?.questions &&
         lesson.knowledgeChecks.questions.length > 0 && (
           <div className="my-12">
@@ -521,7 +543,7 @@ const LessonSection: React.FC<{
         )}
 
       {lesson.handsOnPractice?.tasks && (
-        <div className="my-6 p-6 bg-blue-50 dark:bg-blue-950 rounded-lg border-2 border-blue-300 dark:border-blue-800">
+        <div className="my-6 p-6 bg-blue-50 dark:bg-blue-950/20 rounded-lg border-2 border-blue-300 dark:border-blue-800">
           <h3 className="font-bold mb-3 flex items-center gap-2 text-gray-900 dark:text-gray-100">
             <Target size={20} className="text-blue-600 dark:text-blue-400" />
             Practice Tasks:
