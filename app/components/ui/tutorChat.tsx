@@ -124,7 +124,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
 
       {/* Main Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-md h-168 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col z-50 overflow-hidden">
+        <div className="fixed bottom-24 right-6 max-w-sm h-168 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col z-50 overflow-hidden">
           {/* Header */}
           <div className="p-6 bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-950 dark:to-slate-900 text-white">
             <div className="flex justify-between items-start mb-3">
