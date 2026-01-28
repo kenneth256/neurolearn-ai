@@ -135,7 +135,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
     conceptTitle: string,
     conceptContent: string,
   ): Promise<QuizQuestion | null> => {
-    const quizPrompt = `Based on the concept "${conceptTitle}", generate ONE challenging multiple-choice question in this EXACT JSON format (no markdown, no extra text):
+    const quizPrompt = `Based on the concept "${conceptTitle}", generate 10 challenging multiple-choice questions in this EXACT JSON format (no markdown, no extra text):
 
 {
   "question": "Clear, specific question about the concept",
@@ -163,7 +163,7 @@ Make it challenging but fair. Test understanding, not just memory.`;
         aiQuestion = JSON.parse(jsonStr.trim());
       } catch (parseError) {
         console.error("Failed to parse AI response, using fallback question");
-        // Fallback question if AI response fails
+
         aiQuestion = {
           question: `What is the main principle of ${conceptTitle}?`,
           options: [
@@ -185,12 +185,10 @@ Make it challenging but fair. Test understanding, not just memory.`;
         .map((opt: string, idx: number) => ({ opt, idx, sort: Math.random() }))
         .sort((a: any, b: any) => a.sort - b.sort);
 
-      // ✅ Find new position of correct answer after shuffle
       const newCorrectIndex = shuffledOptions.findIndex(
         (item: any) => item.idx === originalCorrectIndex,
       );
 
-      // ✅ Hash the correct answer
       const correctAnswerHash = await hashAnswer(questionId, newCorrectIndex);
 
       return {
@@ -554,7 +552,7 @@ Make it challenging but fair. Test understanding, not just memory.`;
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 p-4 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-2xl shadow-2xl hover:bg-amber-600 dark:hover:bg-amber-500 transition-all flex items-center gap-2 group z-50 border border-slate-700 dark:border-slate-300"
+        className="relative p-4 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-2xl shadow-2xl hover:bg-amber-600 dark:hover:bg-amber-500 transition-all flex items-center gap-2 group z-50 border border-slate-700 dark:border-slate-300"
         style={{ display: isOpen ? "none" : "flex" }}
       >
         <Bot size={24} />

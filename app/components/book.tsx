@@ -147,7 +147,7 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
     : dailyLessons;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 dark:from-gray-950 dark:to-gray-900 text-gray-900 dark:text-gray-100 font-sans selection:bg-amber-200 dark:selection:bg-amber-900 transition-colors">
+    <div className="min-h-screen relative bg-gradient-to-br from-slate-100 to-slate-200 dark:from-gray-950 dark:to-gray-900 text-gray-900 dark:text-gray-100 font-sans selection:bg-amber-200 dark:selection:bg-amber-900 transition-colors">
       {/* Reading Progress Bar */}
       <div className="fixed top-0 left-0 right-0 h-1 bg-gray-200 dark:bg-gray-800 z-50">
         <motion.div
@@ -441,15 +441,17 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
         </main>
       </div>
 
-      <TutorBot
-        moduleName={currentModule?.moduleName || "Course Folio"}
-        lessonContext={JSON.stringify(currentModule)}
-        suggestedQuestions={[
-          "Summarize this page",
-          "Generate a quiz",
-          "Explain the concepts",
-        ]}
-      />
+      <div className="fixed bottom-28 right-6 z-[100]">
+        <TutorBot
+          moduleName={currentModule?.moduleName || "Course Folio"}
+          lessonContext={JSON.stringify(currentModule)}
+          suggestedQuestions={[
+            "Summarize this page",
+            "Generate a quiz",
+            "Explain the concepts",
+          ]}
+        />
+      </div>
     </div>
   );
 };
@@ -493,7 +495,6 @@ const LessonSection: React.FC<{
       </p>
 
       {lesson.coreContent?.concepts?.map((concept: any, idx: number) => {
-        
         const conceptTitle = concept.concept;
         const uniqueId = `concept-${lessonIndex}-${idx}`;
 
