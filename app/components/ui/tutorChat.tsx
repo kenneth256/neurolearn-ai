@@ -6,7 +6,18 @@ import { useVideoLecture } from "./videotutor";
 import ThinkingIndicator from "./thinking";
 import CodeEditBlock from "./codeEdit";
 import VideoTutorModal from "../videotutor";
-import { X, Bot, Sparkles, Volume2, VolumeX, Mic } from "lucide-react";
+import {
+  X,
+  Bot,
+  Sparkles,
+  Volume2,
+  VolumeX,
+  Mic,
+  Trophy,
+  Zap,
+  Target,
+  Award,
+} from "lucide-react";
 
 interface TutorBotProps {
   lessonContext: string;
@@ -17,12 +28,43 @@ interface TutorBotProps {
   onFileUpdate?: (newContent: string) => void;
 }
 
+interface QuizQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  correctAnswerHash: string;
+  explanation: string;
+  points: number;
+}
+
 type ThinkingLevel = "minimal" | "low" | "medium" | "high";
 
 interface SystemMessage {
   text: string;
   timestamp: number;
 }
+
+interface GameSession {
+  active: boolean;
+  currentQuestion: QuizQuestion | null;
+  questionsAnswered: number;
+  correctAnswers: number;
+  totalPoints: number;
+  streak: number;
+  conceptTitle: string;
+}
+
+const hashAnswer = async (
+  questionId: string,
+  answerIndex: number,
+): Promise<string> => {
+  const data = `${questionId}-${answerIndex}-secret-salt-${Date.now().toString().slice(0, -3)}`;
+  const encoder = new TextEncoder();
+  const dataBuffer = encoder.encode(data);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", dataBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+};
 
 const TutorBot: React.FC<TutorBotProps> = ({
   lessonContext,
@@ -43,6 +85,23 @@ const TutorBot: React.FC<TutorBotProps> = ({
   const [systemMessage, setSystemMessage] = useState<SystemMessage | null>(
     null,
   );
+  const [isVerifying, setIsVerifying] = useState(false);
+  const attemptTracker = useRef<number[]>([]);
+
+  // Gamification states
+  const [gameSession, setGameSession] = useState<GameSession>({
+    active: false,
+    currentQuestion: null,
+    questionsAnswered: 0,
+    correctAnswers: 0,
+    totalPoints: 0,
+    streak: 0,
+    conceptTitle: "",
+  });
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [showResult, setShowResult] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
+  const [gamificationEnabled, setGamificationEnabled] = useState(true);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -70,6 +129,182 @@ const TutorBot: React.FC<TutorBotProps> = ({
   const userInitiatedMessages = messages.filter(
     (m) => !m.text.startsWith("[System"),
   );
+
+  // Generate quiz question based on concept
+  const generateQuizQuestion = async (
+    conceptTitle: string,
+    conceptContent: string,
+  ): Promise<QuizQuestion | null> => {
+    const quizPrompt = `Based on the concept "${conceptTitle}", generate ONE challenging multiple-choice question in this EXACT JSON format (no markdown, no extra text):
+
+{
+  "question": "Clear, specific question about the concept",
+  "options": ["Option A", "Option B", "Option C", "Option D"],
+  "correctAnswerIndex": 0,
+  "explanation": "Brief explanation of the correct answer"
+}
+
+Make it challenging but fair. Test understanding, not just memory.`;
+
+    try {
+      await sendMessage(quizPrompt, false);
+      const response = messages[messages.length - 1]?.text || "";
+
+      // Parse AI response
+      let aiQuestion;
+      try {
+        // Try to extract JSON from markdown code blocks or raw JSON
+        const jsonMatch =
+          response.match(/```json\n([\s\S]*?)\n```/) ||
+          response.match(/```\n([\s\S]*?)\n```/) ||
+          response.match(/\{[\s\S]*\}/);
+
+        const jsonStr = jsonMatch ? jsonMatch[1] || jsonMatch[0] : response;
+        aiQuestion = JSON.parse(jsonStr.trim());
+      } catch (parseError) {
+        console.error("Failed to parse AI response, using fallback question");
+        // Fallback question if AI response fails
+        aiQuestion = {
+          question: `What is the main principle of ${conceptTitle}?`,
+          options: [
+            "Understanding the core concept and its practical applications",
+            "Memorizing definitions without understanding context",
+            "Skipping over important details and examples",
+            "Ignoring the real-world applications",
+          ],
+          correctAnswerIndex: 0,
+          explanation: `${conceptTitle} requires understanding core principles and their practical applications, not just memorization.`,
+        };
+      }
+
+      const questionId = Date.now().toString();
+      const originalCorrectIndex = aiQuestion.correctAnswerIndex;
+
+      // ✅ Shuffle options to prevent pattern recognition
+      const shuffledOptions = aiQuestion.options
+        .map((opt: string, idx: number) => ({ opt, idx, sort: Math.random() }))
+        .sort((a: any, b: any) => a.sort - b.sort);
+
+      // ✅ Find new position of correct answer after shuffle
+      const newCorrectIndex = shuffledOptions.findIndex(
+        (item: any) => item.idx === originalCorrectIndex,
+      );
+
+      // ✅ Hash the correct answer
+      const correctAnswerHash = await hashAnswer(questionId, newCorrectIndex);
+
+      return {
+        id: questionId,
+        question: aiQuestion.question,
+        options: shuffledOptions.map((s: any) => s.opt),
+        correctAnswerHash, // ✅ Secure hash instead of plain answer
+        explanation: aiQuestion.explanation,
+        points: 10,
+      };
+    } catch (error) {
+      console.error("Error generating quiz:", error);
+      return null;
+    }
+  };
+
+  const startGameSession = async (
+    conceptTitle: string,
+    conceptContent: string,
+  ) => {
+    if (!gamificationEnabled) return;
+
+    const question = await generateQuizQuestion(conceptTitle, conceptContent);
+
+    if (question) {
+      setGameSession({
+        active: true,
+        currentQuestion: question,
+        questionsAnswered: 0,
+        correctAnswers: 0,
+        totalPoints: 0,
+        streak: 0,
+        conceptTitle,
+      });
+
+      if (voiceEnabled) {
+        speakText(
+          `Time for a quick knowledge check! ${question.question}`,
+          true,
+        );
+      }
+    }
+  };
+
+  const handleAnswerSelection = async (answerIndex: number) => {
+    if (!gameSession.currentQuestion || showResult || isVerifying) return;
+
+    // ✅ Rate limiting
+    const now = Date.now();
+    attemptTracker.current.push(now);
+    attemptTracker.current = attemptTracker.current.filter(
+      (time) => now - time < 60000, // Keep only last minute
+    );
+
+    if (attemptTracker.current.length > 15) {
+      alert(
+        "⚠️ Too many attempts detected! Please take your time to read the questions carefully.",
+      );
+      return;
+    }
+
+    setIsVerifying(true);
+    setSelectedAnswer(answerIndex);
+
+    try {
+      // ✅ Verify answer by comparing hashes
+      const userAnswerHash = await hashAnswer(
+        gameSession.currentQuestion.id,
+        answerIndex,
+      );
+
+      const correct =
+        userAnswerHash === gameSession.currentQuestion.correctAnswerHash;
+
+      setIsCorrect(correct);
+      setShowResult(true);
+
+      const newStreak = correct ? gameSession.streak + 1 : 0;
+      const points = correct
+        ? gameSession.currentQuestion.points * (1 + newStreak * 0.1)
+        : 0;
+
+      setGameSession((prev) => ({
+        ...prev,
+        questionsAnswered: prev.questionsAnswered + 1,
+        correctAnswers: correct ? prev.correctAnswers + 1 : prev.correctAnswers,
+        totalPoints: prev.totalPoints + points,
+        streak: newStreak,
+      }));
+
+      if (voiceEnabled) {
+        const resultText = correct
+          ? `Correct! ${gameSession.currentQuestion.explanation}. You earned ${Math.round(points)} points!`
+          : `Not quite. ${gameSession.currentQuestion.explanation}`;
+
+        setTimeout(() => speakText(resultText, false), 500);
+      }
+    } catch (error) {
+      console.error("Error verifying answer:", error);
+      alert("Failed to verify answer. Please try again.");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const continueAfterQuiz = () => {
+    setGameSession((prev) => ({
+      ...prev,
+      active: false,
+      currentQuestion: null,
+    }));
+    setShowResult(false);
+    setSelectedAnswer(null);
+  };
 
   const speakText = (text: string, isSystemMessage = false) => {
     if (!voiceEnabled || !text) return;
@@ -114,7 +349,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
     utterance.onend = () => {
       setIsSpeaking(false);
 
-      if (autoListen && isOpen) {
+      if (autoListen && isOpen && !gameSession.active) {
         setTimeout(() => {
           startListening();
         }, 500);
@@ -149,11 +384,16 @@ const TutorBot: React.FC<TutorBotProps> = ({
 
     const lastMessage = messages[messages.length - 1];
 
-    if (lastMessage.role === "model" && voiceEnabled && !isThinking) {
+    if (
+      lastMessage.role === "model" &&
+      voiceEnabled &&
+      !isThinking &&
+      !gameSession.active
+    ) {
       const isSystem = lastMessage.text.startsWith("[System");
       speakText(lastMessage.text, isSystem);
     }
-  }, [messages, voiceEnabled, isThinking]);
+  }, [messages, voiceEnabled, isThinking, gameSession.active]);
 
   useEffect(() => {
     return () => {
@@ -169,7 +409,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
 
       idleTimerRef.current = setTimeout(() => {
-        if (isOpen && !isThinking && isInitialized) {
+        if (isOpen && !isThinking && isInitialized && !gameSession.active) {
           sendMessage(
             "[System Nudge]: I noticed you've been on this section for a bit. Are you finding this concept challenging, or would you like a quick summary to move forward?",
             false,
@@ -188,10 +428,10 @@ const TutorBot: React.FC<TutorBotProps> = ({
       window.removeEventListener("scroll", handleUserActivity);
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     };
-  }, [isOpen, isThinking, isInitialized, sendMessage]);
+  }, [isOpen, isThinking, isInitialized, sendMessage, gameSession.active]);
 
   useEffect(() => {
-    if (!isInitialized || !isOpen) return;
+    if (!isInitialized || !isOpen || !gamificationEnabled) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -210,10 +450,12 @@ const TutorBot: React.FC<TutorBotProps> = ({
                 entry.target.getAttribute("data-concept-title") ||
                 "the previous section";
 
-              sendMessage(
-                `[System Assessment]: The user just finished reading "${conceptTitle}". Ask them a single, thought-provoking question about this specific concept to assess their understanding.`,
-                false,
-              );
+              const conceptContent = entry.target.textContent || "";
+
+              // Trigger gamified quiz
+              setTimeout(() => {
+                startGameSession(conceptTitle, conceptContent);
+              }, 1000);
             }
           }
         });
@@ -225,13 +467,13 @@ const TutorBot: React.FC<TutorBotProps> = ({
     blocks.forEach((block) => observer.observe(block));
 
     return () => observer.disconnect();
-  }, [isInitialized, isOpen, moduleName, sendMessage]);
+  }, [isInitialized, isOpen, moduleName, gamificationEnabled]);
 
   useEffect(() => {
-    if (scrollRef.current) {
+    if (scrollRef.current && !gameSession.active) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [userInitiatedMessages, isThinking]);
+  }, [userInitiatedMessages, isThinking, gameSession.active]);
 
   const startListening = () => {
     const SpeechRecognition =
@@ -319,9 +561,14 @@ const TutorBot: React.FC<TutorBotProps> = ({
         <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 font-bold uppercase tracking-widest text-xs">
           Ask Gemini 3
         </span>
+        {gameSession.totalPoints > 0 && (
+          <div className="absolute -top-2 -right-2 bg-amber-500 text-slate-900 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold shadow-lg">
+            <Trophy size={16} />
+          </div>
+        )}
       </button>
 
-      {systemMessage && (
+      {systemMessage && !gameSession.active && (
         <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] animate-scale-in">
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-950 dark:to-slate-900 text-white rounded-3xl shadow-2xl p-8 max-w-md border-4 border-amber-500 animate-pulse-border">
             <div className="flex items-center justify-center gap-4 mb-4">
@@ -338,6 +585,165 @@ const TutorBot: React.FC<TutorBotProps> = ({
                 <span className="text-sm font-bold">Listening...</span>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Gamified Quiz Overlay */}
+      {gameSession.active && gameSession.currentQuestion && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white rounded-3xl shadow-2xl max-w-2xl w-full border-4 border-amber-500 overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-6 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="bg-white/20 p-3 rounded-full">
+                  <Target size={32} />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold">Knowledge Check!</h3>
+                  <p className="text-sm opacity-90">
+                    {gameSession.conceptTitle}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="flex items-center gap-2 text-2xl font-bold">
+                  <Trophy size={24} />
+                  {Math.round(gameSession.totalPoints)}
+                </div>
+                <div className="text-xs opacity-90">
+                  {gameSession.streak > 0 && (
+                    <span className="flex items-center gap-1">
+                      <Zap size={12} /> {gameSession.streak}x Streak!
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Question */}
+            <div className="p-8">
+              <div className="mb-6">
+                <div className="flex items-center gap-2 text-sm text-amber-400 mb-2">
+                  <Award size={16} />
+                  <span>Worth {gameSession.currentQuestion.points} points</span>
+                </div>
+                <h4 className="text-xl font-semibold leading-relaxed">
+                  {gameSession.currentQuestion.question}
+                </h4>
+              </div>
+
+              {/* Options */}
+              <div className="space-y-3">
+                {gameSession.currentQuestion.options.map((option, index) => {
+                  const isSelected = selectedAnswer === index;
+                  const showCorrect = showResult && isCorrect && isSelected;
+                  const showWrong = showResult && !isCorrect && isSelected;
+
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => handleAnswerSelection(index)}
+                      disabled={showResult || isVerifying}
+                      className={`w-full p-4 rounded-xl text-left transition-all font-medium border-2 ${
+                        showCorrect
+                          ? "bg-green-500/30 border-green-400 shadow-lg shadow-green-500/50"
+                          : showWrong
+                            ? "bg-red-500/30 border-red-400 shadow-lg shadow-red-500/50"
+                            : isSelected
+                              ? "bg-amber-500/30 border-amber-400"
+                              : "bg-white/10 border-white/20 hover:bg-white/20 hover:border-amber-400"
+                      } ${showResult || isVerifying ? "cursor-not-allowed" : "cursor-pointer"}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                            showCorrect
+                              ? "bg-green-400 text-green-900"
+                              : showWrong
+                                ? "bg-red-400 text-red-900"
+                                : "bg-white/20"
+                          }`}
+                        >
+                          {String.fromCharCode(65 + index)}
+                        </div>
+                        <span className="flex-1">{option}</span>
+                        {showCorrect && <span className="text-2xl">✓</span>}
+                        {showWrong && <span className="text-2xl">✗</span>}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              {isVerifying && (
+                <div className="mt-6 p-4 bg-blue-500/20 border border-blue-400 rounded-xl text-center">
+                  <p className="text-sm">
+                    🔐 Verifying your answer securely...
+                  </p>
+                </div>
+              )}
+              {/* Explanation */}
+              {showResult && (
+                <div
+                  className={`mt-6 p-4 rounded-xl ${
+                    isCorrect
+                      ? "bg-green-500/20 border border-green-400"
+                      : "bg-red-500/20 border border-red-400"
+                  }`}
+                >
+                  <p className="font-semibold mb-2">
+                    {isCorrect ? "🎉 Correct!" : "❌ Not quite right"}
+                  </p>
+                  <p className="text-sm opacity-90">
+                    {gameSession.currentQuestion.explanation}
+                  </p>
+                  {isCorrect && gameSession.streak > 1 && (
+                    <p className="text-sm mt-2 text-amber-400 font-bold">
+                      🔥 {gameSession.streak}x Streak Bonus Applied!
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Continue Button */}
+              {showResult && (
+                <button
+                  onClick={continueAfterQuiz}
+                  className="w-full mt-6 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg"
+                >
+                  Continue Learning →
+                </button>
+              )}
+            </div>
+
+            {/* Stats Footer */}
+            <div className="bg-black/30 p-4 flex justify-around text-center text-sm">
+              <div>
+                <div className="text-2xl font-bold text-amber-400">
+                  {gameSession.questionsAnswered}
+                </div>
+                <div className="text-xs opacity-75">Questions</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-green-400">
+                  {gameSession.correctAnswers}
+                </div>
+                <div className="text-xs opacity-75">Correct</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-purple-400">
+                  {gameSession.questionsAnswered > 0
+                    ? Math.round(
+                        (gameSession.correctAnswers /
+                          gameSession.questionsAnswered) *
+                          100,
+                      )
+                    : 0}
+                  %
+                </div>
+                <div className="text-xs opacity-75">Accuracy</div>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -371,9 +777,29 @@ const TutorBot: React.FC<TutorBotProps> = ({
                       {fileName}
                     </p>
                   )}
+                  {gameSession.totalPoints > 0 && (
+                    <p className="text-xs text-green-400 flex items-center gap-1 mt-1">
+                      <Trophy size={10} />
+                      {Math.round(gameSession.totalPoints)} pts
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex gap-2">
+                <button
+                  onClick={() => setGamificationEnabled(!gamificationEnabled)}
+                  className={`p-2 rounded-lg transition-all ${
+                    gamificationEnabled
+                      ? "bg-green-500/20 text-green-400"
+                      : "text-slate-500 hover:text-slate-300"
+                  }`}
+                  title={
+                    gamificationEnabled ? "Gamification ON" : "Gamification OFF"
+                  }
+                >
+                  <Target size={18} />
+                </button>
+
                 <button
                   onClick={() => setVoiceEnabled(!voiceEnabled)}
                   className={`p-2 rounded-lg transition-all ${
