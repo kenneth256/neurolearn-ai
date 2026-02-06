@@ -2,18 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
+@theme {
+  /* Editorial Fonts */
+  --font-sans: "Inter", ui-sans-serif, system-ui;
+  --font-serif:
+    "Playfair Display", "Georgia", serif; /* Perfect for that 'Book' feel */
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Custom Branding Colors */
+  --color-amber-50: #fffbeb;
+  --color-amber-500: #f59e0b;
+  --color-amber-600: #d97706;
+
+  --color-slate-900: #0f172a; /* For that deep sidebar */
+  --color-slate-950: #020617; /* For dark mode depth */
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
+:root {
+  /* Light Mode: Warm Parchment Background */
+  --background: #fcfcf9;
+  --foreground: #0f172a;
+  --sidebar: #0f172a;
+  --accent: #f59e0b;
+}
 
-  body {
-    @apply bg-background text-foreground;
-    font-feature-settings:
-      "rlig" 1,
-      "calt" 1;
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark Mode: Deep Midnight Background */
+    --background: #020617;
+    --foreground: #f8fafc;
+    --sidebar: #000000;
+    --accent: #fbbf24;
   }
 }

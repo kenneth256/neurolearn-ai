@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, JSX } from "react";
 import { useGeminiChat } from "./geminichat";
 import { useVideoLecture } from "./videotutor";
 import ThinkingIndicator from "./thinking";
@@ -13,10 +13,11 @@ import {
   Volume2,
   VolumeX,
   Mic,
-  Trophy,
-  Zap,
-  Target,
-  Award,
+  MicOff,
+  Maximize2,
+  Minimize2,
+  Copy,
+  Check,
 } from "lucide-react";
 
 interface TutorBotProps {
@@ -28,43 +29,7 @@ interface TutorBotProps {
   onFileUpdate?: (newContent: string) => void;
 }
 
-interface QuizQuestion {
-  id: string;
-  question: string;
-  options: string[];
-  correctAnswerHash: string;
-  explanation: string;
-  points: number;
-}
-
 type ThinkingLevel = "minimal" | "low" | "medium" | "high";
-
-interface SystemMessage {
-  text: string;
-  timestamp: number;
-}
-
-interface GameSession {
-  active: boolean;
-  currentQuestion: QuizQuestion | null;
-  questionsAnswered: number;
-  correctAnswers: number;
-  totalPoints: number;
-  streak: number;
-  conceptTitle: string;
-}
-
-const hashAnswer = async (
-  questionId: string,
-  answerIndex: number,
-): Promise<string> => {
-  const data = `${questionId}-${answerIndex}-secret-salt-${Date.now().toString().slice(0, -3)}`;
-  const encoder = new TextEncoder();
-  const dataBuffer = encoder.encode(data);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", dataBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-};
 
 const TutorBot: React.FC<TutorBotProps> = ({
   lessonContext,
@@ -75,39 +40,22 @@ const TutorBot: React.FC<TutorBotProps> = ({
   onFileUpdate,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [input, setInput] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>("medium");
   const [showVideoTutor, setShowVideoTutor] = useState(false);
-  const [autoListen, setAutoListen] = useState(true);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
-  const [systemMessage, setSystemMessage] = useState<SystemMessage | null>(
-    null,
-  );
-  const [isVerifying, setIsVerifying] = useState(false);
-  const attemptTracker = useRef<number[]>([]);
-
-  // Gamification states
-  const [gameSession, setGameSession] = useState<GameSession>({
-    active: false,
-    currentQuestion: null,
-    questionsAnswered: 0,
-    correctAnswers: 0,
-    totalPoints: 0,
-    streak: 0,
-    conceptTitle: "",
-  });
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [showResult, setShowResult] = useState(false);
-  const [isCorrect, setIsCorrect] = useState(false);
-  const [gamificationEnabled, setGamificationEnabled] = useState(true);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [autoListen, setAutoListen] = useState(false);
+  const [copiedCode, setCopiedCode] = useState<number | null>(null);
+  const [showScrollPrompt, setShowScrollPrompt] = useState(false);
+  const [scrollPromptDismissed, setScrollPromptDismissed] = useState(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastScrollPositionRef = useRef(0);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const observedSections = useRef<Set<string>>(new Set());
 
   const { messages, isThinking, sendMessage, setMessages, isInitialized } =
     useGeminiChat(
@@ -126,207 +74,120 @@ const TutorBot: React.FC<TutorBotProps> = ({
     replayAudio,
   } = useVideoLecture(lessonContext, moduleName, fileContent);
 
-  const userInitiatedMessages = messages.filter(
-    (m) => !m.text.startsWith("[System"),
-  );
+  const cleanMessages = messages.filter((m) => !m.text.startsWith("[System"));
 
-  // Generate quiz question based on concept
-  const generateQuizQuestion = async (
-    conceptTitle: string,
-    conceptContent: string,
-  ): Promise<QuizQuestion | null> => {
-    const quizPrompt = `Based on the concept "${conceptTitle}", generate 10 challenging multiple-choice questions in this EXACT JSON format (no markdown, no extra text):
+  useEffect(() => {
+    let isScrolling = false;
 
-{
-  "question": "Clear, specific question about the concept",
-  "options": ["Option A", "Option B", "Option C", "Option D"],
-  "correctAnswerIndex": 0,
-  "explanation": "Brief explanation of the correct answer"
-}
+    const handleScroll = () => {
+      const scrollTop =
+        window.pageYOffset || document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight;
+      const clientHeight = document.documentElement.clientHeight;
+      const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
 
-Make it challenging but fair. Test understanding, not just memory.`;
-
-    try {
-      await sendMessage(quizPrompt, false);
-      const response = messages[messages.length - 1]?.text || "";
-
-      // Parse AI response
-      let aiQuestion;
-      try {
-        // Try to extract JSON from markdown code blocks or raw JSON
-        const jsonMatch =
-          response.match(/```json\n([\s\S]*?)\n```/) ||
-          response.match(/```\n([\s\S]*?)\n```/) ||
-          response.match(/\{[\s\S]*\}/);
-
-        const jsonStr = jsonMatch ? jsonMatch[1] || jsonMatch[0] : response;
-        aiQuestion = JSON.parse(jsonStr.trim());
-      } catch (parseError) {
-        console.error("Failed to parse AI response, using fallback question");
-
-        aiQuestion = {
-          question: `What is the main principle of ${conceptTitle}?`,
-          options: [
-            "Understanding the core concept and its practical applications",
-            "Memorizing definitions without understanding context",
-            "Skipping over important details and examples",
-            "Ignoring the real-world applications",
-          ],
-          correctAnswerIndex: 0,
-          explanation: `${conceptTitle} requires understanding core principles and their practical applications, not just memorization.`,
-        };
-      }
-
-      const questionId = Date.now().toString();
-      const originalCorrectIndex = aiQuestion.correctAnswerIndex;
-
-      // ✅ Shuffle options to prevent pattern recognition
-      const shuffledOptions = aiQuestion.options
-        .map((opt: string, idx: number) => ({ opt, idx, sort: Math.random() }))
-        .sort((a: any, b: any) => a.sort - b.sort);
-
-      const newCorrectIndex = shuffledOptions.findIndex(
-        (item: any) => item.idx === originalCorrectIndex,
-      );
-
-      const correctAnswerHash = await hashAnswer(questionId, newCorrectIndex);
-
-      return {
-        id: questionId,
-        question: aiQuestion.question,
-        options: shuffledOptions.map((s: any) => s.opt),
-        correctAnswerHash, // ✅ Secure hash instead of plain answer
-        explanation: aiQuestion.explanation,
-        points: 10,
-      };
-    } catch (error) {
-      console.error("Error generating quiz:", error);
-      return null;
-    }
-  };
-
-  const startGameSession = async (
-    conceptTitle: string,
-    conceptContent: string,
-  ) => {
-    if (!gamificationEnabled) return;
-
-    const question = await generateQuizQuestion(conceptTitle, conceptContent);
-
-    if (question) {
-      setGameSession({
-        active: true,
-        currentQuestion: question,
-        questionsAnswered: 0,
-        correctAnswers: 0,
-        totalPoints: 0,
-        streak: 0,
-        conceptTitle,
+      console.log("Scroll Debug:", {
+        scrollTop,
+        scrollHeight,
+        clientHeight,
+        distanceFromBottom,
+        isOpen,
+        scrollPromptDismissed,
+        showScrollPrompt,
       });
 
-      if (voiceEnabled) {
-        speakText(
-          `Time for a quick knowledge check! ${question.question}`,
-          true,
-        );
+      const isAtBottom = distanceFromBottom < 150;
+
+      if (
+        isAtBottom &&
+        !isOpen &&
+        !scrollPromptDismissed &&
+        !showScrollPrompt
+      ) {
+        console.log("✅ At bottom! Starting timer...");
+
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+        }
+
+        isScrolling = true;
+
+        scrollTimeoutRef.current = setTimeout(() => {
+          console.log("⏰ Timer complete! Showing prompt...");
+          setShowScrollPrompt(true);
+          isScrolling = false;
+        }, 2000);
+      } else if (!isAtBottom && scrollTimeoutRef.current) {
+        console.log("❌ Scrolled away from bottom, canceling timer");
+        clearTimeout(scrollTimeoutRef.current);
+        scrollTimeoutRef.current = null;
+        isScrolling = false;
       }
-    }
-  };
 
-  const handleAnswerSelection = async (answerIndex: number) => {
-    if (!gameSession.currentQuestion || showResult || isVerifying) return;
+      lastScrollPositionRef.current = scrollTop;
+    };
 
-    // ✅ Rate limiting
-    const now = Date.now();
-    attemptTracker.current.push(now);
-    attemptTracker.current = attemptTracker.current.filter(
-      (time) => now - time < 60000, // Keep only last minute
-    );
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
 
-    if (attemptTracker.current.length > 15) {
-      alert(
-        "⚠️ Too many attempts detected! Please take your time to read the questions carefully.",
-      );
-      return;
-    }
-
-    setIsVerifying(true);
-    setSelectedAnswer(answerIndex);
-
-    try {
-      // ✅ Verify answer by comparing hashes
-      const userAnswerHash = await hashAnswer(
-        gameSession.currentQuestion.id,
-        answerIndex,
-      );
-
-      const correct =
-        userAnswerHash === gameSession.currentQuestion.correctAnswerHash;
-
-      setIsCorrect(correct);
-      setShowResult(true);
-
-      const newStreak = correct ? gameSession.streak + 1 : 0;
-      const points = correct
-        ? gameSession.currentQuestion.points * (1 + newStreak * 0.1)
-        : 0;
-
-      setGameSession((prev) => ({
-        ...prev,
-        questionsAnswered: prev.questionsAnswered + 1,
-        correctAnswers: correct ? prev.correctAnswers + 1 : prev.correctAnswers,
-        totalPoints: prev.totalPoints + points,
-        streak: newStreak,
-      }));
-
-      if (voiceEnabled) {
-        const resultText = correct
-          ? `Correct! ${gameSession.currentQuestion.explanation}. You earned ${Math.round(points)} points!`
-          : `Not quite. ${gameSession.currentQuestion.explanation}`;
-
-        setTimeout(() => speakText(resultText, false), 500);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
       }
-    } catch (error) {
-      console.error("Error verifying answer:", error);
-      alert("Failed to verify answer. Please try again.");
-    } finally {
-      setIsVerifying(false);
+    };
+  }, [isOpen, scrollPromptDismissed, showScrollPrompt]);
+
+  useEffect(() => {
+    console.log("🔄 Module/Lesson changed, resetting prompt state");
+    setScrollPromptDismissed(false);
+    setShowScrollPrompt(false);
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
     }
+  }, [lessonContext, moduleName]);
+
+  useEffect(() => {
+    console.log("🎯 showScrollPrompt state changed to:", showScrollPrompt);
+  }, [showScrollPrompt]);
+
+  const handleAcceptScrollPrompt = () => {
+    console.log("✅ User accepted scroll prompt");
+    setShowScrollPrompt(false);
+    setScrollPromptDismissed(true);
+    setIsOpen(true);
+
+    setTimeout(() => {
+      sendMessage(
+        "I've just finished reading this section. Can you quiz me on what I've learned to check my understanding?",
+        false,
+      );
+    }, 500);
   };
 
-  const continueAfterQuiz = () => {
-    setGameSession((prev) => ({
-      ...prev,
-      active: false,
-      currentQuestion: null,
-    }));
-    setShowResult(false);
-    setSelectedAnswer(null);
+  const handleDismissScrollPrompt = () => {
+    console.log("❌ User dismissed scroll prompt");
+    setShowScrollPrompt(false);
+    setScrollPromptDismissed(true);
   };
 
-  const speakText = (text: string, isSystemMessage = false) => {
+  const speakText = (text: string) => {
     if (!voiceEnabled || !text) return;
 
     window.speechSynthesis.cancel();
 
     const cleanText = text
-      .replace(/\[System[^\]]*\]:\s*/g, "")
-      .replace(/```[\s\S]*?```/g, "Code block omitted")
+      .replace(/```[\s\S]*?```/g, "Code block")
       .replace(/`([^`]+)`/g, "$1")
       .replace(/\*\*([^*]+)\*\*/g, "$1")
       .replace(/\*([^*]+)\*/g, "$1")
-      .replace(/\[([^\]]+)\]\([^\)]+\)/g, "$1")
       .replace(/#+\s/g, "")
       .trim();
-
-    if (isSystemMessage) {
-      setSystemMessage({ text: cleanText, timestamp: Date.now() });
-    }
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utteranceRef.current = utterance;
 
-    utterance.rate = 1.0;
+    utterance.rate = 1.1;
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
 
@@ -340,31 +201,9 @@ Make it challenging but fair. Test understanding, not just memory.`;
       utterance.voice = preferredVoice;
     }
 
-    utterance.onstart = () => {
-      setIsSpeaking(true);
-    };
-
     utterance.onend = () => {
-      setIsSpeaking(false);
-
-      if (autoListen && isOpen && !gameSession.active) {
-        setTimeout(() => {
-          startListening();
-        }, 500);
-      }
-
-      if (isSystemMessage) {
-        setTimeout(() => {
-          setSystemMessage(null);
-        }, 1000);
-      }
-    };
-
-    utterance.onerror = (event) => {
-      console.error("Speech synthesis error:", event);
-      setIsSpeaking(false);
-      if (isSystemMessage) {
-        setSystemMessage(null);
+      if (autoListen && isOpen) {
+        setTimeout(startListening, 300);
       }
     };
 
@@ -373,25 +212,21 @@ Make it challenging but fair. Test understanding, not just memory.`;
 
   const stopSpeaking = () => {
     window.speechSynthesis.cancel();
-    setIsSpeaking(false);
-    setSystemMessage(null);
   };
 
   useEffect(() => {
     if (messages.length === 0) return;
-
     const lastMessage = messages[messages.length - 1];
 
     if (
       lastMessage.role === "model" &&
       voiceEnabled &&
       !isThinking &&
-      !gameSession.active
+      !lastMessage.text.startsWith("[System")
     ) {
-      const isSystem = lastMessage.text.startsWith("[System");
-      speakText(lastMessage.text, isSystem);
+      speakText(lastMessage.text);
     }
-  }, [messages, voiceEnabled, isThinking, gameSession.active]);
+  }, [messages, voiceEnabled, isThinking]);
 
   useEffect(() => {
     return () => {
@@ -403,75 +238,10 @@ Make it challenging but fair. Test understanding, not just memory.`;
   }, []);
 
   useEffect(() => {
-    const handleUserActivity = () => {
-      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-
-      idleTimerRef.current = setTimeout(() => {
-        if (isOpen && !isThinking && isInitialized && !gameSession.active) {
-          sendMessage(
-            "[System Nudge]: I noticed you've been on this section for a bit. Are you finding this concept challenging, or would you like a quick summary to move forward?",
-            false,
-          );
-        }
-      }, 45000);
-    };
-
-    window.addEventListener("mousemove", handleUserActivity);
-    window.addEventListener("keydown", handleUserActivity);
-    window.addEventListener("scroll", handleUserActivity);
-
-    return () => {
-      window.removeEventListener("mousemove", handleUserActivity);
-      window.removeEventListener("keydown", handleUserActivity);
-      window.removeEventListener("scroll", handleUserActivity);
-      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-    };
-  }, [isOpen, isThinking, isInitialized, sendMessage, gameSession.active]);
-
-  useEffect(() => {
-    if (!isInitialized || !isOpen || !gamificationEnabled) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const conceptId = entry.target.getAttribute("data-concept-id");
-
-          if (
-            !entry.isIntersecting &&
-            entry.boundingClientRect.top < 0 &&
-            conceptId
-          ) {
-            if (!observedSections.current.has(conceptId)) {
-              observedSections.current.add(conceptId);
-
-              const conceptTitle =
-                entry.target.getAttribute("data-concept-title") ||
-                "the previous section";
-
-              const conceptContent = entry.target.textContent || "";
-
-              // Trigger gamified quiz
-              setTimeout(() => {
-                startGameSession(conceptTitle, conceptContent);
-              }, 1000);
-            }
-          }
-        });
-      },
-      { threshold: 0.1 },
-    );
-
-    const blocks = document.querySelectorAll("[data-concept-block]");
-    blocks.forEach((block) => observer.observe(block));
-
-    return () => observer.disconnect();
-  }, [isInitialized, isOpen, moduleName, gamificationEnabled]);
-
-  useEffect(() => {
-    if (scrollRef.current && !gameSession.active) {
+    if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [userInitiatedMessages, isThinking, gameSession.active]);
+  }, [cleanMessages, isThinking]);
 
   const startListening = () => {
     const SpeechRecognition =
@@ -492,9 +262,7 @@ Make it challenging but fair. Test understanding, not just memory.`;
     recognition.interimResults = false;
     recognition.lang = "en-US";
 
-    recognition.onstart = () => {
-      setIsListening(true);
-    };
+    recognition.onstart = () => setIsListening(true);
 
     recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript;
@@ -506,9 +274,7 @@ Make it challenging but fair. Test understanding, not just memory.`;
       setIsListening(false);
     };
 
-    recognition.onend = () => {
-      setIsListening(false);
-    };
+    recognition.onend = () => setIsListening(false);
 
     recognition.start();
   };
@@ -548,276 +314,221 @@ Make it challenging but fair. Test understanding, not just memory.`;
     window.speechSynthesis.cancel();
   };
 
+  const copyToClipboard = (text: string, index: number) => {
+    navigator.clipboard.writeText(text);
+    setCopiedCode(index);
+    setTimeout(() => setCopiedCode(null), 2000);
+  };
+
+  const renderMessageContent = (text: string, messageIndex: number) => {
+    const parts: JSX.Element[] = [];
+    let lastIndex = 0;
+    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+    let match;
+    let blockIndex = 0;
+
+    while ((match = codeBlockRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        const textBefore = text.substring(lastIndex, match.index);
+        parts.push(
+          <span
+            key={`text-${messageIndex}-${blockIndex}`}
+            className="whitespace-pre-wrap break-words"
+          >
+            {formatInlineCode(textBefore)}
+          </span>,
+        );
+      }
+
+      const language = match[1] || "text";
+      const code = match[2];
+      const codeId = `code-${messageIndex}-${blockIndex}`;
+
+      parts.push(
+        <div
+          key={codeId}
+          className="my-4 rounded-lg overflow-hidden border border-gray-700"
+        >
+          <div className="bg-[#1e1e1e] px-4 py-2 flex items-center justify-between border-b border-gray-700">
+            <span className="text-xs text-gray-400 font-mono">{language}</span>
+            <button
+              onClick={() => copyToClipboard(code, blockIndex)}
+              className="flex items-center gap-1.5 px-2 py-1 text-xs text-gray-400 hover:text-white transition-colors rounded hover:bg-gray-700"
+            >
+              {copiedCode === blockIndex ? (
+                <>
+                  <Check size={14} />
+                  <span>Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy size={14} />
+                  <span>Copy code</span>
+                </>
+              )}
+            </button>
+          </div>
+          <div className="bg-[#1e1e1e] p-4 overflow-x-auto">
+            <pre className="text-sm text-gray-100 font-mono leading-relaxed">
+              <code>{code}</code>
+            </pre>
+          </div>
+        </div>,
+      );
+
+      lastIndex = match.index + match[0].length;
+      blockIndex++;
+    }
+
+    if (lastIndex < text.length) {
+      const remainingText = text.substring(lastIndex);
+      parts.push(
+        <span
+          key={`text-${messageIndex}-end`}
+          className="whitespace-pre-wrap break-words"
+        >
+          {formatInlineCode(remainingText)}
+        </span>,
+      );
+    }
+
+    return parts.length > 0 ? (
+      parts
+    ) : (
+      <span className="whitespace-pre-wrap break-words">
+        {formatInlineCode(text)}
+      </span>
+    );
+  };
+
+  const formatInlineCode = (text: string) => {
+    const parts = text.split(/(`[^`]+`)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith("`") && part.endsWith("`")) {
+        return (
+          <code
+            key={i}
+            className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-sm font-mono text-pink-600 dark:text-pink-400 break-all"
+          >
+            {part.slice(1, -1)}
+          </code>
+        );
+      }
+      return part;
+    });
+  };
+
   return (
     <>
+      {showScrollPrompt && !isOpen && (
+        <div
+          className="fixed bottom-24 left-6 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border-2 border-blue-500 p-4 max-w-sm z-[100] animate-slideIn"
+          style={{ zIndex: 100 }}
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+              <Sparkles size={20} className="text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="font-semibold text-gray-900 dark:text-white text-sm mb-1">
+                Finished reading?
+              </h4>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+                Would you like me to quiz you on what you just learned to check
+                your understanding?
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleAcceptScrollPrompt}
+                  className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Yes, quiz me!
+                </button>
+                <button
+                  onClick={handleDismissScrollPrompt}
+                  className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  Not now
+                </button>
+              </div>
+            </div>
+            <button
+              onClick={handleDismissScrollPrompt}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 flex-shrink-0"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
       <button
         onClick={() => setIsOpen(true)}
-        className="relative p-4 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-2xl shadow-2xl hover:bg-amber-600 dark:hover:bg-amber-500 transition-all flex items-center gap-2 group z-50 border border-slate-700 dark:border-slate-300"
+        className="fixed bottom-6 left-6 p-4 bg-[#1e3a8a] text-white rounded-2xl shadow-2xl hover:bg-[#1e40af] transition-all flex items-center gap-2 group z-50"
         style={{ display: isOpen ? "none" : "flex" }}
       >
         <Bot size={24} />
-        <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 font-bold uppercase tracking-widest text-xs">
-          Ask Gemini 3
+        <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 font-semibold text-sm">
+          AI Tutor
         </span>
-        {gameSession.totalPoints > 0 && (
-          <div className="absolute -top-2 -right-2 bg-amber-500 text-slate-900 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold shadow-lg">
-            <Trophy size={16} />
-          </div>
-        )}
       </button>
 
-      {systemMessage && !gameSession.active && (
-        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] animate-scale-in">
-          <div className="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-950 dark:to-slate-900 text-white rounded-3xl shadow-2xl p-8 max-w-md border-4 border-amber-500 animate-pulse-border">
-            <div className="flex items-center justify-center gap-4 mb-4">
-              <div className="p-3 bg-amber-500 rounded-full animate-pulse">
-                <Mic size={32} className="text-slate-900" />
-              </div>
-            </div>
-            <p className="text-center text-lg font-medium leading-relaxed">
-              {systemMessage.text}
-            </p>
-            {isListening && (
-              <div className="mt-4 flex items-center justify-center gap-2 text-amber-400">
-                <Mic size={20} className="animate-pulse" />
-                <span className="text-sm font-bold">Listening...</span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Gamified Quiz Overlay */}
-      {gameSession.active && gameSession.currentQuestion && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white rounded-3xl shadow-2xl max-w-2xl w-full border-4 border-amber-500 overflow-hidden">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-6 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="bg-white/20 p-3 rounded-full">
-                  <Target size={32} />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold">Knowledge Check!</h3>
-                  <p className="text-sm opacity-90">
-                    {gameSession.conceptTitle}
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="flex items-center gap-2 text-2xl font-bold">
-                  <Trophy size={24} />
-                  {Math.round(gameSession.totalPoints)}
-                </div>
-                <div className="text-xs opacity-90">
-                  {gameSession.streak > 0 && (
-                    <span className="flex items-center gap-1">
-                      <Zap size={12} /> {gameSession.streak}x Streak!
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Question */}
-            <div className="p-8">
-              <div className="mb-6">
-                <div className="flex items-center gap-2 text-sm text-amber-400 mb-2">
-                  <Award size={16} />
-                  <span>Worth {gameSession.currentQuestion.points} points</span>
-                </div>
-                <h4 className="text-xl font-semibold leading-relaxed">
-                  {gameSession.currentQuestion.question}
-                </h4>
-              </div>
-
-              {/* Options */}
-              <div className="space-y-3">
-                {gameSession.currentQuestion.options.map((option, index) => {
-                  const isSelected = selectedAnswer === index;
-                  const showCorrect = showResult && isCorrect && isSelected;
-                  const showWrong = showResult && !isCorrect && isSelected;
-
-                  return (
-                    <button
-                      key={index}
-                      onClick={() => handleAnswerSelection(index)}
-                      disabled={showResult || isVerifying}
-                      className={`w-full p-4 rounded-xl text-left transition-all font-medium border-2 ${
-                        showCorrect
-                          ? "bg-green-500/30 border-green-400 shadow-lg shadow-green-500/50"
-                          : showWrong
-                            ? "bg-red-500/30 border-red-400 shadow-lg shadow-red-500/50"
-                            : isSelected
-                              ? "bg-amber-500/30 border-amber-400"
-                              : "bg-white/10 border-white/20 hover:bg-white/20 hover:border-amber-400"
-                      } ${showResult || isVerifying ? "cursor-not-allowed" : "cursor-pointer"}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                            showCorrect
-                              ? "bg-green-400 text-green-900"
-                              : showWrong
-                                ? "bg-red-400 text-red-900"
-                                : "bg-white/20"
-                          }`}
-                        >
-                          {String.fromCharCode(65 + index)}
-                        </div>
-                        <span className="flex-1">{option}</span>
-                        {showCorrect && <span className="text-2xl">✓</span>}
-                        {showWrong && <span className="text-2xl">✗</span>}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-              {isVerifying && (
-                <div className="mt-6 p-4 bg-blue-500/20 border border-blue-400 rounded-xl text-center">
-                  <p className="text-sm">
-                    🔐 Verifying your answer securely...
-                  </p>
-                </div>
-              )}
-              {/* Explanation */}
-              {showResult && (
-                <div
-                  className={`mt-6 p-4 rounded-xl ${
-                    isCorrect
-                      ? "bg-green-500/20 border border-green-400"
-                      : "bg-red-500/20 border border-red-400"
-                  }`}
-                >
-                  <p className="font-semibold mb-2">
-                    {isCorrect ? "🎉 Correct!" : "❌ Not quite right"}
-                  </p>
-                  <p className="text-sm opacity-90">
-                    {gameSession.currentQuestion.explanation}
-                  </p>
-                  {isCorrect && gameSession.streak > 1 && (
-                    <p className="text-sm mt-2 text-amber-400 font-bold">
-                      🔥 {gameSession.streak}x Streak Bonus Applied!
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* Continue Button */}
-              {showResult && (
-                <button
-                  onClick={continueAfterQuiz}
-                  className="w-full mt-6 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg"
-                >
-                  Continue Learning →
-                </button>
-              )}
-            </div>
-
-            {/* Stats Footer */}
-            <div className="bg-black/30 p-4 flex justify-around text-center text-sm">
-              <div>
-                <div className="text-2xl font-bold text-amber-400">
-                  {gameSession.questionsAnswered}
-                </div>
-                <div className="text-xs opacity-75">Questions</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-green-400">
-                  {gameSession.correctAnswers}
-                </div>
-                <div className="text-xs opacity-75">Correct</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-purple-400">
-                  {gameSession.questionsAnswered > 0
-                    ? Math.round(
-                        (gameSession.correctAnswers /
-                          gameSession.questionsAnswered) *
-                          100,
-                      )
-                    : 0}
-                  %
-                </div>
-                <div className="text-xs opacity-75">Accuracy</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-96 max-w-[calc(100vw-3rem)] h-[600px] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col z-50 overflow-hidden animate-fadeIn">
-          <div className="p-6 bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-950 dark:to-slate-900 text-white flex-shrink-0">
-            <div className="flex justify-between items-start mb-3">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-amber-500 dark:bg-amber-600 rounded-lg text-slate-900 dark:text-slate-100">
-                  <Sparkles size={18} />
+        <div
+          className={`fixed ${
+            isExpanded
+              ? "inset-4 w-auto h-auto"
+              : "bottom-6 left-6 w-[420px] max-w-[calc(100vw-3rem)] h-[600px]"
+          } bg-white dark:bg-[#1e1e1e] rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 flex flex-col z-50 overflow-hidden transition-all duration-300`}
+        >
+          <div className="p-4 bg-white dark:bg-[#1e1e1e] border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                  <Sparkles size={16} className="text-white" />
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold">Gemini 3 Tutor</h3>
-                  <p className="text-[9px] text-slate-400 dark:text-slate-500 uppercase">
-                    Level: {thinkingLevel}
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                    AI Tutor
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {thinkingLevel} thinking
                   </p>
-                  {fileName && (
-                    <p className="text-xs text-amber-400 dark:text-amber-500 flex items-center gap-1 mt-1">
-                      <svg
-                        width="10"
-                        height="10"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                      </svg>
-                      {fileName}
-                    </p>
-                  )}
-                  {gameSession.totalPoints > 0 && (
-                    <p className="text-xs text-green-400 flex items-center gap-1 mt-1">
-                      <Trophy size={10} />
-                      {Math.round(gameSession.totalPoints)} pts
-                    </p>
-                  )}
                 </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setGamificationEnabled(!gamificationEnabled)}
-                  className={`p-2 rounded-lg transition-all ${
-                    gamificationEnabled
-                      ? "bg-green-500/20 text-green-400"
-                      : "text-slate-500 hover:text-slate-300"
-                  }`}
-                  title={
-                    gamificationEnabled ? "Gamification ON" : "Gamification OFF"
-                  }
-                >
-                  <Target size={18} />
-                </button>
-
+              <div className="flex items-center gap-1 flex-shrink-0">
                 <button
                   onClick={() => setVoiceEnabled(!voiceEnabled)}
                   className={`p-2 rounded-lg transition-all ${
                     voiceEnabled
-                      ? "bg-amber-500/20 text-amber-400"
-                      : "text-slate-500 hover:text-slate-300"
+                      ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+                      : "text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
                   }`}
-                  title={voiceEnabled ? "Voice enabled" : "Voice disabled"}
+                  title={voiceEnabled ? "Voice ON" : "Voice OFF"}
                 >
                   {voiceEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
                 </button>
 
                 <button
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                  title={isExpanded ? "Minimize" : "Expand"}
+                >
+                  {isExpanded ? (
+                    <Minimize2 size={18} />
+                  ) : (
+                    <Maximize2 size={18} />
+                  )}
+                </button>
+
+                <button
                   onClick={handleGenerateVideo}
-                  className="hover:text-amber-500 dark:hover:text-amber-400 p-2 transition-colors"
-                  title="Generate Video Lecture"
+                  className="p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                  title="Generate Video"
                 >
                   <svg
-                    width="20"
-                    height="20"
+                    width="18"
+                    height="18"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -830,41 +541,44 @@ Make it challenging but fair. Test understanding, not just memory.`;
                 <button
                   onClick={() => {
                     setIsOpen(false);
+                    setIsExpanded(false);
                     stopSpeaking();
                     stopListening();
                   }}
-                  className="hover:text-amber-500 dark:hover:text-amber-400 p-2 transition-colors"
+                  className="p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                 >
-                  <X size={20} />
+                  <X size={18} />
                 </button>
               </div>
             </div>
 
-            <div className="flex bg-slate-800 dark:bg-slate-950 p-0.5 rounded-full gap-0.5 border border-slate-700 dark:border-slate-600 mb-2">
+            <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
               {(["minimal", "low", "medium", "high"] as const).map((level) => (
                 <button
                   key={level}
                   onClick={() => setThinkingLevel(level)}
-                  className={`text-[7px] px-2 py-1 rounded-full transition-all uppercase font-black ${
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all flex-shrink-0 ${
                     thinkingLevel === level
-                      ? "bg-amber-500 dark:bg-amber-600 text-slate-900 dark:text-slate-100 shadow-sm"
-                      : "text-slate-500 dark:text-slate-400 hover:text-white dark:hover:text-slate-200"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
                   }`}
                 >
-                  {level}
+                  {level.charAt(0).toUpperCase() + level.slice(1)}
                 </button>
               ))}
             </div>
 
-            <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={autoListen}
-                onChange={(e) => setAutoListen(e.target.checked)}
-                className="rounded"
-              />
-              Auto-activate mic after response
-            </label>
+            {voiceEnabled && (
+              <label className="flex items-center gap-2 mt-2 text-xs text-gray-500 dark:text-gray-400 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={autoListen}
+                  onChange={(e) => setAutoListen(e.target.checked)}
+                  className="rounded"
+                />
+                Auto-listen after response
+              </label>
+            )}
           </div>
 
           <VideoTutorModal
@@ -878,110 +592,139 @@ Make it challenging but fair. Test understanding, not just memory.`;
 
           <div
             ref={scrollRef}
-            className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50 dark:bg-slate-950 min-h-0 scrollbar-thin scrollbar-thumb-amber-500 scrollbar-track-transparent"
+            className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 bg-white dark:bg-[#1e1e1e] min-h-0"
           >
-            {userInitiatedMessages.length === 0 && (
-              <div className="text-center py-6 space-y-4">
-                <Sparkles
-                  className="mx-auto text-amber-400 dark:text-amber-500 animate-pulse"
-                  size={32}
-                />
-                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                  Suggested Questions
-                </p>
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {suggestedQuestions.map((q, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleSend(q)}
-                      className="text-xs p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-amber-500 dark:hover:border-amber-600 transition-all text-slate-600 dark:text-slate-300 shadow-sm"
-                    >
-                      {q}
-                    </button>
-                  ))}
-                  <button
-                    onClick={handleGenerateVideo}
-                    className="text-xs p-3 bg-gradient-to-r from-purple-500 to-pink-500 dark:from-purple-600 dark:to-pink-600 text-white rounded-xl hover:shadow-lg transition-all font-semibold flex items-center gap-2"
+            {cleanMessages.length === 0 && (
+              <div className="text-center py-12 space-y-6">
+                <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                  <Sparkles className="text-white" size={32} />
+                </div>
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    How can I help you today?
+                  </h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 px-4">
+                    Ask me anything about {moduleName}
+                  </p>
+                </div>
+                {suggestedQuestions.length > 0 && (
+                  <div className="flex flex-wrap gap-2 justify-center max-w-md mx-auto px-4">
+                    {suggestedQuestions.map((q, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleSend(q)}
+                        className="px-4 py-2 text-sm bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-all border border-gray-200 dark:border-gray-700"
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {cleanMessages.map((m, i) => (
+              <div key={i} className="flex gap-3 items-start">
+                {m.role === "model" && (
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                    <Sparkles size={16} className="text-white" />
+                  </div>
+                )}
+
+                <div
+                  className={`flex-1 min-w-0 ${m.role === "user" ? "flex justify-end" : ""}`}
+                >
+                  <div
+                    className={`inline-block max-w-[85%] ${
+                      m.role === "user"
+                        ? "bg-[#1a73e8] text-white px-4 py-2.5 rounded-2xl rounded-tr-md"
+                        : "text-gray-800 dark:text-gray-200"
+                    }`}
                   >
+                    {m.role === "user" ? (
+                      <p className="text-sm leading-relaxed break-words">
+                        {m.text}
+                      </p>
+                    ) : (
+                      <div className="text-sm leading-relaxed overflow-hidden">
+                        {renderMessageContent(m.text, i)}
+                      </div>
+                    )}
+                  </div>
+                  {m.codeEdit && (
+                    <div className="mt-2">
+                      <CodeEditBlock
+                        codeEdit={m.codeEdit}
+                        onApply={onFileUpdate ? applyCodeChange : undefined}
+                        messageIndex={i}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {m.role === "user" && (
+                  <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
                     <svg
                       width="16"
                       height="16"
                       viewBox="0 0 24 24"
                       fill="currentColor"
+                      className="text-gray-600 dark:text-gray-300"
                     >
-                      <polygon points="5 3 19 12 5 21 5 3" />
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
                     </svg>
-                    Generate Video Lecture
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {userInitiatedMessages.map((m, i) => (
-              <div
-                key={i}
-                className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[90%] ${m.role === "model" ? "w-full" : ""}`}
-                >
-                  <div
-                    className={`p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${
-                      m.role === "user"
-                        ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-tr-none"
-                        : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-tl-none"
-                    }`}
-                  >
-                    {m.text}
                   </div>
-                  {m.codeEdit && (
-                    <CodeEditBlock
-                      codeEdit={m.codeEdit}
-                      onApply={onFileUpdate ? applyCodeChange : undefined}
-                      messageIndex={i}
-                    />
-                  )}
-                </div>
+                )}
               </div>
             ))}
 
-            {isThinking && <ThinkingIndicator />}
+            {isThinking && (
+              <div className="flex gap-3 items-start">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                  <Sparkles size={16} className="text-white" />
+                </div>
+                <ThinkingIndicator />
+              </div>
+            )}
           </div>
 
-          <div className="p-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => {
-                  if (isListening) {
-                    stopListening();
-                  } else {
-                    startListening();
+          <div className="p-4 bg-white dark:bg-[#1e1e1e] border-t border-gray-200 dark:border-gray-800 flex-shrink-0">
+            <div className="flex items-end gap-2">
+              {voiceEnabled && (
+                <button
+                  onClick={() => {
+                    if (isListening) {
+                      stopListening();
+                    } else {
+                      startListening();
+                    }
+                  }}
+                  className={`p-3 rounded-full transition-all flex-shrink-0 ${
+                    isListening
+                      ? "bg-red-500 text-white"
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  }`}
+                  title={isListening ? "Stop" : "Voice input"}
+                >
+                  {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+                </button>
+              )}
+              <div className="flex-1 relative min-w-0">
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && !e.shiftKey && handleSend()
                   }
-                }}
-                className={`p-4 rounded-2xl transition-all ${
-                  isListening
-                    ? "bg-red-500 dark:bg-red-600 text-white animate-pulse"
-                    : isSpeaking
-                      ? "bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:bg-amber-100 dark:hover:bg-amber-950/30 hover:text-amber-600 dark:hover:text-amber-400"
-                }`}
-                disabled={isSpeaking}
-                title={isListening ? "Stop listening" : "Start voice input"}
-              >
-                <Mic size={20} />
-              </button>
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                placeholder="Ask anything or request code changes..."
-                disabled={isThinking || isListening}
-                className="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:ring-2 focus:ring-amber-500 dark:focus:ring-amber-600 outline-none transition-all disabled:opacity-50"
-              />
+                  placeholder="Message AI Tutor..."
+                  disabled={isThinking || isListening}
+                  className="w-full bg-gray-100 dark:bg-gray-800 border-none rounded-3xl px-5 py-3 pr-12 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-50 resize-none"
+                />
+              </div>
               <button
                 onClick={() => handleSend()}
                 disabled={isThinking || !input.trim() || isListening}
-                className="p-4 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-2xl hover:bg-amber-600 dark:hover:bg-amber-500 transition-colors shadow-lg disabled:bg-slate-400 dark:disabled:bg-slate-600 disabled:cursor-not-allowed"
+                className="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed flex-shrink-0"
               >
                 <svg
                   width="20"
@@ -1000,43 +743,19 @@ Make it challenging but fair. Test understanding, not just memory.`;
         </div>
       )}
 
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
+      <style jsx>{`
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out forwards;
-        }
-        
-        @keyframes scaleIn {
-          from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-          to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        }
-        .animate-scale-in {
-          animation: scaleIn 0.3s ease-out forwards;
-        }
-        
-        @keyframes pulseBorder {
-          0%, 100% { border-color: #f59e0b; }
-          50% { border-color: #fbbf24; }
-        }
-        .animate-pulse-border {
-          animation: pulseBorder 2s ease-in-out infinite;
-        }
-        
-        .scrollbar-thin::-webkit-scrollbar {
-          width: 6px;
-        }
-        .scrollbar-thin::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .scrollbar-thin::-webkit-scrollbar-thumb {
-          background: #d97706;
-          border-radius: 3px;
-        }
-        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-          background: #b45309;
+        .animate-slideIn {
+          animation: slideIn 0.3s ease-out forwards;
         }
       `}</style>
     </>

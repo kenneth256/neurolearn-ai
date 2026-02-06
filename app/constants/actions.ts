@@ -1,7 +1,4 @@
-// Remove unused import
-// import { json } from "stream/consumers";
 
-// Form data interface
 export interface FormData {
   subject: string;
   level: string;
@@ -59,34 +56,60 @@ export interface LessonResponse {
   };
 }
 
-export async function generateCourse(params: FormData) {
-  const response = await fetch("/api/generate", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      subject: params.subject,
-      level: params.level,
-      goals: params.goals,
-      time: params.time,
-      style: params.style,
-      deadline: params.deadline,
-    }),
-  });
 
-  const data: CourseResponse = await response.json();
-  
-  if (data.success) {
+
+export async function generateCourse(params: FormData) {
+  try {
+    console.log("Calling /api/ai/generate with:", params);
+
+    const response = await fetch("/api/ai/generate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        subject: params.subject,
+        level: params.level,
+        goals: params.goals,
+        time: params.time,
+        style: params.style,
+        deadline: params.deadline,
+      }),
+    });
+
+    const responseText = await response.text();
+    console.log("AI API response status:", response.status);
+    console.log("AI API response (first 300 chars):", responseText.substring(0, 300));
+
+    if (!response.ok) {
+      console.error("AI endpoint returned error:", response.status, responseText);
+      return { data: { success: false, error: `HTTP ${response.status}: ${responseText}` } };
+    }
+
+    let data: any;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error("Failed to parse AI response:", responseText);
+      return { data: { success: false, error: "Invalid response format from AI" } };
+    }
+
     return { data };
-  } else {
-    console.log('Failed to generate course');
-    return null;
+    
+  } catch (error) {
+    console.error("Error generating course from AI:", error);
+    return { 
+      data: { 
+        success: false, 
+        error: error instanceof Error ? error.message : "Network error" 
+      } 
+    };
   }
 }
 
+
 export async function generateLessons(params: LessonParams) {
-  const response = await fetch('/api/lesson', {
+  const response = await fetch('/api/courses/lesson', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

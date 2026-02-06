@@ -1,5 +1,12 @@
 import { ProjectData } from "../components/ui/protocol";
 
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
 export interface CourseGenParams {
   subject: string;
   level: string;
@@ -14,7 +21,7 @@ export interface DailyLesson {
   title: string;
   duration: string;
   learningObjectives: string[];
-  preLessonCheck: any;
+  preLessonCheck?: any;
   coreContent: any;
   handsOnPractice: any;
   knowledgeChecks: any;
@@ -31,11 +38,21 @@ export interface LessonsData {
   moduleNumber: number;
   totalDuration: string;
   dailyLessons: DailyLesson[];
-  moduleCapstone?: ProjectData;
-  // Index signature to allow accessing nested lesson data by module number
+  assessmentBlueprint?: any;
+  differentiatedLearning?: {
+    forBeginners?: string;
+    forAdvanced?: string;
+  };
+  weeklyMilestones?: string[];
   [key: number]: {
     dailyLessons: DailyLesson[];
     moduleCapstone?: ProjectData;
+    differentiatedLearning?: {
+      forBeginners?: string;
+      forAdvanced?: string;
+    };
+    weeklyMilestones?: string[];
+    assessmentBlueprint?: any;
   };
 }
 
@@ -185,50 +202,106 @@ Return a JSON object where the root key is "${module.moduleNumber}".
   "${module.moduleNumber}": {
     "moduleTitle": "${module.moduleName}",
     "moduleNumber": ${module.moduleNumber},
+    "totalDuration": "Estimated total time for this module",
     "dailyLessons": [
       {
         "day": 1,
         "title": "Day Theme Title",
         "duration": "${availableTime}",
+        "learningObjectives": [
+          {
+            "objective": "What they'll learn",
+            "measurable": "How success is measured",
+            "timebound": "Time to achieve"
+          }
+        ],
         "coreContent": {
           "concepts": [
             {
-              "concept": "Concept Title",
-              "narrativeExplanation": "Multi-paragraph deep dive tutorial.",
-              "whyScenario": "Real-world application scenario.",
-              "socraticInquiry": "Question to make them think.",
-              "gotcha": "Non-obvious edge case.",
+              "title": "Concept Title",
+              "narrativeExplanation": "Multi-paragraph deep dive tutorial with examples.",
+              "interactiveAnalogy": "A relatable metaphor or analogy to explain the concept.",
               "codeWalkthrough": {
-                "code": "Production-grade code.",
-                "analysis": "Line-by-line reasoning.",
-                "language": "string"
-              }
+                "code": "Practical example - could be: programming code, historical case study, recipe steps, mathematical proof, business scenario, etc.",
+                "analysis": "Step-by-step breakdown explaining each part in detail.",
+                "language": "For programming: 'python', 'javascript', etc. For other subjects: 'text', 'steps', 'math', 'case-study', 'markdown'"
+              },
+              "edgeCase": "Non-obvious gotcha, common mistake, or important caveat students often miss."
+            }
+          ]
+        },
+        "handsOnPractice": {
+          "exercises": [
+            {
+              "title": "Exercise name",
+              "challenge": "What they need to accomplish",
+              "constraints": ["Constraint 1", "Constraint 2"],
+              "starterCode": "Optional starter template if applicable",
+              "hints": ["Hint 1", "Hint 2"],
+              "fullSolution": "Complete solution with all steps",
+              "explanationOfSolution": "Detailed explanation of why this solution works"
             }
           ]
         },
         "knowledgeChecks": {
           "questions": [
             {
-              "question": "Logic-based question",
-              "options": ["A", "B", "C", "D"],
-              "correctAnswer": "Exact string of correct option",
-              "feedback": "Why it's right/wrong."
+              "type": "multiple-choice",
+              "question": "Logic-based question that tests deep understanding, not just memorization",
+              "options": [
+                "First option text",
+                "Second option text",
+                "Third option text",
+                "Fourth option text"
+              ],
+              "correctAnswer": "Exact text matching ONE of the options above",
+              "feedback": "Comprehensive explanation of why this is correct and why other options are wrong"
             }
           ]
         },
-        "handsOnPractice": {
-          "tasks": ["Specific task 1", "Specific task 2"]
-        }
+        "commonPitfalls": [
+          {
+            "mistake": "Common mistake students make",
+            "mentalModelFix": "Better way to conceptualize this topic",
+            "debuggingHack": "Practical tip to avoid or identify this mistake"
+          }
+        ]
       }
-    ]
+    ],
+    "weeklyMilestones": [
+      "Milestone 1: What they should achieve by end of week 1",
+      "Milestone 2: What they should achieve by end of week 2"
+    ],
+    "differentiatedLearning": {
+      "forBeginners": "Simplified explanations or additional scaffolding for those struggling",
+      "forAdvanced": "Challenge extensions, deeper theory, or optimization techniques"
+    },
+    "assessmentBlueprint": {
+      "finalProject": {
+        "prompt": "Comprehensive capstone project that synthesizes all module concepts",
+        "requirements": ["Requirement 1", "Requirement 2", "Requirement 3"],
+        "rubric": ["Criterion 1: Description (40%)", "Criterion 2: Description (30%)", "Criterion 3: Description (30%)"]
+      }
+    }
   }
 }
 
-IMPORTANT: 
-- Escape all JSON strings.
-- Root key MUST be "${module.moduleNumber}".
-- Return ONLY valid JSON.
-`;
+CRITICAL RULES FOR GENERATION:
+1. **Randomize Quiz Answers**: Place the correct answer at RANDOM positions across questions. DO NOT put correct answers at index 0 every time. Mix them up (index 0, 1, 2, or 3).
+2. **Match correctAnswer Exactly**: The "correctAnswer" field must contain the EXACT text of one option from the "options" array. Copy-paste it precisely.
+3. **Subject-Appropriate Content in codeWalkthrough.code**: 
+   - Programming courses: Actual executable code
+   - History courses: Historical case study text
+   - Business courses: Business scenario/case
+   - Cooking courses: Recipe with steps
+   - Math courses: Worked mathematical problem
+   - Set "language" accordingly: code languages OR content types like "text", "steps", "markdown"
+4. **Escape JSON properly**: All quotes, newlines, and special characters must be properly escaped.
+5. **Depth over brevity**: Provide comprehensive, production-quality content. Better to exceed time than leave gaps in understanding.
+6. **Root key must be "${module.moduleNumber}"** - this is mandatory for parsing.
+7. **Return ONLY valid JSON** - no markdown blocks, no extra commentary, just the JSON object.
+
+Return ONLY the JSON object, nothing else.`;
 };
 
 // export const lessonDesignPrompt = ({ module, userLevel, learningStyle, availableTime }: LessonDesignParams): string => {

@@ -1,0 +1,348 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  firstName      String?
+  secondName String
+  password String
+  bio       String?  @db.Text
+  avatar    String?
+  role      UserRole @default(LEARNER)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdCourses     Course[]               @relation("CourseCreator")
+  enrollments        Enrollment[]
+  moduleProgress     ModuleProgress[]
+  assessmentAttempts UserAssessmentAttempt[]
+  reviews            CourseReview[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  LEARNER
+  INSTRUCTOR
+  ADMIN
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  creatorId   String
+  fingerprint String   @unique
+  title       String   
+  description String?  @db.Text
+  thumbnail   String?
+  subject String
+  level   CourseLevel
+  goals   String @db.Text
+  isPublished Boolean @default(false)
+  isPublic    Boolean @default(true)
+  totalEnrollments Int   @default(0)
+  averageRating    Float @default(0)
+  totalReviews     Int   @default(0)
+  generationParams Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  publishedAt DateTime?
+
+  creator     User              @relation("CourseCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  modules     CourseModule[]
+  enrollments Enrollment[]
+  reviews     CourseReview[]
+  tags        CourseTag[]
+
+  @@index([creatorId])
+  @@index([fingerprint])
+  @@index([subject, level])
+  @@index([isPublished, isPublic])
+  @@map("courses")
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+model CourseModule {
+  id           String @id @default(cuid())
+  courseId     String
+  moduleNumber Int
+  moduleName          String
+  learningObjectives  Json
+  masteryRequirements Json
+  assessmentMethods   Json
+  weeklyLearningPlan  Json
+  resources           Json
+  masteryVerification Json
+  estimatedHours Int?
+  order          Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course         Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons        LessonModule[]
+  moduleProgress ModuleProgress[]
+
+  @@unique([courseId, moduleNumber])
+  @@index([courseId])
+  @@map("course_modules")
+}
+
+model LessonModule {
+  id             String @id @default(cuid())
+  courseModuleId String
+  day            Int
+  title                String
+  duration             String
+  learningObjectives   Json
+  coreContent          Json
+  handsOnPractice      Json
+  knowledgeChecks      Json
+  practicalApplication Json?
+  commonPitfalls       Json
+  resources            Json?
+  spacedRepetition     Json?
+  exitCriteria         Json?
+  order Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  courseModule   CourseModule    @relation(fields: [courseModuleId], references: [id], onDelete: Cascade)
+  lessonProgress LessonProgress[]
+
+  @@unique([courseModuleId, day])
+  @@index([courseModuleId])
+  @@index([courseModuleId, day])
+  @@map("lesson_modules")
+}
+
+model Enrollment {
+  id       String @id @default(cuid())
+  userId   String
+  courseId String
+  availableTime String
+  learningStyle String
+  deadline      String
+  status EnrollmentStatus @default(ACTIVE)
+  currentModuleNumber Int   @default(1)
+  currentDay          Int   @default(1)
+  overallCompletion   Float @default(0)
+  averageMasteryScore Float @default(0)
+  totalTimeSpent      Int   @default(0)
+  enrolledAt     DateTime  @default(now())
+  lastAccessedAt DateTime  @default(now())
+  completedAt    DateTime?
+  updatedAt      DateTime  @updatedAt
+
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course         Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  moduleProgress ModuleProgress[]
+  lessonProgress LessonProgress[]
+  reviewItems    ReviewItem[]
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+  @@index([status])
+  @@map("enrollments")
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  PAUSED
+  DROPPED
+}
+
+model ModuleProgress {
+  id                 String @id @default(cuid())
+  enrollmentId       String
+  userId             String
+  courseModuleId     String
+  status           ModuleStatus @default(LOCKED)
+  lessonsCompleted Int          @default(0)
+  totalLessons     Int
+  masteryScore       Float   @default(0)
+  preAssessmentScore Float?
+  timeSpentMinutes Int @default(0)
+  masteryAchievedAt DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  enrollment         Enrollment           @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  user               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseModule       CourseModule         @relation(fields: [courseModuleId], references: [id], onDelete: Cascade)
+  assessmentAttempts AssessmentAttempt[]
+
+  @@unique([enrollmentId, courseModuleId])
+  @@index([enrollmentId])
+  @@index([userId])
+  @@index([courseModuleId])
+  @@index([userId, status])
+  @@map("module_progress")
+}
+
+enum ModuleStatus {
+  LOCKED
+  IN_PROGRESS
+  COMPLETED
+  MASTERED
+}
+
+model LessonProgress {
+  id             String @id @default(cuid())
+  enrollmentId   String
+  lessonModuleId String
+  status           LessonStatus @default(NOT_STARTED)
+  timeSpentMinutes Int          @default(0)
+  quizScore        Float?
+  exercisesCompleted Int @default(0)
+  totalExercises     Int @default(0)
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  enrollment   Enrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  lessonModule LessonModule @relation(fields: [lessonModuleId], references: [id], onDelete: Cascade)
+
+  @@unique([enrollmentId, lessonModuleId])
+  @@index([enrollmentId])
+  @@index([lessonModuleId])
+  @@index([enrollmentId, status])
+  @@map("lesson_progress")
+}
+
+enum LessonStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+model AssessmentAttempt {
+  id               String @id @default(cuid())
+  moduleProgressId String
+  assessmentType String
+  answers  Json
+  score    Float
+  passed   Boolean
+  feedback String  @db.Text
+  submittedAt DateTime @default(now())
+
+  moduleProgress ModuleProgress @relation(fields: [moduleProgressId], references: [id], onDelete: Cascade)
+
+  @@index([moduleProgressId])
+  @@map("assessment_attempts")
+}
+
+model UserAssessmentAttempt {
+  id           String @id @default(cuid())
+  userId       String
+  assessmentId String
+  answers     Json
+  score       Float
+  feedback    String   @db.Text
+  submittedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([assessmentId])
+  @@map("user_assessment_attempts")
+}
+
+model ReviewItem {
+  id             String @id @default(cuid())
+  enrollmentId   String
+  moduleNumber   Int
+  conceptId      String
+  dueDate         DateTime
+  repetitionCount Int      @default(0)
+  lastReviewed    DateTime?
+  completed       Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@index([enrollmentId])
+  @@index([dueDate, completed])
+  @@map("review_items")
+}
+
+model CourseReview {
+  id       String @id @default(cuid())
+  userId   String
+  courseId String
+  rating  Int
+  review  String? @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([courseId])
+  @@map("course_reviews")
+}
+
+model Tag {
+  id   String @id @default(cuid())
+  name String @unique
+  slug String @unique
+  
+  courses CourseTag[]
+
+  @@map("tags")
+}
+
+model CourseTag {
+  courseId String
+  tagId    String
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([courseId, tagId])
+  @@map("course_tags")
+}
+
+model UserActivity {
+  id           String @id @default(cuid())
+  userId       String
+  enrollmentId String?
+  activityType ActivityType
+  metadata     Json?
+  timestamp DateTime @default(now())
+
+  @@index([userId])
+  @@index([enrollmentId])
+  @@index([timestamp])
+  @@map("user_activities")
+}
+
+enum ActivityType {
+  COURSE_CREATED
+  COURSE_PUBLISHED
+  COURSE_ENROLLED
+  LESSON_STARTED
+  LESSON_COMPLETED
+  QUIZ_ATTEMPTED
+  MODULE_COMPLETED
+  COURSE_COMPLETED
+  REVIEW_LEFT
+}

@@ -41,7 +41,6 @@ export async function POST(req: NextRequest) {
     const prompt = lessonDesignPrompt(lessonParams);
     console.log('Generating lessons for module:', moduleData.moduleNumber, moduleData.moduleName);
 
-    // --- RETRY LOGIC START ---
     let attempts = 0;
     const maxRetries = 3;
     let response;
@@ -68,10 +67,9 @@ export async function POST(req: NextRequest) {
 
       data = await response.json();
 
-      // If successful, break out of the loop
       if (response.ok) break;
 
-      // Check if the error is a 503 (Overloaded) or 429 (Rate Limit)
+     
       const isRetryable = response.status === 503 || response.status === 429;
 
       if (isRetryable && attempts < maxRetries) {
@@ -85,30 +83,13 @@ export async function POST(req: NextRequest) {
         throw new Error(data.error?.message || `Gemini API failed with status ${response.status}`);
       }
     }
-    // --- RETRY LOGIC END ---
-
-    // *** ENHANCED DEBUGGING ***
-    console.log('Response status:', response?.status);
-    console.log('Full Gemini response structure:', JSON.stringify(data, null, 2));
-    console.log('Has candidates?', !!data.candidates);
-    console.log('Candidates length:', data.candidates?.length);
-    console.log('Has content?', !!data.candidates?.[0]?.content);
-    console.log('Has parts?', !!data.candidates?.[0]?.content?.parts);
-    console.log('Parts length:', data.candidates?.[0]?.content?.parts?.length);
-
+  
+    
     const lessonContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
     
-    console.log('Extracted lesson content length:', lessonContent?.length || 0);
-    console.log('First 200 chars of content:', lessonContent?.substring(0, 200));
+    
     
     if (!lessonContent) {
-      console.error('❌ EXTRACTION FAILED - Response structure:', {
-        hasCandidates: !!data.candidates,
-        candidatesLength: data.candidates?.length,
-        firstCandidate: data.candidates?.[0],
-        finishReason: data.candidates?.[0]?.finishReason,
-        safetyRatings: data.candidates?.[0]?.safetyRatings
-      });
       throw new Error('No lesson content generated - check logs for response structure');
     }
     
@@ -117,7 +98,7 @@ export async function POST(req: NextRequest) {
       parsedLessons = JSON.parse(lessonContent);
       console.log('✅ Successfully parsed lessons');
     } catch (parseError) {
-      console.error('❌ Failed to parse lesson JSON:', parseError);
+      console.error('Failed to parse lesson JSON:', parseError);
       console.error('Raw content that failed to parse:', lessonContent);
       throw new Error('Invalid JSON response from AI');
     }
