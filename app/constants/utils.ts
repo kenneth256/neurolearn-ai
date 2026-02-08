@@ -17,6 +17,7 @@ export interface CourseGenParams {
 }
 
 export interface DailyLesson {
+   id: string;
   day: number;
   title: string;
   duration: string;
@@ -304,7 +305,7 @@ CRITICAL RULES FOR GENERATION:
 Return ONLY the JSON object, nothing else.`;
 };
 
-// export const lessonDesignPrompt = ({ module, userLevel, learningStyle, availableTime }: LessonDesignParams): string => {
+
 //   const moduleData = JSON.stringify(module, null, 2);
   
 //   return `You are a world-class Instructional Designer. Your task is to generate a **Full, Interactive Course Module**. 

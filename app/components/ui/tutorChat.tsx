@@ -6,10 +6,10 @@ import { useVideoLecture } from "./videotutor";
 import ThinkingIndicator from "./thinking";
 import CodeEditBlock from "./codeEdit";
 import VideoTutorModal from "../videotutor";
+import toast from "react-hot-toast";
 import {
   X,
-  Bot,
-  Sparkles,
+  BookOpen,
   Volume2,
   VolumeX,
   Mic,
@@ -27,6 +27,9 @@ interface TutorBotProps {
   fileContent?: string;
   fileName?: string;
   onFileUpdate?: (newContent: string) => void;
+  enrollmentId: string;
+  lessonModuleId: string;
+  timeSpentMinutes?: number;
 }
 
 type ThinkingLevel = "minimal" | "low" | "medium" | "high";
@@ -38,6 +41,9 @@ const TutorBot: React.FC<TutorBotProps> = ({
   fileContent,
   fileName,
   onFileUpdate,
+  enrollmentId,
+  lessonModuleId,
+  timeSpentMinutes = 0,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -86,16 +92,6 @@ const TutorBot: React.FC<TutorBotProps> = ({
       const clientHeight = document.documentElement.clientHeight;
       const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
 
-      console.log("Scroll Debug:", {
-        scrollTop,
-        scrollHeight,
-        clientHeight,
-        distanceFromBottom,
-        isOpen,
-        scrollPromptDismissed,
-        showScrollPrompt,
-      });
-
       const isAtBottom = distanceFromBottom < 150;
 
       if (
@@ -104,8 +100,6 @@ const TutorBot: React.FC<TutorBotProps> = ({
         !scrollPromptDismissed &&
         !showScrollPrompt
       ) {
-        console.log("✅ At bottom! Starting timer...");
-
         if (scrollTimeoutRef.current) {
           clearTimeout(scrollTimeoutRef.current);
         }
@@ -113,12 +107,10 @@ const TutorBot: React.FC<TutorBotProps> = ({
         isScrolling = true;
 
         scrollTimeoutRef.current = setTimeout(() => {
-          console.log("⏰ Timer complete! Showing prompt...");
           setShowScrollPrompt(true);
           isScrolling = false;
         }, 2000);
       } else if (!isAtBottom && scrollTimeoutRef.current) {
-        console.log("❌ Scrolled away from bottom, canceling timer");
         clearTimeout(scrollTimeoutRef.current);
         scrollTimeoutRef.current = null;
         isScrolling = false;
@@ -139,7 +131,6 @@ const TutorBot: React.FC<TutorBotProps> = ({
   }, [isOpen, scrollPromptDismissed, showScrollPrompt]);
 
   useEffect(() => {
-    console.log("🔄 Module/Lesson changed, resetting prompt state");
     setScrollPromptDismissed(false);
     setShowScrollPrompt(false);
     if (scrollTimeoutRef.current) {
@@ -147,13 +138,54 @@ const TutorBot: React.FC<TutorBotProps> = ({
     }
   }, [lessonContext, moduleName]);
 
-  useEffect(() => {
-    console.log("🎯 showScrollPrompt state changed to:", showScrollPrompt);
-  }, [showScrollPrompt]);
-
-  const handleAcceptScrollPrompt = () => {
-    console.log("✅ User accepted scroll prompt");
+  const handleAcceptScrollPrompt = async () => {
     setShowScrollPrompt(false);
+
+    const loadingToast = toast.loading("Completing lesson...");
+
+    try {
+      const response = await fetch("/api/courses/lesson/complete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          enrollmentId,
+          lessonModuleId,
+          timeSpentMinutes: timeSpentMinutes || 0,
+          exercisesCompleted: 0,
+          totalExercises: 0,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success(data.message, {
+          id: loadingToast,
+          duration: 4000,
+          icon: data.data.isModuleComplete ? "🎉" : "✅",
+        });
+
+        if (data.data.isModuleComplete) {
+          setTimeout(() => {
+            toast.success("Next module unlocked! Keep going! 🚀", {
+              duration: 3000,
+            });
+          }, 500);
+        }
+      } else {
+        toast.error(data.message || "Failed to complete lesson", {
+          id: loadingToast,
+        });
+      }
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.", {
+        id: loadingToast,
+      });
+      console.error("Error completing lesson:", error);
+    }
+
     setScrollPromptDismissed(true);
     setIsOpen(true);
 
@@ -166,7 +198,6 @@ const TutorBot: React.FC<TutorBotProps> = ({
   };
 
   const handleDismissScrollPrompt = () => {
-    console.log("❌ User dismissed scroll prompt");
     setShowScrollPrompt(false);
     setScrollPromptDismissed(true);
   };
@@ -249,7 +280,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
       (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      alert("Voice input not supported in this browser.");
+      toast.error("Voice input not supported in this browser");
       return;
     }
 
@@ -347,13 +378,15 @@ const TutorBot: React.FC<TutorBotProps> = ({
       parts.push(
         <div
           key={codeId}
-          className="my-4 rounded-lg overflow-hidden border border-gray-700"
+          className="my-4 rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700"
         >
-          <div className="bg-[#1e1e1e] px-4 py-2 flex items-center justify-between border-b border-gray-700">
-            <span className="text-xs text-gray-400 font-mono">{language}</span>
+          <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2 flex items-center justify-between border-b border-slate-300 dark:border-slate-700">
+            <span className="text-xs text-slate-600 dark:text-slate-400 font-mono uppercase tracking-wider">
+              {language}
+            </span>
             <button
               onClick={() => copyToClipboard(code, blockIndex)}
-              className="flex items-center gap-1.5 px-2 py-1 text-xs text-gray-400 hover:text-white transition-colors rounded hover:bg-gray-700"
+              className="flex items-center gap-1.5 px-2 py-1 text-xs text-slate-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors rounded hover:bg-slate-200 dark:hover:bg-slate-700"
             >
               {copiedCode === blockIndex ? (
                 <>
@@ -368,8 +401,8 @@ const TutorBot: React.FC<TutorBotProps> = ({
               )}
             </button>
           </div>
-          <div className="bg-[#1e1e1e] p-4 overflow-x-auto">
-            <pre className="text-sm text-gray-100 font-mono leading-relaxed">
+          <div className="bg-slate-50 dark:bg-slate-900 p-4 overflow-x-auto">
+            <pre className="text-sm text-slate-800 dark:text-slate-200 font-mono leading-relaxed">
               <code>{code}</code>
             </pre>
           </div>
@@ -408,7 +441,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
         return (
           <code
             key={i}
-            className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-sm font-mono text-pink-600 dark:text-pink-400 break-all"
+            className="px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/30 rounded text-sm font-mono text-amber-700 dark:text-amber-500 break-all border border-amber-200 dark:border-amber-800"
           >
             {part.slice(1, -1)}
           </code>
@@ -422,31 +455,31 @@ const TutorBot: React.FC<TutorBotProps> = ({
     <>
       {showScrollPrompt && !isOpen && (
         <div
-          className="fixed bottom-24 left-6 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border-2 border-blue-500 p-4 max-w-sm z-[100] animate-slideIn"
+          className="fixed bottom-24 left-6 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border-2 border-amber-500 dark:border-amber-600 p-6 max-w-sm z-[100] animate-slideIn"
           style={{ zIndex: 100 }}
         >
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-              <Sparkles size={20} className="text-white" />
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+              <BookOpen size={24} className="text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="font-semibold text-gray-900 dark:text-white text-sm mb-1">
+              <h4 className="font-serif font-bold text-gray-900 dark:text-white text-base mb-2">
                 Finished reading?
               </h4>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">
                 Would you like me to quiz you on what you just learned to check
                 your understanding?
               </p>
               <div className="flex gap-2">
                 <button
                   onClick={handleAcceptScrollPrompt}
-                  className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-md"
                 >
                   Yes, quiz me!
                 </button>
                 <button
                   onClick={handleDismissScrollPrompt}
-                  className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                 >
                   Not now
                 </button>
@@ -454,9 +487,9 @@ const TutorBot: React.FC<TutorBotProps> = ({
             </div>
             <button
               onClick={handleDismissScrollPrompt}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 flex-shrink-0"
+              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex-shrink-0 transition-colors"
             >
-              <X size={16} />
+              <X size={18} />
             </button>
           </div>
         </div>
@@ -464,11 +497,11 @@ const TutorBot: React.FC<TutorBotProps> = ({
 
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 left-6 p-4 bg-[#1e3a8a] text-white rounded-2xl shadow-2xl hover:bg-[#1e40af] transition-all flex items-center gap-2 group z-50"
+        className="fixed bottom-6 left-6 p-4 bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-2xl shadow-2xl hover:shadow-amber-500/50 hover:from-amber-600 hover:to-amber-700 transition-all flex items-center gap-3 group z-50 border-2 border-amber-400"
         style={{ display: isOpen ? "none" : "flex" }}
       >
-        <Bot size={24} />
-        <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 font-semibold text-sm">
+        <BookOpen size={24} className="flex-shrink-0" />
+        <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 font-serif font-bold text-sm whitespace-nowrap">
           AI Tutor
         </span>
       </button>
@@ -478,21 +511,21 @@ const TutorBot: React.FC<TutorBotProps> = ({
           className={`fixed ${
             isExpanded
               ? "inset-4 w-auto h-auto"
-              : "bottom-6 left-6 w-[420px] max-w-[calc(100vw-3rem)] h-[600px]"
-          } bg-white dark:bg-[#1e1e1e] rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 flex flex-col z-50 overflow-hidden transition-all duration-300`}
+              : "bottom-6 left-6 w-[480px] max-w-[calc(100vw-3rem)] h-[650px]"
+          } bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border-2 border-slate-200 dark:border-slate-800 flex flex-col z-50 overflow-hidden transition-all duration-300`}
         >
-          <div className="p-4 bg-white dark:bg-[#1e1e1e] border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
+          <div className="p-6 bg-gradient-to-r from-amber-50 to-slate-50 dark:from-gray-900 dark:to-gray-900 border-b-2 border-slate-200 dark:border-slate-800 flex-shrink-0">
             <div className="flex justify-between items-center">
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                  <Sparkles size={16} className="text-white" />
+              <div className="flex items-center gap-4 min-w-0 flex-1">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                  <BookOpen size={20} className="text-white" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                  <h3 className="text-base font-serif font-bold text-gray-900 dark:text-white truncate">
                     AI Tutor
                   </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {thinkingLevel} thinking
+                  <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-mono">
+                    {thinkingLevel} mode
                   </p>
                 </div>
               </div>
@@ -501,8 +534,8 @@ const TutorBot: React.FC<TutorBotProps> = ({
                   onClick={() => setVoiceEnabled(!voiceEnabled)}
                   className={`p-2 rounded-lg transition-all ${
                     voiceEnabled
-                      ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-                      : "text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-500"
+                      : "text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                   }`}
                   title={voiceEnabled ? "Voice ON" : "Voice OFF"}
                 >
@@ -511,7 +544,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
 
                 <button
                   onClick={() => setIsExpanded(!isExpanded)}
-                  className="p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                  className="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                   title={isExpanded ? "Minimize" : "Expand"}
                 >
                   {isExpanded ? (
@@ -523,7 +556,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
 
                 <button
                   onClick={handleGenerateVideo}
-                  className="p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                  className="p-2 text-slate-400 hover:text-amber-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                   title="Generate Video"
                 >
                   <svg
@@ -545,36 +578,36 @@ const TutorBot: React.FC<TutorBotProps> = ({
                     stopSpeaking();
                     stopListening();
                   }}
-                  className="p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                  className="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                 >
                   <X size={18} />
                 </button>
               </div>
             </div>
 
-            <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
+            <div className="flex gap-2 mt-4 overflow-x-auto pb-1">
               {(["minimal", "low", "medium", "high"] as const).map((level) => (
                 <button
                   key={level}
                   onClick={() => setThinkingLevel(level)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all flex-shrink-0 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all flex-shrink-0 ${
                     thinkingLevel === level
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                      ? "bg-amber-600 text-white shadow-md"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
                   }`}
                 >
-                  {level.charAt(0).toUpperCase() + level.slice(1)}
+                  {level}
                 </button>
               ))}
             </div>
 
             {voiceEnabled && (
-              <label className="flex items-center gap-2 mt-2 text-xs text-gray-500 dark:text-gray-400 cursor-pointer">
+              <label className="flex items-center gap-2 mt-3 text-xs text-slate-500 dark:text-slate-400 cursor-pointer font-medium">
                 <input
                   type="checkbox"
                   checked={autoListen}
                   onChange={(e) => setAutoListen(e.target.checked)}
-                  className="rounded"
+                  className="rounded border-slate-300 text-amber-600 focus:ring-amber-500"
                 />
                 Auto-listen after response
               </label>
@@ -588,23 +621,27 @@ const TutorBot: React.FC<TutorBotProps> = ({
             videoScript={videoScript}
             onClose={handleCloseVideo}
             onReplayAudio={replayAudio}
+            userId=""
           />
 
           <div
             ref={scrollRef}
-            className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 bg-white dark:bg-[#1e1e1e] min-h-0"
+            className="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-6 bg-white dark:bg-gray-900 min-h-0"
           >
             {cleanMessages.length === 0 && (
-              <div className="text-center py-12 space-y-6">
-                <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                  <Sparkles className="text-white" size={32} />
+              <div className="text-center py-16 space-y-8">
+                <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-xl">
+                  <BookOpen className="text-white" size={40} />
                 </div>
                 <div>
-                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  <h4 className="text-xl font-serif font-bold text-gray-900 dark:text-white mb-3">
                     How can I help you today?
                   </h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 px-4">
-                    Ask me anything about {moduleName}
+                  <p className="text-sm text-slate-600 dark:text-slate-400 px-6 leading-relaxed">
+                    Ask me anything about{" "}
+                    <span className="font-semibold text-amber-600 dark:text-amber-500">
+                      {moduleName}
+                    </span>
                   </p>
                 </div>
                 {suggestedQuestions.length > 0 && (
@@ -613,7 +650,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
                       <button
                         key={i}
                         onClick={() => handleSend(q)}
-                        className="px-4 py-2 text-sm bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-all border border-gray-200 dark:border-gray-700"
+                        className="px-4 py-2 text-sm bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-slate-700 dark:hover:text-amber-500 transition-all border border-slate-200 dark:border-slate-700 font-medium"
                       >
                         {q}
                       </button>
@@ -624,25 +661,27 @@ const TutorBot: React.FC<TutorBotProps> = ({
             )}
 
             {cleanMessages.map((m, i) => (
-              <div key={i} className="flex gap-3 items-start">
+              <div key={i} className="flex gap-4 items-start">
                 {m.role === "model" && (
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                    <Sparkles size={16} className="text-white" />
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                    <BookOpen size={18} className="text-white" />
                   </div>
                 )}
 
                 <div
-                  className={`flex-1 min-w-0 ${m.role === "user" ? "flex justify-end" : ""}`}
+                  className={`flex-1 min-w-0 ${
+                    m.role === "user" ? "flex justify-end" : ""
+                  }`}
                 >
                   <div
                     className={`inline-block max-w-[85%] ${
                       m.role === "user"
-                        ? "bg-[#1a73e8] text-white px-4 py-2.5 rounded-2xl rounded-tr-md"
+                        ? "bg-gradient-to-r from-slate-700 to-slate-800 dark:from-slate-800 dark:to-slate-900 text-white px-5 py-3 rounded-2xl rounded-tr-md shadow-md border border-slate-600 dark:border-slate-700"
                         : "text-gray-800 dark:text-gray-200"
                     }`}
                   >
                     {m.role === "user" ? (
-                      <p className="text-sm leading-relaxed break-words">
+                      <p className="text-sm leading-relaxed break-words font-medium">
                         {m.text}
                       </p>
                     ) : (
@@ -652,7 +691,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
                     )}
                   </div>
                   {m.codeEdit && (
-                    <div className="mt-2">
+                    <div className="mt-3">
                       <CodeEditBlock
                         codeEdit={m.codeEdit}
                         onApply={onFileUpdate ? applyCodeChange : undefined}
@@ -663,13 +702,13 @@ const TutorBot: React.FC<TutorBotProps> = ({
                 </div>
 
                 {m.role === "user" && (
-                  <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-slate-200 dark:bg-slate-700 flex items-center justify-center flex-shrink-0 shadow-sm">
                     <svg
-                      width="16"
-                      height="16"
+                      width="18"
+                      height="18"
                       viewBox="0 0 24 24"
                       fill="currentColor"
-                      className="text-gray-600 dark:text-gray-300"
+                      className="text-slate-600 dark:text-slate-300"
                     >
                       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
                     </svg>
@@ -679,17 +718,17 @@ const TutorBot: React.FC<TutorBotProps> = ({
             ))}
 
             {isThinking && (
-              <div className="flex gap-3 items-start">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                  <Sparkles size={16} className="text-white" />
+              <div className="flex gap-4 items-start">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-md">
+                  <BookOpen size={18} className="text-white" />
                 </div>
                 <ThinkingIndicator />
               </div>
             )}
           </div>
 
-          <div className="p-4 bg-white dark:bg-[#1e1e1e] border-t border-gray-200 dark:border-gray-800 flex-shrink-0">
-            <div className="flex items-end gap-2">
+          <div className="p-5 bg-gradient-to-r from-slate-50 to-amber-50/30 dark:from-gray-900 dark:to-gray-900 border-t-2 border-slate-200 dark:border-slate-800 flex-shrink-0">
+            <div className="flex items-end gap-3">
               {voiceEnabled && (
                 <button
                   onClick={() => {
@@ -699,10 +738,10 @@ const TutorBot: React.FC<TutorBotProps> = ({
                       startListening();
                     }
                   }}
-                  className={`p-3 rounded-full transition-all flex-shrink-0 ${
+                  className={`p-3 rounded-xl transition-all flex-shrink-0 shadow-md ${
                     isListening
                       ? "bg-red-500 text-white"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
                   }`}
                   title={isListening ? "Stop" : "Voice input"}
                 >
@@ -718,13 +757,13 @@ const TutorBot: React.FC<TutorBotProps> = ({
                   }
                   placeholder="Message AI Tutor..."
                   disabled={isThinking || isListening}
-                  className="w-full bg-gray-100 dark:bg-gray-800 border-none rounded-3xl px-5 py-3 pr-12 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-50 resize-none"
+                  className="w-full bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-3 pr-12 text-sm text-gray-900 dark:text-gray-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none disabled:opacity-50 resize-none transition-all"
                 />
               </div>
               <button
                 onClick={() => handleSend()}
                 disabled={isThinking || !input.trim() || isListening}
-                className="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed flex-shrink-0"
+                className="p-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl hover:from-amber-600 hover:to-amber-700 transition-all disabled:from-slate-300 disabled:to-slate-400 dark:disabled:from-slate-700 dark:disabled:to-slate-800 disabled:cursor-not-allowed flex-shrink-0 shadow-md"
               >
                 <svg
                   width="20"
@@ -733,6 +772,8 @@ const TutorBot: React.FC<TutorBotProps> = ({
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 >
                   <line x1="22" y1="2" x2="11" y2="13" />
                   <polygon points="22 2 15 22 11 13 2 9 22 2" />

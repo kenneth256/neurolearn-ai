@@ -9,16 +9,16 @@ export async function generateWithLLM(prompt: string) {
     model: "gemini-3-flash-preview",
     generationConfig: {
       temperature: 0.7,
-      responseMimeType: "application/json", // 🔥 critical
+      responseMimeType: "application/json", 
     },
   });
 
-  const result = await model.generateContent([
-    {
+  const result = await model.generateContent({
+   contents: [ {
       role: "user",
       parts: [{ text: prompt }],
-    },
-  ]);
+    }],
+});
 
   const response = result.response.text();
 

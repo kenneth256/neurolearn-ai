@@ -125,7 +125,7 @@ const SpacedRepetition: React.FC<{ data: any }> = ({ data }) => {
 
         <div>
           <h4 className="text-slate-900 dark:text-slate-100 font-serif text-xl font-bold mb-6 flex items-center gap-3">
-            <Target size={20} className="text-amber-400" />
+            <Target size={20} className="text-amber-00" />
             Core Tasks
           </h4>
 

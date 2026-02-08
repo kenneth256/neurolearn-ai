@@ -11,6 +11,7 @@ const transformLessonsToUIFormat = (
   moduleData?: any,
 ): LessonsData => {
   const dailyLessons = dbLessons.map((lesson) => ({
+    id: lesson.id,
     day: lesson.day,
     title: lesson.title,
     duration: lesson.duration,

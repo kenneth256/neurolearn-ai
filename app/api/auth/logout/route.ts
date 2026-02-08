@@ -1,26 +1,21 @@
-// ============================================
-// app/api/auth/logout/route.ts
-// ============================================
-
-import { NextRequest } from 'next/server';
-import { requireAuth, createSuccessResponse, createErrorResponse } from '../../lib/auth/auth';
+import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers'; // Needed to manipulate cookies
+import { createSuccessResponse, createErrorResponse } from '../../lib/auth/auth';
 
 export async function POST(request: NextRequest) {
   try {
+    const cookieStore = await cookies();
     
-    await requireAuth(request);
-    
-    
-    
+   
+    // This tells the browser to expire the cookie immediately
+    cookieStore.delete('auth-token');
+
+   
     return createSuccessResponse({
-      message: 'Logout successful',
+      message: 'Logout successful and cookie cleared',
     });
     
   } catch (error) {
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return createErrorResponse('Unauthorized', 401);
-    }
-    
     console.error('Logout error:', error);
     return createErrorResponse('Failed to logout', 500);
   }

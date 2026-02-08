@@ -1,33 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "../../lib/prisma"; 
 import jwt from "jsonwebtoken";
+import { createErrorResponse } from "../../lib/auth/auth";
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
 
 export async function GET(req: NextRequest) {
   try {
-    // 1. Authenticate user from the auth-token cookie
+    
     const token = req.cookies.get("auth-token")?.value;
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const decoded = jwt.verify(token, JWT_SECRET) as { learnerId: number };
+    if (!decoded) return createErrorResponse("Invalid token", 401);
 
-    const enrollments = await prisma.enrollment.findMany({
+    const userIdString = String(decoded.learnerId);
+
+  const enrollments = await prisma.enrollment.findMany({
       where: {
-        learnerId: decoded.learnerId,
+        userId: userIdString
       },
       include: {
         course: {
           include: {
             _count: {
-              select: { modules: true } // Useful for "X of Y modules" display
+              select: { modules: true } 
             },
             modules: {
               include: {
-                progress: {
-                  where: { learnerId: decoded.learnerId }
+                _count: { select: { lessons: true } },
+                moduleProgress: {
+                  where: {
+                    userId: userIdString
+                  }
                 }
               }
             }

@@ -20,8 +20,7 @@ export async function POST(req: Request) {
     }
     
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
-    
-    console.log("Calling Gemini API...");
+  
     
     const response = await fetch(url, {
       method: "POST",
@@ -40,7 +39,6 @@ export async function POST(req: Request) {
       }),
     });
 
-    console.log("Gemini response status:", response.status);
 
     const responseText = await response.text();
 
@@ -73,9 +71,6 @@ export async function POST(req: Request) {
         error: "No content returned from Gemini" 
       }, { status: 500 });
     }
-
-    console.log("AI text length:", aiText.length);
-    console.log("AI text preview:", aiText.substring(0, 200));
 
     
     let cleanedText = aiText.trim();

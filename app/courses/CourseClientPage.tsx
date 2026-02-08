@@ -11,6 +11,7 @@ const transformLessonsToUIFormat = (
   additionalData?: any,
 ): LessonsData => {
   const dailyLessons: DailyLesson[] = dbLessons.map((lesson) => ({
+    id: lesson.id,
     day: lesson.day,
     title: lesson.title,
     duration: lesson.duration,
@@ -58,8 +59,48 @@ const CourseClientPage = ({ id }: { id: string }) => {
   const [metadata, setMetadata] = useState<any>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingModule, setGeneratingModule] = useState<number | null>(null);
+  
+  // ✅ ADD: State for enrollmentId
+  const [enrollmentId, setEnrollmentId] = useState<string>("");
+  const [enrollmentLoading, setEnrollmentLoading] = useState(true);
 
   const processingModules = useRef<Set<number>>(new Set());
+
+  // ✅ ADD: Fetch enrollment for this course
+  useEffect(() => {
+    const fetchEnrollment = async () => {
+      if (!id) return;
+
+      try {
+        console.log("🔍 Fetching enrollment for course:", id);
+        
+        const response = await fetch(`/api/enrollments/course/${id}`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log("✅ Enrollment found:", data.enrollment.id);
+          setEnrollmentId(data.enrollment.id);
+        } else {
+          const errorData = await response.json();
+          console.error("❌ Enrollment not found:", errorData.message);
+          
+          // If enrollment doesn't exist, you might want to create one
+          // or redirect the user to enroll first
+          setError("Please enroll in this course first");
+        }
+      } catch (err) {
+        console.error("❌ Failed to fetch enrollment:", err);
+        setError("Failed to load enrollment");
+      } finally {
+        setEnrollmentLoading(false);
+      }
+    };
+
+    fetchEnrollment();
+  }, [id]);
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -124,7 +165,6 @@ const CourseClientPage = ({ id }: { id: string }) => {
       }
 
       if (lessons[modNum]) {
-        
         return;
       }
 
@@ -187,7 +227,7 @@ const CourseClientPage = ({ id }: { id: string }) => {
               [modNum]: transformedLessons,
             }));
 
-            return; // Early return - don't generate
+            return;
           } else {
             console.log(`📭 No lessons found in database for Module ${modNum}`);
           }
@@ -197,9 +237,6 @@ const CourseClientPage = ({ id }: { id: string }) => {
           );
         }
 
-        
-
-        // Step 2: Generate new lessons with AI
         const generateResponse = await fetch("/api/ai/lesson", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -229,9 +266,6 @@ const CourseClientPage = ({ id }: { id: string }) => {
           );
         }
 
-     
-
-        // Step 3: Extract lesson data
         const moduleKey = String(modNum);
         let aiLessonsData;
 
@@ -257,7 +291,6 @@ const CourseClientPage = ({ id }: { id: string }) => {
 
         console.log(`💾 Saving ${dailyLessons.length} lessons to database...`);
 
-        // Step 4: Save to database
         const saveResponse = await fetch("/api/courses/lesson", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -278,14 +311,12 @@ const CourseClientPage = ({ id }: { id: string }) => {
         }
 
         if (saveResult?.success) {
-          // Prepare additional data from AI response
           const additionalData = {
             weeklyMilestones: aiLessonsData.weeklyMilestones || [],
             differentiatedLearning: aiLessonsData.differentiatedLearning || {},
             assessmentBlueprint: aiLessonsData.assessmentBlueprint || {},
           };
 
-          // Transform saved lessons with additional data
           const transformedLessons = transformLessonsToUIFormat(
             saveResult.lessons,
             modNum,
@@ -300,7 +331,6 @@ const CourseClientPage = ({ id }: { id: string }) => {
         } else {
           console.error("❌ Save failed:", saveResult);
 
-          
           const fullLessonsData: LessonsData = {
             moduleTitle: aiLessonsData.moduleTitle || moduleToFetch.moduleName,
             moduleNumber: modNum,
@@ -351,12 +381,15 @@ const CourseClientPage = ({ id }: { id: string }) => {
     window.location.href = "/generate";
   };
 
-  if (loading) {
+  // ✅ MODIFIED: Wait for both course and enrollment to load
+  if (loading || enrollmentLoading) {
     return (
       <div className="min-h-screen bg-[#fcfbf7] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-slate-600 font-medium">Loading course...</p>
+          <p className="text-slate-600 font-medium">
+            {loading ? "Loading course..." : "Loading enrollment..."}
+          </p>
         </div>
       </div>
     );
@@ -378,6 +411,13 @@ const CourseClientPage = ({ id }: { id: string }) => {
     );
   }
 
+  // ✅ ADDED: Debug logging
+  console.log("📋 CourseClientPage - Passing to CourseBookUI:", {
+    enrollmentId,
+    hasEnrollmentId: !!enrollmentId,
+    courseModules: course?.length,
+  });
+
   return (
     <>
       <CourseBookUI
@@ -385,6 +425,7 @@ const CourseClientPage = ({ id }: { id: string }) => {
         lessons={lessons}
         onModuleSelect={(mod: any) => fetchModuleContent(mod)}
         onReset={handleReset}
+        enrollmentId={enrollmentId} 
       />
 
       {isGenerating && (

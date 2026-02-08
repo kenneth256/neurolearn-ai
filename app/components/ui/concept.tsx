@@ -11,6 +11,7 @@ import {
   Zap,
   GraduationCap,
   Rocket,
+  Sparkles,
 } from "lucide-react";
 
 export type Exercise = {
@@ -126,13 +127,13 @@ const ConceptSection: React.FC<ConceptSectionProps> = ({
           <div className="h-1 w-20 bg-amber-400 dark:bg-amber-500 rounded-full" />
         </div>
       </div>
-      
+
       <div className="mb-10">
         <p className="text-xl text-slate-600 dark:text-slate-300 leading-relaxed font-serif first-letter:text-5xl first-letter:font-bold first-letter:text-slate-900 dark:first-letter:text-slate-100 first-letter:mr-3 first-letter:float-left">
           {narrative}
         </p>
       </div>
-     
+
       <div className="bg-amber-50/40 dark:bg-amber-950/20 rounded-4xl p-8 border border-amber-100/50 dark:border-amber-900/30 mb-10 relative overflow-hidden group">
         <div className="absolute top-0 left-0 w-2 h-full bg-amber-400 dark:bg-amber-500 opacity-50" />
         <div className="flex items-center gap-3 text-amber-700 dark:text-amber-400 font-black text-[11px] uppercase tracking-[0.2em] mb-4">
@@ -193,129 +194,154 @@ const ConceptSection: React.FC<ConceptSectionProps> = ({
         </div>
       )}
       {/* 5. The "Gotcha" (Edge Cases) */}
-      <div className="bg-rose-50/30 dark:bg-rose-950/20 border border-rose-100/50 dark:border-rose-900/30 rounded-2xl p-6 flex gap-5 mb-10 transition-colors hover:bg-rose-50/50 dark:hover:bg-rose-950/30">
-        <div className="bg-rose-100 dark:bg-rose-900/50 p-3 rounded-xl shrink-0 h-fit">
-          <AlertCircle className="text-rose-600 dark:text-rose-400" size={24} />
+      <div className="bg-gradient-to-br from-amber-50/40 via-white to-red-50/20 dark:from-amber-950/10 dark:via-gray-900 dark:to-red-950/10 border-2 border-amber-300 dark:border-amber-800 rounded-2xl p-7 flex gap-5 mb-10 transition-all hover:shadow-lg shadow-amber-100 dark:shadow-amber-950/20">
+        <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 p-3 rounded-xl shrink-0 shadow-md flex items-center justify-center">
+          <AlertCircle className="text-white" size={24} />
         </div>
-        <div>
-          <span className="block text-xs font-black text-rose-500 dark:text-rose-400 uppercase tracking-widest mb-2">
+        <div className="flex-1">
+          <span className="block text-xs font-black text-amber-700 dark:text-amber-500 uppercase tracking-[0.2em] mb-3">
             Critical Limitation / Edge Case
           </span>
-          <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+          <p className="text-slate-800 dark:text-slate-200 leading-relaxed font-medium text-base">
             {edgeCase}
           </p>
         </div>
       </div>
-      {/* 6. Interaction Layer (Exercises & Socratic Inquiry) */}
       {(exercises.length > 0 || inquiry) && (
-        <div className="mt-12 pt-10 border-t border-slate-100 dark:border-slate-800 space-y-10">
-          {/* Render Exercises */}
+        <div className="mt-16 pt-12 border-t-2 border-slate-200 dark:border-slate-800 space-y-12">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shadow-md">
+              <Sparkles className="text-white" size={20} />
+            </div>
+            <h4 className="text-2xl font-serif font-bold text-gray-900 dark:text-white">
+              Hands-On Practice
+            </h4>
+          </div>
+
           {exercises.length > 0 &&
             exercises.map((exercise, idx) => (
               <div key={idx} className="grid md:grid-cols-2 gap-6">
-                {/* Challenge / Inquiry */}
-                <div className="group p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md dark:hover:shadow-slate-950/50 transition-all">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 bg-indigo-50 dark:bg-indigo-950/50 rounded-lg text-indigo-500 dark:text-indigo-400">
-                      <HelpCircle size={18} />
+                {/* Challenge Card */}
+                <div className="group p-8 bg-white dark:bg-gray-900 rounded-2xl border-2 border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all">
+                  <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-slate-100 dark:border-slate-800">
+                    <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center">
+                      <HelpCircle
+                        size={20}
+                        className="text-slate-600 dark:text-slate-400"
+                      />
                     </div>
-                    <span className="font-black text-slate-400 dark:text-slate-500 uppercase text-[10px] tracking-widest">
-                      Exercise {idx + 1}
-                    </span>
+                    <div className="flex-1">
+                      <span className="font-black text-slate-400 dark:text-slate-500 uppercase text-xs tracking-[0.2em]">
+                        Exercise {idx + 1}
+                      </span>
+                    </div>
+                    <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-950/30 flex items-center justify-center">
+                      <span className="text-amber-600 dark:text-amber-500 font-mono font-bold text-sm">
+                        {String(idx + 1).padStart(2, "0")}
+                      </span>
+                    </div>
                   </div>
 
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">
+                  <h3 className="text-xl font-serif font-bold text-gray-900 dark:text-gray-100 mb-4">
                     {exercise.title}
                   </h3>
 
-                  <p className="text-slate-700 dark:text-slate-300 italic leading-relaxed font-serif text-lg mb-4">
+                  <p className="text-slate-700 dark:text-slate-300 italic leading-relaxed font-serif text-base mb-6">
                     {exercise.challenge}
                   </p>
 
                   {exercise.constraints && exercise.constraints.length > 0 && (
-                    <div className="mt-4">
-                      <p className="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2 font-bold">
+                    <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800">
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 mb-3 font-black flex items-center gap-2">
+                        <span className="w-1 h-1 rounded-full bg-slate-400" />
                         Constraints
                       </p>
-                      <ul className="space-y-1 text-sm text-slate-500 dark:text-slate-400 list-disc list-inside">
+                      <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400 list-none">
                         {exercise.constraints.map((c, i) => (
-                          <li key={i}>{c}</li>
+                          <li key={i} className="flex items-start gap-2">
+                            <span className="text-amber-500 mt-1">•</span>
+                            <span>{c}</span>
+                          </li>
                         ))}
                       </ul>
                     </div>
                   )}
                 </div>
 
-                {/* Protocol / Solution / Hints */}
-                <div className="group p-6 bg-slate-900 dark:bg-slate-950 rounded-2xl shadow-xl border border-slate-800 dark:border-slate-700 hover:bg-slate-800 dark:hover:bg-slate-900 transition-all">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 bg-amber-500/10 dark:bg-amber-500/20 rounded-lg text-amber-500 dark:text-amber-400">
-                      <Zap size={18} />
+                {/* Solution Card */}
+                <div className="group p-8 bg-slate-800 dark:bg-slate-900 rounded-2xl shadow-2xl border-2 border-slate-700 dark:border-slate-800 hover:border-amber-500/50 transition-all">
+                  <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-slate-700 dark:border-slate-800">
+                    <div className="w-10 h-10 bg-amber-500/20 rounded-xl flex items-center justify-center">
+                      <Zap size={20} className="text-amber-500" />
                     </div>
-                    <span className="font-black text-amber-500 dark:text-amber-400 uppercase text-[10px] tracking-widest">
-                      Hands-on Protocol
+                    <span className="font-black text-amber-500 uppercase text-xs tracking-[0.2em]">
+                      Solution Protocol
                     </span>
                   </div>
 
                   {exercise.hints && exercise.hints.length > 0 && (
-                    <div className="mb-4">
-                      <p className="text-xs uppercase tracking-widest text-slate-500 mb-2 font-bold">
+                    <div className="mb-6">
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-400 mb-3 font-black flex items-center gap-2">
+                        <span className="w-1 h-1 rounded-full bg-slate-500" />
                         Hints
                       </p>
-                      <ul className="space-y-2 text-sm text-slate-300 dark:text-slate-400 list-disc list-inside">
+                      <ul className="space-y-2 text-sm text-slate-300 list-none">
                         {exercise.hints.map((hint, i) => (
-                          <li key={i}>{hint}</li>
+                          <li key={i} className="flex items-start gap-2">
+                            <span className="text-amber-500 mt-1">→</span>
+                            <span>{hint}</span>
+                          </li>
                         ))}
                       </ul>
                     </div>
                   )}
 
-                  {/* Learning Path Component */}
+                  {/* Learning Path Tabs */}
                   {exercise.learningPath &&
                     (exercise.learningPath.forBeginners ||
                       exercise.learningPath.forAdvanced) && (
-                      <div className="mb-4 border border-slate-700 dark:border-slate-600 rounded-xl overflow-hidden">
+                      <div className="mb-6 border-2 border-slate-700 dark:border-slate-600 rounded-xl overflow-hidden">
                         {/* Tabs */}
-                        <div className="flex border-b border-slate-700 dark:border-slate-600">
+                        <div className="flex border-b-2 border-slate-700 dark:border-slate-600">
                           {exercise.learningPath.forBeginners && (
                             <button
                               onClick={() => togglePath(idx, "beginner")}
-                              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold transition-colors ${
+                              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-xs font-serif font-bold uppercase tracking-wider transition-all ${
                                 (activePath[idx] || "beginner") === "beginner"
-                                  ? "bg-emerald-500 text-white"
-                                  : "bg-slate-800 dark:bg-slate-900 text-slate-400 hover:text-slate-200"
+                                  ? "bg-amber-500 text-white shadow-lg"
+                                  : "bg-slate-700 dark:bg-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-600"
                               }`}
                             >
-                              <GraduationCap size={14} />
-                              <span>BEGINNER</span>
+                              <GraduationCap size={16} />
+                              <span>Beginner</span>
                             </button>
                           )}
                           {exercise.learningPath.forAdvanced && (
                             <button
                               onClick={() => togglePath(idx, "advanced")}
-                              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold transition-colors ${
+                              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-xs font-serif font-bold uppercase tracking-wider transition-all ${
                                 activePath[idx] === "advanced"
-                                  ? "bg-purple-600 text-white"
-                                  : "bg-slate-800 dark:bg-slate-900 text-slate-400 hover:text-slate-200"
+                                  ? "bg-slate-600 text-white shadow-lg"
+                                  : "bg-slate-700 dark:bg-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-600"
                               }`}
                             >
-                              <Rocket size={14} />
-                              <span>ADVANCED</span>
+                              <Rocket size={16} />
+                              <span>Advanced</span>
                             </button>
                           )}
                         </div>
 
-                        {/* Content */}
-                        <div className="p-4 bg-slate-800/50 dark:bg-slate-950/50">
+                        {/* Tab Content */}
+                        <div className="p-5 bg-slate-900/50 dark:bg-black/50">
                           {(activePath[idx] || "beginner") === "beginner" &&
                             exercise.learningPath.forBeginners && (
-                              <p className="text-sm text-slate-300 dark:text-slate-400 leading-relaxed">
+                              <p className="text-sm text-slate-300 dark:text-slate-400 leading-relaxed font-medium">
                                 {exercise.learningPath.forBeginners}
                               </p>
                             )}
                           {activePath[idx] === "advanced" &&
                             exercise.learningPath.forAdvanced && (
-                              <p className="text-sm text-slate-300 dark:text-slate-400 leading-relaxed">
+                              <p className="text-sm text-slate-300 dark:text-slate-400 leading-relaxed font-medium">
                                 {exercise.learningPath.forAdvanced}
                               </p>
                             )}
@@ -323,23 +349,27 @@ const ConceptSection: React.FC<ConceptSectionProps> = ({
                       </div>
                     )}
 
+                  {/* Full Solution */}
                   {exercise.fullSolution && (
-                    <div className="mb-4">
-                      <p className="text-xs uppercase tracking-widest text-emerald-400 mb-2 font-bold">
+                    <div className="mb-6">
+                      <p className="text-xs uppercase tracking-[0.2em] text-green-400 mb-3 font-black flex items-center gap-2">
+                        <span className="w-1 h-1 rounded-full bg-green-400" />
                         Solution
                       </p>
-                      <pre className="font-mono text-[13px] text-slate-300 dark:text-slate-400 leading-relaxed whitespace-pre-wrap bg-slate-950/40 rounded-lg p-4">
+                      <pre className="font-mono text-sm text-slate-200 leading-relaxed whitespace-pre-wrap bg-black/40 rounded-xl p-5 border border-slate-700">
                         {exercise.fullSolution}
                       </pre>
                     </div>
                   )}
 
+                  {/* Explanation */}
                   {exercise.explanationOfSolution && (
                     <div>
-                      <p className="text-xs uppercase tracking-widest text-slate-500 mb-2 font-bold">
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500 mb-3 font-black flex items-center gap-2">
+                        <span className="w-1 h-1 rounded-full bg-slate-500" />
                         Explanation
                       </p>
-                      <p className="text-sm text-slate-400 leading-relaxed">
+                      <p className="text-sm text-slate-400 leading-relaxed font-medium">
                         {exercise.explanationOfSolution}
                       </p>
                     </div>

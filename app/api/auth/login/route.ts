@@ -4,7 +4,7 @@ import { prisma } from '../../lib/prisma';
 import { loginSchema } from '../../lib/auth/validator';
 import {
   createErrorResponse,
-  createSuccessResponse,
+  
   generateToken,
   verifyPassword,
 } from '../../lib/auth/auth';
@@ -70,12 +70,12 @@ export async function POST(request: NextRequest) {
       message: 'Login successful',
     });
 
-    // Set HTTP-only cookie for API routes
+    
     response.cookies.set('auth-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 7, 
       path: '/',
     });
 

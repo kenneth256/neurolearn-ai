@@ -1,4 +1,4 @@
-// prisma.config.ts
+
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
@@ -8,6 +8,6 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: "postgresql://postgres:postgres@localhost:5432/neurolearn_test"
+    url: process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/neurolearn_test"
   },
 });

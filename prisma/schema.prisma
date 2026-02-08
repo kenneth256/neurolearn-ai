@@ -24,6 +24,8 @@ model User {
   moduleProgress     ModuleProgress[]
   assessmentAttempts UserAssessmentAttempt[]
   reviews            CourseReview[]
+  moodEntries        MoodEntry[]
+  learnerProfile     LearnerProfile?
 
   @@map("users")
 }
@@ -59,6 +61,7 @@ model Course {
   enrollments Enrollment[]
   reviews     CourseReview[]
   tags        CourseTag[]
+  videoPrompts VideoPrompt[]
 
   @@index([creatorId])
   @@index([fingerprint])
@@ -93,6 +96,9 @@ model CourseModule {
   course         Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lessons        LessonModule[]
   moduleProgress ModuleProgress[]
+  adaptiveQuizzes AdaptiveQuiz[]
+  moodEntries     MoodEntry[]
+  videoPrompts VideoPrompt[]
 
   @@unique([courseId, moduleNumber])
   @@index([courseId])
@@ -120,6 +126,9 @@ model LessonModule {
 
   courseModule   CourseModule    @relation(fields: [courseModuleId], references: [id], onDelete: Cascade)
   lessonProgress LessonProgress[]
+  adaptiveQuizzes AdaptiveQuiz[]
+  moodEntries     MoodEntry[]
+  videoPrompts VideoPrompt[]
 
   @@unique([courseModuleId, day])
   @@index([courseModuleId])
@@ -150,6 +159,8 @@ model Enrollment {
   moduleProgress ModuleProgress[]
   lessonProgress LessonProgress[]
   reviewItems    ReviewItem[]
+  adaptiveQuizzes AdaptiveQuiz[]
+  moodEntries     MoodEntry[]
 
   @@unique([userId, courseId])
   @@index([userId])
@@ -345,4 +356,293 @@ enum ActivityType {
   MODULE_COMPLETED
   COURSE_COMPLETED
   REVIEW_LEFT
+}
+
+model MoodEntry {
+  id           String   @id @default(cuid())
+  userId       String
+  enrollmentId String?
+  lessonModuleId String?
+  courseModuleId String?
+  
+  mood         MoodType
+  intensity    Int
+  trigger      String?
+  context      String?  @db.Text
+  
+  actionTaken       String?
+  wasHelpful        Boolean?
+  
+  timestamp    DateTime @default(now())
+  
+  metadata     Json?
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollment   Enrollment?   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  lessonModule LessonModule? @relation(fields: [lessonModuleId], references: [id], onDelete: Cascade)
+  courseModule CourseModule? @relation(fields: [courseModuleId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([enrollmentId])
+  @@index([lessonModuleId])
+  @@index([mood, timestamp])
+  @@index([userId, enrollmentId, timestamp])
+  @@map("mood_entries")
+}
+
+enum MoodType {
+  ENGAGED
+  NEUTRAL
+  BORED
+  FRUSTRATED
+  CONFUSED
+  EXCITED
+  OVERWHELMED
+}
+
+model AdaptiveQuiz {
+  id             String   @id @default(cuid())
+  userId         String
+  enrollmentId   String
+  lessonModuleId String?
+  courseModuleId String?
+  
+  generatedBy       String   @default("AI")
+  adaptationReason  String?
+  difficultyLevel   QuizDifficulty
+  
+  questions         Json
+  totalQuestions    Int
+  estimatedDuration Int
+  
+  focusAreas        Json?
+  questionTypes     Json?
+  
+  attempts          QuizAttempt[]
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  expiresAt  DateTime?
+
+  enrollment   Enrollment    @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  lessonModule LessonModule? @relation(fields: [lessonModuleId], references: [id], onDelete: Cascade)
+  courseModule CourseModule? @relation(fields: [courseModuleId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([enrollmentId])
+  @@index([lessonModuleId])
+  @@index([userId, enrollmentId])
+  @@map("adaptive_quizzes")
+}
+
+enum QuizDifficulty {
+  VERY_EASY
+  EASY
+  MODERATE
+  CHALLENGING
+  HARD
+  EXPERT
+}
+
+model QuizAttempt {
+  id              String   @id @default(cuid())
+  adaptiveQuizId  String
+  userId          String
+  
+  answers         Json
+  score           Float
+  correctAnswers  Int
+  incorrectAnswers Int
+  skippedQuestions Int     @default(0)
+  
+  timeSpentSeconds Int
+  averageTimePerQuestion Float
+  struggledQuestions Json?
+  
+  aiFeedback      String?  @db.Text
+  strengthAreas   Json?
+  improvementAreas Json?
+  nextSteps       Json?
+  
+  completionPattern String?
+  confidenceLevel   Float?
+  
+  submittedAt DateTime @default(now())
+  
+  adaptiveQuiz AdaptiveQuiz @relation(fields: [adaptiveQuizId], references: [id], onDelete: Cascade)
+
+  @@index([adaptiveQuizId])
+  @@index([userId])
+  @@index([userId, submittedAt])
+  @@map("quiz_attempts")
+}
+
+model LearnerProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  
+  preferredDifficulty  QuizDifficulty @default(MODERATE)
+  averageAccuracy      Float          @default(0)
+  learningVelocity     Float          @default(0)
+  retentionRate        Float          @default(0)
+  
+  commonStruggles      Json?
+  strongTopics         Json?
+  optimalQuizLength    Int?
+  bestTimeOfDay        String?
+  
+  boredomThreshold     Int    @default(5)
+  challengePreference  String @default("BALANCED")
+  feedbackResponsiveness Float @default(0)
+  
+  adaptationEnabled    Boolean @default(true)
+  lastAnalyzedAt       DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("learner_profiles")
+}
+
+// ============================================
+// VIDEO GENERATION SYSTEM
+// ============================================
+
+model VideoPrompt {
+  id              String   @id @default(cuid())
+  contentHash     String   @unique
+  
+  // Source tracking
+  courseId        String?
+  courseModuleId  String?
+  lessonModuleId  String?
+  
+  // Master prompt (full context)
+  masterPrompt    String   @db.Text
+  style           String
+  mood            String
+  
+  // Segmentation for long videos
+  isSegmented     Boolean  @default(false)
+  totalDuration   Int      // Total desired duration in seconds
+  segmentCount    Int      @default(1)
+  
+  generatedBy     String
+  generationModel String   @default("gemini-3-flash-preview")
+  
+  timesUsed       Int      @default(0)
+  lastUsedAt      DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  course          Course?       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseModule    CourseModule? @relation(fields: [courseModuleId], references: [id], onDelete: Cascade)
+  lessonModule    LessonModule? @relation(fields: [lessonModuleId], references: [id], onDelete: Cascade)
+  
+  segments        VideoSegment[]
+  compiledVideos  CompiledVideo[]
+
+  @@index([contentHash])
+  @@index([courseId])
+  @@index([courseModuleId])
+  @@index([lessonModuleId])
+  @@map("video_prompts")
+}
+
+model VideoSegment {
+  id             String   @id @default(cuid())
+  videoPromptId  String
+  
+  segmentNumber  Int      // 1, 2, 3, etc.
+  segmentPrompt  String   @db.Text
+  keyVisuals     Json
+  
+  // Transition info
+  transitionIn   String?  // "fade", "cut", "dissolve"
+  transitionOut  String?
+  
+  // Target duration for THIS segment
+  targetDuration Int      @default(5) // seconds
+  
+  // Generation status
+  status         SegmentStatus @default(PENDING)
+  retryCount     Int           @default(0)
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  videoPrompt    VideoPrompt        @relation(fields: [videoPromptId], references: [id], onDelete: Cascade)
+  generatedClips GeneratedVideoClip[]
+
+  @@unique([videoPromptId, segmentNumber])
+  @@index([videoPromptId])
+  @@index([status])
+  @@map("video_segments")
+}
+
+enum SegmentStatus {
+  PENDING
+  GENERATING
+  COMPLETED
+  FAILED
+}
+
+model GeneratedVideoClip {
+  id              String   @id @default(cuid())
+  videoSegmentId  String
+  
+  videoUrl        String
+  thumbnailUrl    String?
+  duration        Int      // Actual duration in seconds
+  
+  generationService String // "veo-3", "runway", etc.
+  generationParams  Json?
+  
+  status          VideoStatus @default(PROCESSING)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  videoSegment    VideoSegment @relation(fields: [videoSegmentId], references: [id], onDelete: Cascade)
+
+  @@index([videoSegmentId])
+  @@index([status])
+  @@map("generated_video_clips")
+}
+
+model CompiledVideo {
+  id              String   @id @default(cuid())
+  videoPromptId   String
+  
+  finalVideoUrl   String
+  thumbnailUrl    String?
+  totalDuration   Int      // seconds
+  
+  // Compilation metadata
+  segmentsUsed    Json     // Array of segment IDs in order
+  compilationMethod String @default("ffmpeg")
+  
+  status          VideoStatus @default(PROCESSING)
+  viewCount       Int         @default(0)
+  lastViewedAt    DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  videoPrompt     VideoPrompt @relation(fields: [videoPromptId], references: [id], onDelete: Cascade)
+
+  @@index([videoPromptId])
+  @@index([status])
+  @@map("compiled_videos")
+}
+
+enum VideoStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
+  ARCHIVED
 }
