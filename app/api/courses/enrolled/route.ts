@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
       }
     });
 
-    // 3. Clean up the response structure for the frontend
+  
     const enrolledCourses = enrollments.map((e) => ({
       enrollmentId: e.id,
       enrolledAt: e.enrolledAt,

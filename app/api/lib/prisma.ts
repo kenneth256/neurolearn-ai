@@ -1,22 +1,17 @@
 import { PrismaClient } from '@prisma/client';
-import { withAccelerate } from '@prisma/extension-accelerate';
 
 const prismaClientSingleton = () => {
- 
-  const options: any = {
-    accelerateUrl: process.env.ACCELERATE_URL || process.env.DATABASE_URL,
+  return new PrismaClient({
     log: ['query', 'error', 'warn'],
-  };
-
-  return new PrismaClient(options).$extends(withAccelerate());
+  });
 };
 
-type PrismaClientConfigured = ReturnType<typeof prismaClientSingleton>;
+declare const globalThis: {
+  prismaGlobal: ReturnType<typeof prismaClientSingleton>;
+} & typeof global;
 
-const globalForPrisma = global as unknown as { 
-  prisma: PrismaClientConfigured | undefined 
-};
+export const prisma = globalThis.prismaGlobal ?? prismaClientSingleton();
 
-export const prisma = globalForPrisma.prisma ?? prismaClientSingleton();
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+if (process.env.NODE_ENV !== 'production') {
+  globalThis.prismaGlobal = prisma;
+}

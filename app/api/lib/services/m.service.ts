@@ -5,9 +5,6 @@ import { prisma } from '../prisma';
 
 
 
-// ============================================
-// MASTERY PROGRESSION
-// ============================================
 
 export async function getMasteryProgression(
   enrollmentId: string
