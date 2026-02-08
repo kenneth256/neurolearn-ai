@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+   url      = env("DATABASE_URL")
 }
 
 model User {
@@ -73,8 +74,6 @@ model Course {
 enum CourseLevel {
   BEGINNER
   INTERMEDIATE
-  ADVANCED
-  EXPERT
 }
 
 model CourseModule {

@@ -70,11 +70,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Map level to Prisma enum
+    
     const levelMap: Record<string, CourseLevel> = {
       Beginner: CourseLevel.BEGINNER,
       Intermediate: CourseLevel.INTERMEDIATE,
-      Advanced: CourseLevel.ADVANCED,
+      Advanced: CourseLevel.INTERMEDIATE,
     };
     const prismaLevel = levelMap[level];
 
