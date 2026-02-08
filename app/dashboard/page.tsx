@@ -168,8 +168,8 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="max-h-screen bg-gradient-to-br from-slate-100 to-slate-200 dark:from-gray-950 dark:to-gray-900 flex transition-colors">
-      <aside className="w-72 border-r-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-gray-900 hidden lg:flex flex-col shadow-xl">
+    <div className="max-h-screen overflow-hidden h-screen bg-gradient-to-br from-slate-100 to-slate-200 dark:from-gray-950 dark:to-gray-900 flex transition-colors">
+      <aside className="w-72 shrink-0 h-full border-r-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-gray-900 hidden lg:flex flex-col shadow-xl">
         <div className="p-8 border-b-2 border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -212,7 +212,7 @@ const Dashboard = () => {
         </div>
       </aside>
 
-      <main className="flex-1 p-8 lg:p-12 overflow-y-auto">
+      <main className="flex-1 h-full p-8 lg:p-12 overflow-y-auto">
         {activeTab === "Statistics" ? (
           loading ? (
             <div className="flex flex-col items-center justify-center py-24 bg-white dark:bg-gray-900 rounded-2xl border-2 border-slate-200 dark:border-slate-800">

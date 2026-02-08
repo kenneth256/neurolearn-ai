@@ -86,7 +86,7 @@ const Page = () => {
         throw new Error("Course was created but no ID was returned.");
       }
 
-      window.location.href = `/${courseId}`;
+      window.location.href = `/courses/${courseId}`;
     } catch (error) {
       console.error("Generation Error:", error);
       alert(
