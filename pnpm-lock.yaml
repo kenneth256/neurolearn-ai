@@ -26,6 +26,9 @@ dependencies:
   clsx:
     specifier: ^2.1.1
     version: 2.1.1
+  dotenv:
+    specifier: ^17.2.4
+    version: 17.2.4
   framer-motion:
     specifier: ^12.29.0
     version: 12.29.2(react-dom@19.2.3)(react@19.2.3)
@@ -115,9 +118,6 @@ devDependencies:
   concurrently:
     specifier: ^9.2.1
     version: 9.2.1
-  dotenv:
-    specifier: ^17.2.4
-    version: 17.2.4
   eslint:
     specifier: ^9
     version: 9.39.2
@@ -2867,7 +2867,7 @@ packages:
   /dotenv@17.2.4:
     resolution: {integrity: sha512-mudtfb4zRB4bVvdj0xRo+e6duH1csJRM8IukBqfTRvHotn9+LBXB8ynAidP9zHqoRC/fsllXgk4kCKlR21fIhw==}
     engines: {node: '>=12'}
-    dev: true
+    dev: false
 
   /dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
