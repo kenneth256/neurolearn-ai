@@ -12,8 +12,6 @@
     "build": "prisma generate && prisma db push --accept-data-loss && next build"
   },
   "dependencies": {
-    "prisma": "^7.3.0",
-    "dotenv": "^17.2.4",
     "@google/generative-ai": "^0.24.1",
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
@@ -28,6 +26,7 @@
     "lucide-react": "^0.563.0",
     "next": "16.1.4",
     "pg": "^8.18.0",
+    "prisma": "^7.3.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-hot-toast": "^2.6.0",
@@ -51,6 +50,7 @@
     "autoprefixer": "^10.4.23",
     "bcryptjs": "^3.0.3",
     "concurrently": "^9.2.1",
+    "dotenv": "^17.2.4",
     "eslint": "^9",
     "eslint-config-next": "16.1.4",
     "lightningcss": "^1.31.1",
