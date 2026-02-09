@@ -27,9 +27,11 @@ model User {
   reviews            CourseReview[]
   moodEntries        MoodEntry[]
   learnerProfile     LearnerProfile?
+  moodInterventions  MoodIntervention[]
 
   @@map("users")
 }
+
 
 enum UserRole {
   LEARNER
@@ -160,6 +162,7 @@ model Enrollment {
   reviewItems    ReviewItem[]
   adaptiveQuizzes AdaptiveQuiz[]
   moodEntries     MoodEntry[]
+  moodInterventions MoodIntervention[]
 
   @@unique([userId, courseId])
   @@index([userId])
@@ -167,6 +170,7 @@ model Enrollment {
   @@index([status])
   @@map("enrollments")
 }
+
 
 enum EnrollmentStatus {
   ACTIVE
@@ -380,6 +384,7 @@ model MoodEntry {
   enrollment   Enrollment?   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
   lessonModule LessonModule? @relation(fields: [lessonModuleId], references: [id], onDelete: Cascade)
   courseModule CourseModule? @relation(fields: [courseModuleId], references: [id], onDelete: Cascade)
+  interventions MoodIntervention[]
 
   @@index([userId])
   @@index([enrollmentId])
@@ -388,6 +393,7 @@ model MoodEntry {
   @@index([userId, enrollmentId, timestamp])
   @@map("mood_entries")
 }
+
 
 enum MoodType {
   ENGAGED
@@ -644,4 +650,52 @@ enum VideoStatus {
   COMPLETED
   FAILED
   ARCHIVED
+}
+
+model MoodIntervention {
+  id             String   @id @default(cuid())
+  moodEntryId    String
+  userId         String
+  enrollmentId   String
+  lessonModuleId String?
+
+  triggerMood       MoodType
+  triggerIntensity  Int
+
+  interventionType  InterventionType
+
+  adaptiveQuestion  Json?
+  encouragement     String?
+  simplification    Json?
+  hint             String?
+
+  userResponse      Json?
+  wasHelpful        Boolean?
+  responseTime      Int?
+
+  generatedBy       String    @default("gemini-3-flash-preview")
+  generationTime    Int?
+
+  createdAt         DateTime  @default(now())
+  respondedAt       DateTime?
+
+  moodEntry         MoodEntry   @relation(fields: [moodEntryId], references: [id], onDelete: Cascade)
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollment        Enrollment  @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@index([moodEntryId])
+  @@index([userId])
+  @@index([enrollmentId])
+  @@index([triggerMood])
+  @@map("mood_interventions")
+}
+
+enum InterventionType {
+  ADAPTIVE_QUESTION
+  ENCOURAGEMENT
+  CONTENT_SIMPLIFICATION
+  HINT
+  BREAK_SUGGESTION
+  SKIP_OPTION
+  REVIEW_SUGGESTION
 }

@@ -47,6 +47,10 @@ import VideoTutorModal from "./videotutor";
 import { useLessonCompletion } from "../hooks/useLessCompletion";
 import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast";
+import MoodDetector from "./ui/moodector";
+import QuickMoodCheck from "./ui/moodassessmenttriger";
+import AutoMoodTrigger from "./ui/automoodtrigger";
+import MoodInterventionPopup from "./ui/MoodInterventionPopup";
 
 interface User {
   userId: string;
@@ -77,6 +81,37 @@ interface CourseBookUIProps {
   onModuleSelect: (module: any) => void;
   onReset?: () => void;
   enrollmentId?: string;
+}
+
+interface InterventionData {
+  id: string;
+  type: string;
+  content: {
+    question?: {
+      text: string;
+      options: Array<{
+        text: string;
+        correct: boolean;
+        explanation: string;
+      }>;
+      difficulty: string;
+    };
+    encouragement?: {
+      message: string;
+      actionItems: string[];
+    };
+    hint?: {
+      level: string;
+      text: string;
+      relatedConcepts: string[];
+    };
+    simplification?: {
+      simplifiedText: string;
+      keyPoints: string[];
+      analogy?: string;
+    };
+  };
+  estimatedTime: number;
 }
 
 const bookFlipVariants: Variants = {
@@ -308,6 +343,96 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
     return colors[mood] || "bg-gray-300";
   };
 
+  const generateInterventionFromMood = (
+    mood: any,
+    currentLesson: any,
+  ): InterventionData => {
+    if (mood.mood === "FRUSTRATED" || mood.mood === "CONFUSED") {
+      return {
+        id: `intervention-${Date.now()}`,
+        type: "ENCOURAGEMENT",
+        content: {
+          encouragement: {
+            message:
+              "It's okay to feel stuck! Learning new concepts takes time.",
+            actionItems: [
+              "Take a 2-minute break and come back fresh",
+              "Re-read the previous section slowly",
+              "Try explaining the concept out loud to yourself",
+              "Ask the AI tutor for help",
+            ],
+          },
+        },
+        estimatedTime: 3,
+      };
+    }
+
+    if (mood.mood === "OVERWHELMED") {
+      return {
+        id: `intervention-${Date.now()}`,
+        type: "BREAK_SUGGESTION",
+        content: {},
+        estimatedTime: 5,
+      };
+    }
+
+    if (mood.mood === "BORED") {
+      return {
+        id: `intervention-${Date.now()}`,
+        type: "ENCOURAGEMENT",
+        content: {
+          encouragement: {
+            message: "Let's make this more interesting!",
+            actionItems: [
+              "Try the hands-on exercises",
+              "Challenge yourself with the quiz",
+              "Explore a real-world application of this concept",
+            ],
+          },
+        },
+        estimatedTime: 2,
+      };
+    }
+
+    if (currentLesson?.knowledgeChecks?.questions?.[0]) {
+      const q = currentLesson.knowledgeChecks.questions[0];
+      return {
+        id: `intervention-${Date.now()}`,
+        type: "ADAPTIVE_QUESTION",
+        content: {
+          question: {
+            text: q.question,
+            options: q.options.map((opt: string) => ({
+              text: opt,
+              correct: opt === q.correctAnswer,
+              explanation:
+                opt === q.correctAnswer
+                  ? q.feedback
+                  : "Try again! Review the concept and give it another shot.",
+            })),
+            difficulty: "medium",
+          },
+        },
+        estimatedTime: 2,
+      };
+    }
+
+    return {
+      id: `intervention-${Date.now()}`,
+      type: "ENCOURAGEMENT",
+      content: {
+        encouragement: {
+          message: "You're doing great! Keep up the excellent work.",
+          actionItems: [
+            "Continue to the next section",
+            "Review key concepts if needed",
+          ],
+        },
+      },
+      estimatedTime: 1,
+    };
+  };
+
   const router = useRouter();
   const handleLogout = async () => {
     try {
@@ -371,39 +496,6 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
         />
       </div>
 
-      <AnimatePresence>
-        {showMoodPanel && (
-          <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 20 }}
-            className="fixed right-0 top-0 h-fit w-full md:w-[500px] bg-white dark:bg-gray-900 shadow-2xl z-[70] overflow-y-auto"
-          >
-            <div className="p-6 space-y-6">
-              <div className="flex items-center justify-between border-b pb-4">
-                <h2 className="text-2xl font-bold">AI Learning Assistant</h2>
-                <button
-                  onClick={() => setShowMoodPanel(false)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {detectedMood && (
-                <AdaptiveQuizGenerator
-                  enrollmentId={enrollmentId || ""}
-                  lessonModuleId={dailyLessons[0]?.id}
-                  courseModuleId={currentModule?.id}
-                  currentMood={detectedMood}
-                />
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <div className="max-w-400 mx-auto flex flex-col lg:flex-row relative">
         <aside className="w-full lg:w-[320px] lg:h-screen lg:sticky lg:top-0 bg-gray-900 dark:bg-black text-white z-40 flex flex-col shrink-0 border-r-2 border-gray-800 dark:border-gray-900">
           <div className="p-10 border-b-2 border-gray-800 dark:border-gray-900 bg-gray-900 dark:bg-black z-50">
@@ -421,31 +513,47 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
                   </p>
                 </div>
               </div>
+
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowMoodPanel(!showMoodPanel)}
-                  className={cn(
-                    "relative w-10 h-10 rounded-full transition-all duration-300 hover:scale-110 border-2 border-white/20",
-                    detectedMood
-                      ? getMoodColor(detectedMood.mood)
-                      : "bg-gray-600",
-                  )}
-                  title={
-                    detectedMood
-                      ? `Mood: ${detectedMood.mood}`
-                      : "Check your mood"
-                  }
-                >
-                  {detectedMood ? (
-                    <Brain className="w-5 h-5 mx-auto text-white" />
-                  ) : (
-                    <Camera className="w-5 h-5 mx-auto text-white" />
-                  )}
-                  {detectedMood && (
-                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                  )}
-                </button>
                 <ThemeToggle />
+                <AutoMoodTrigger
+                  enrollmentId={enrollmentId}
+                  courseModuleId={currentModule?.id}
+                  lessonModuleId={filteredLessons[0]?.id}
+                  onMoodDetected={(moodResponse) => {
+                    setDetectedMood(moodResponse);
+
+                    if (moodResponse.intervention) {
+                      const intervention = {
+                        id: moodResponse.intervention.id,
+                        type: moodResponse.intervention.interventionType,
+                        content: {
+                          question: moodResponse.intervention.adaptiveQuestion,
+                          encouragement: moodResponse.intervention.encouragement
+                            ? {
+                                message:
+                                  moodResponse.intervention.encouragement,
+                                actionItems: [],
+                              }
+                            : undefined,
+                          hint: moodResponse.intervention.hint
+                            ? {
+                                level: "moderate",
+                                text: moodResponse.intervention.hint,
+                                relatedConcepts: [],
+                              }
+                            : undefined,
+                          simplification:
+                            moodResponse.intervention.simplification,
+                        },
+                        estimatedTime: 2,
+                      };
+
+                      setShowMoodPanel(true);
+                    }
+                  }}
+                  triggerInterval={1}
+                />
               </div>
             </div>
 
@@ -707,6 +815,38 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
           lessonModuleId={filteredLessons[0]?.id || ""}
         />
       </div>
+
+      {showMoodPanel && detectedMood?.intervention && (
+        <MoodInterventionPopup
+          intervention={{
+            id: detectedMood.intervention.id,
+            type: detectedMood.intervention.interventionType,
+            content: {
+              question: detectedMood.intervention.adaptiveQuestion,
+              encouragement: detectedMood.intervention.encouragement
+                ? {
+                    message: detectedMood.intervention.encouragement,
+                    actionItems: [],
+                  }
+                : undefined,
+              hint: detectedMood.intervention.hint
+                ? {
+                    level: "moderate",
+                    text: detectedMood.intervention.hint,
+                    relatedConcepts: [],
+                  }
+                : undefined,
+              simplification: detectedMood.intervention.simplification,
+            },
+            estimatedTime: 2,
+          }}
+          onClose={() => setShowMoodPanel(false)}
+          onComplete={(response) => {
+            console.log("User response:", response);
+            setShowMoodPanel(false);
+          }}
+        />
+      )}
     </div>
   );
 };
@@ -740,7 +880,6 @@ const LessonSection: React.FC<LessonSectionProps> = ({
   const lessonEndRef = useRef<HTMLDivElement>(null);
   const hasAutoCompletedRef = useRef(false);
 
-  // ✅ Check if lesson is already completed on mount
   useEffect(() => {
     const checkExistingCompletion = async () => {
       if (!enrollmentId || !lessonModuleId) {
@@ -748,11 +887,7 @@ const LessonSection: React.FC<LessonSectionProps> = ({
         return;
       }
 
-      console.log("🔍 Checking existing completion for:", {
-        enrollmentId,
-        lessonModuleId,
-        lessonTitle: lesson.title,
-      });
+      
 
       try {
         const response = await fetch(
@@ -765,10 +900,9 @@ const LessonSection: React.FC<LessonSectionProps> = ({
 
         if (response.ok) {
           const data = await response.json();
-          console.log("📊 Existing progress:", data);
+          
 
           if (data.lessonProgress?.status === "COMPLETED") {
-            console.log("✅ Lesson already completed");
             setHasMarkedComplete(true);
             hasAutoCompletedRef.current = true;
           }
@@ -783,7 +917,6 @@ const LessonSection: React.FC<LessonSectionProps> = ({
     checkExistingCompletion();
   }, [enrollmentId, lessonModuleId, lesson.title]);
 
-  // ✅ Track time spent
   useEffect(() => {
     startTimeRef.current = Date.now();
 
@@ -796,7 +929,6 @@ const LessonSection: React.FC<LessonSectionProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  // ✅ AUTO-COMPLETE when scrolling to bottom
   useEffect(() => {
     if (
       !lessonEndRef.current ||
@@ -812,13 +944,13 @@ const LessonSection: React.FC<LessonSectionProps> = ({
           if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
             console.log("🎯 Reached bottom of lesson - auto-completing...");
             hasAutoCompletedRef.current = true;
-            handleCompleteLesson(true); // true = auto-complete
+            handleCompleteLesson(true);
           }
         });
       },
       {
         threshold: 0.5,
-        rootMargin: "0px 0px -100px 0px", // Trigger slightly before the very bottom
+        rootMargin: "0px 0px -100px 0px",
       },
     );
 
@@ -856,29 +988,17 @@ const LessonSection: React.FC<LessonSectionProps> = ({
       Math.floor((Date.now() - startTimeRef.current) / 60000),
     );
 
-    console.log("🎯 Complete Lesson:", {
-      type: isAutoComplete ? "AUTO" : "MANUAL",
-      enrollmentId,
-      lessonModuleId,
-      lessonTitle: lesson.title,
-      timeSpent: finalTimeSpent,
-      hasMarkedComplete,
-    });
-
     if (!enrollmentId) {
-      console.error("❌ Missing enrollmentId");
       if (!isAutoComplete) toast.error("Missing enrollment information");
       return;
     }
 
     if (!lessonModuleId) {
-      console.error("❌ Missing lessonModuleId");
       if (!isAutoComplete) toast.error("Missing lesson module ID");
       return;
     }
 
     if (hasMarkedComplete) {
-      console.log("ℹ️ Already completed");
       if (!isAutoComplete) {
         toast("This lesson is already completed", { icon: "✅" });
       }
@@ -908,7 +1028,7 @@ const LessonSection: React.FC<LessonSectionProps> = ({
       window.dispatchEvent(new CustomEvent("progressUpdated"));
     } catch (error) {
       console.error("❌ Failed to complete lesson:", error);
-      hasAutoCompletedRef.current = false; // Allow retry
+      hasAutoCompletedRef.current = false;
     }
   };
 
@@ -1091,7 +1211,6 @@ const LessonSection: React.FC<LessonSectionProps> = ({
             </div>
           )}
 
-          {/* ✅ INVISIBLE MARKER FOR AUTO-COMPLETION */}
           <div
             ref={lessonEndRef}
             className="h-1 w-full mt-16"
