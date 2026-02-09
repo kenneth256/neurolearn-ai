@@ -552,7 +552,7 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
                       setShowMoodPanel(true);
                     }
                   }}
-                  triggerInterval={1}
+                  triggerInterval={15}
                 />
               </div>
             </div>
@@ -887,8 +887,6 @@ const LessonSection: React.FC<LessonSectionProps> = ({
         return;
       }
 
-      
-
       try {
         const response = await fetch(
           `/api/courses/lesson/progress?enrollmentId=${enrollmentId}&lessonModuleId=${lessonModuleId}`,
@@ -900,7 +898,6 @@ const LessonSection: React.FC<LessonSectionProps> = ({
 
         if (response.ok) {
           const data = await response.json();
-          
 
           if (data.lessonProgress?.status === "COMPLETED") {
             setHasMarkedComplete(true);

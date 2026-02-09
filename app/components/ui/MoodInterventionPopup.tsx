@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Brain,
@@ -59,7 +59,6 @@ export default function MoodInterventionPopup({
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [startTime] = useState(Date.now());
-  const [wasHelpful, setWasHelpful] = useState<boolean | null>(null);
 
   const handleAnswerSelect = (index: number) => {
     setSelectedAnswer(index);
@@ -68,7 +67,6 @@ export default function MoodInterventionPopup({
 
   const handleComplete = (helpful: boolean) => {
     const responseTime = Math.floor((Date.now() - startTime) / 1000);
-
     const response = {
       interventionId: intervention.id,
       userResponse: {
@@ -82,7 +80,6 @@ export default function MoodInterventionPopup({
       wasHelpful: helpful,
       responseTime,
     };
-
     onComplete(response);
   };
 
@@ -93,297 +90,169 @@ export default function MoodInterventionPopup({
       case "ADAPTIVE_QUESTION":
         return (
           <div>
-            <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            <h4 className="text-xl font-serif italic text-slate-900 dark:text-slate-50 mb-6">
               {content.question?.text}
             </h4>
-
-            <div className="space-y-3 mb-6">
+            <div className="space-y-3 mb-6 font-sans">
               {content.question?.options.map((option, index) => (
                 <motion.button
                   key={index}
                   onClick={() => handleAnswerSelect(index)}
                   disabled={showFeedback}
-                  whileHover={{ scale: showFeedback ? 1 : 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: showFeedback ? 1 : 1.01 }}
                   className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
                     selectedAnswer === index
                       ? option.correct
                         ? "border-green-500 bg-green-50 dark:bg-green-900/20"
                         : "border-red-500 bg-red-50 dark:bg-red-900/20"
-                      : "border-gray-200 dark:border-gray-700 hover:border-indigo-500 bg-white dark:bg-gray-800"
-                  } ${showFeedback ? "cursor-default" : "cursor-pointer"}`}
+                      : "border-slate-200 dark:border-slate-800 hover:border-amber-500 bg-white dark:bg-slate-950"
+                  }`}
                 >
                   <div className="flex items-start gap-3">
-                    <span className="shrink-0 w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-700 text-sm font-bold flex items-center justify-center">
+                    <span className="shrink-0 w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-xs font-mono flex items-center justify-center">
                       {String.fromCharCode(65 + index)}
                     </span>
                     <div className="flex-1">
-                      <p className="text-gray-800 dark:text-gray-200">
+                      <p className="text-slate-800 dark:text-slate-200">
                         {option.text}
                       </p>
                       {showFeedback && selectedAnswer === index && (
                         <motion.p
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          className="text-sm mt-2 text-gray-600 dark:text-gray-400"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="text-sm mt-2 text-slate-600 dark:text-slate-400 italic"
                         >
                           {option.explanation}
                         </motion.p>
                       )}
                     </div>
-                    {showFeedback && selectedAnswer === index && (
-                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                        {option.correct ? (
-                          <CheckCircle className="w-5 h-5 text-green-600" />
-                        ) : (
-                          <X className="w-5 h-5 text-red-600" />
-                        )}
-                      </motion.div>
-                    )}
                   </div>
                 </motion.button>
               ))}
             </div>
-
-            {showFeedback && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4"
-              >
-                <p className="text-sm text-blue-800 dark:text-blue-300 mb-3">
-                  Was this helpful?
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setWasHelpful(true);
-                      handleComplete(true);
-                    }}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
-                  >
-                    <ThumbsUp className="w-4 h-4" />
-                    Yes, helpful!
-                  </button>
-                  <button
-                    onClick={() => {
-                      setWasHelpful(false);
-                      handleComplete(false);
-                    }}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
-                  >
-                    <ThumbsDown className="w-4 h-4" />
-                    Not really
-                  </button>
-                </div>
-              </motion.div>
-            )}
+            {showFeedback && <FeedbackActions onComplete={handleComplete} />}
           </div>
         );
 
       case "ENCOURAGEMENT":
         return (
-          <div>
-            <div className="flex items-start gap-3 mb-4">
-              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                <Brain className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+          <div className="font-sans">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl">
+                <Brain className="w-8 h-8 text-amber-600" />
               </div>
               <div>
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  You've got this! 💪
+                <h4 className="text-2xl font-serif text-slate-900 dark:text-white mb-2 italic">
+                  You&apos;ve got this!
                 </h4>
-                <p className="text-gray-700 dark:text-gray-300">
+                <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
                   {content.encouragement?.message}
                 </p>
               </div>
             </div>
-
-            {content.encouragement?.actionItems &&
-              content.encouragement.actionItems.length > 0 && (
-                <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-4 mb-4">
-                  <h5 className="font-semibold text-purple-900 dark:text-purple-300 mb-2">
-                    Try these steps:
-                  </h5>
-                  <ul className="space-y-2">
-                    {content.encouragement.actionItems.map((item, index) => (
-                      <li
-                        key={index}
-                        className="flex items-start gap-2 text-sm text-purple-800 dark:text-purple-300"
-                      >
-                        <ArrowRight className="w-4 h-4 shrink-0 mt-0.5" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleComplete(true)}
-                className="flex-1 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
-              >
-                <ThumbsUp className="w-4 h-4 inline mr-2" />
-                Feeling better!
-              </button>
-              <button
-                onClick={() => handleComplete(false)}
-                className="flex-1 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
-              >
-                Still struggling
-              </button>
-            </div>
-          </div>
-        );
-
-      case "HINT":
-        return (
-          <div>
-            <div className="flex items-start gap-3 mb-4">
-              <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-                <Lightbulb className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-              </div>
-              <div>
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  Here's a hint 💡
-                </h4>
-                <p className="text-gray-700 dark:text-gray-300">
-                  {content.hint?.text}
-                </p>
-              </div>
-            </div>
-
-            {content.hint?.relatedConcepts &&
-              content.hint.relatedConcepts.length > 0 && (
-                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mb-4">
-                  <h5 className="font-semibold text-amber-900 dark:text-amber-300 mb-2">
-                    Related concepts to review:
-                  </h5>
-                  <div className="flex flex-wrap gap-2">
-                    {content.hint.relatedConcepts.map((concept, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 rounded-full text-sm text-amber-800 dark:text-amber-300"
-                      >
-                        {concept}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleComplete(true)}
-                className="flex-1 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
-              >
-                That helps!
-              </button>
-              <button
-                onClick={() => handleComplete(false)}
-                className="flex-1 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
-              >
-                Need more help
-              </button>
-            </div>
-          </div>
-        );
-
-      case "CONTENT_SIMPLIFICATION":
-        return (
-          <div>
-            <div className="flex items-start gap-3 mb-4">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                <AlertCircle className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  Let's break this down
-                </h4>
-                <p className="text-gray-700 dark:text-gray-300 mb-4">
-                  {content.simplification?.simplifiedText}
-                </p>
-              </div>
-            </div>
-
-            {content.simplification?.keyPoints && (
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-4">
-                <h5 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">
-                  Key points:
-                </h5>
-                <ul className="space-y-2">
-                  {content.simplification.keyPoints.map((point, index) => (
+            {content.encouragement?.actionItems && (
+              <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl p-5 mb-6">
+                <ul className="space-y-3">
+                  {content.encouragement.actionItems.map((item, i) => (
                     <li
-                      key={index}
-                      className="flex items-start gap-2 text-sm text-blue-800 dark:text-blue-300"
+                      key={i}
+                      className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300"
                     >
-                      <CheckCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                      <span>{point}</span>
+                      <ArrowRight className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                      {item}
                     </li>
                   ))}
                 </ul>
               </div>
             )}
+            <FeedbackActions
+              onComplete={handleComplete}
+              positiveLabel="Feeling better!"
+              negativeLabel="Still struggling"
+            />
+          </div>
+        );
 
-            {content.simplification?.analogy && (
-              <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl p-4 mb-4">
-                <h5 className="font-semibold text-indigo-900 dark:text-indigo-300 mb-2 flex items-center gap-2">
-                  <Lightbulb className="w-4 h-4" />
-                  Think of it like this:
-                </h5>
-                <p className="text-sm text-indigo-800 dark:text-indigo-300 italic">
-                  {content.simplification.analogy}
+      case "HINT":
+        return (
+          <div className="font-sans">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-xl">
+                <Lightbulb className="w-8 h-8 text-amber-600" />
+              </div>
+              <div>
+                <h4 className="text-2xl font-serif text-slate-900 dark:text-white mb-2 italic">
+                  A little insight...
+                </h4>
+                <p className="text-slate-700 dark:text-slate-300">
+                  {content.hint?.text}
                 </p>
               </div>
-            )}
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleComplete(true)}
-                className="flex-1 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
-              >
-                Makes sense now!
-              </button>
-              <button
-                onClick={() => handleComplete(false)}
-                className="flex-1 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
-              >
-                Still confused
-              </button>
             </div>
+            {content.hint?.relatedConcepts && (
+              <div className="flex flex-wrap gap-2 mb-6">
+                {content.hint.relatedConcepts.map((concept, i) => (
+                  <span
+                    key={i}
+                    className="px-3 py-1 bg-amber-50 dark:bg-slate-900 border border-amber-200 dark:border-slate-700 rounded-full text-xs font-mono text-amber-700 dark:text-amber-400"
+                  >
+                    {concept}
+                  </span>
+                ))}
+              </div>
+            )}
+            <FeedbackActions onComplete={handleComplete} />
+          </div>
+        );
+
+      case "CONTENT_SIMPLIFICATION":
+        return (
+          <div className="font-sans">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl">
+                <AlertCircle className="w-8 h-8 text-slate-600 dark:text-slate-400" />
+              </div>
+              <div>
+                <h4 className="text-2xl font-serif text-slate-900 dark:text-white mb-2 italic">
+                  Simplified for you
+                </h4>
+                <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
+                  {content.simplification?.simplifiedText}
+                </p>
+              </div>
+            </div>
+            {content.simplification?.analogy && (
+              <div className="bg-amber-50/50 dark:bg-amber-900/10 border-l-4 border-amber-500 p-4 mb-6 italic text-slate-600 dark:text-slate-400">
+                &quot;{content.simplification.analogy}&quot;
+              </div>
+            )}
+            <FeedbackActions
+              onComplete={handleComplete}
+              positiveLabel="Makes sense!"
+              negativeLabel="Still confused"
+            />
           </div>
         );
 
       case "BREAK_SUGGESTION":
         return (
-          <div className="text-center">
-            <div className="inline-block p-4 bg-orange-100 dark:bg-orange-900/30 rounded-full mb-4">
-              <Coffee className="w-12 h-12 text-orange-600 dark:text-orange-400" />
+          <div className="text-center py-4 font-sans">
+            <div className="inline-block p-5 bg-amber-100 dark:bg-amber-900/30 rounded-full mb-6">
+              <Coffee className="w-12 h-12 text-amber-600" />
             </div>
-            <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              Time for a break?
+            <h4 className="text-2xl font-serif text-slate-900 dark:text-white mb-3 italic">
+              Time for a breather?
             </h4>
-            <p className="text-gray-700 dark:text-gray-300 mb-6">
-              You've been working hard! Taking a short break can help you come
-              back refreshed and focused.
+            <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-sm mx-auto">
+              A 5-minute pause can help reset your focus. You&apos;ve been doing
+              great work.
             </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  handleComplete(true);
-                  // TODO: Implement break timer
-                }}
-                className="flex-1 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors"
-              >
-                Take a 5-min break
-              </button>
-              <button
-                onClick={() => handleComplete(false)}
-                className="flex-1 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
-              >
-                Continue learning
-              </button>
-            </div>
+            <FeedbackActions
+              onComplete={handleComplete}
+              positiveLabel="Take a break"
+              negativeLabel="Keep going"
+              isBreak
+            />
           </div>
         );
 
@@ -398,45 +267,74 @@ export default function MoodInterventionPopup({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[10000] flex items-center justify-center p-4"
+        className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[10000] flex items-center justify-center p-4"
         onClick={onClose}
       >
         <motion.div
-          initial={{ scale: 0.9, opacity: 0, y: 20 }}
+          initial={{ scale: 0.95, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.9, opacity: 0, y: 20 }}
+          className="bg-[#fcfcf9] dark:bg-[#020617] rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-amber-500/20"
           onClick={(e) => e.stopPropagation()}
-          className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden"
         >
-          {/* Header */}
-          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6">
+          {/* Editorial Header */}
+          <div className="bg-[#f59e0b] dark:bg-[#fbbf24] p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-white/20 rounded-lg">
-                  <Brain className="w-6 h-6 text-white" />
+                  <Brain className="w-6 h-6 text-slate-900" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">
+                  <h3 className="text-lg font-bold text-slate-900">
                     AI Learning Assistant
                   </h3>
-                  <p className="text-sm text-indigo-100">
-                    Personalized help based on how you're feeling
+                  <p className="text-xs font-mono uppercase tracking-widest text-slate-900/60">
+                    Tailored Intervention
                   </p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                className="p-2 hover:bg-black/5 rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 text-white" />
+                <X className="w-5 h-5 text-slate-900" />
               </button>
             </div>
           </div>
 
-          {/* Content */}
-          <div className="p-6">{renderContent()}</div>
+          <div className="p-8">{renderContent()}</div>
         </motion.div>
       </motion.div>
     </AnimatePresence>
+  );
+}
+
+// Sub-component for buttons to keep logic clean
+function FeedbackActions({
+  onComplete,
+  positiveLabel = "That helps!",
+  negativeLabel = "Not really",
+  isBreak = false,
+}: any) {
+  return (
+    <div className="flex gap-3">
+      <button
+        onClick={() => onComplete(true)}
+        className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-sans font-bold transition-all ${
+          isBreak
+            ? "bg-amber-600 hover:bg-amber-700 text-white"
+            : "bg-slate-900 dark:bg-amber-500 text-white dark:text-slate-900 hover:opacity-90"
+        }`}
+      >
+        <ThumbsUp className="w-4 h-4" />
+        {positiveLabel}
+      </button>
+      <button
+        onClick={() => onComplete(false)}
+        className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 rounded-xl font-sans hover:bg-slate-200 dark:hover:bg-slate-800 transition-all"
+      >
+        <ThumbsDown className="w-4 h-4" />
+        {negativeLabel}
+      </button>
+    </div>
   );
 }
