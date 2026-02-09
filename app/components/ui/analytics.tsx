@@ -4,9 +4,7 @@ import { useMasteryProgression, useStruggleAnalysis } from "@/app/hooks/useAnaly
 import React from "react";
 
 
-// ============================================
-// STRUGGLE ANALYSIS COMPONENT
-// ============================================
+
 
 interface StruggleAnalysisProps {
   userId: string;
@@ -117,9 +115,6 @@ export function StruggleAnalysisComponent({ userId }: StruggleAnalysisProps) {
   );
 }
 
-// ============================================
-// MASTERY PROGRESSION COMPONENT
-// ============================================
 
 interface MasteryProgressionProps {
   enrollmentId: string;

@@ -76,12 +76,13 @@ const Page = () => {
       });
 
       const data = await response.json();
+      console.log(data)
 
       if (!response.ok) {
         throw new Error(data.message || "Failed to save course to database.");
       }
 
-      const courseId = data?.course?.id ?? data?.id;
+      const courseId = data?.data.id ?? data?.id;
       if (!courseId) {
         throw new Error("Course was created but no ID was returned.");
       }

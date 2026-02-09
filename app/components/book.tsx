@@ -1099,7 +1099,7 @@ const LessonSection: React.FC<LessonSectionProps> = ({
           isGeneratingVideo={false}
           currentVideoUrl=""
           videoScript={currentLesson}
-          lessonContent={lesson.coreContent}
+          lessonContent={lesson.coreContent.concepts}
           userId={userId || ""}
           onClose={() => setShowVideoTutor(false)}
           onReplayAudio={handleReplayAudio}

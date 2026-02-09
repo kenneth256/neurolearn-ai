@@ -60,7 +60,7 @@ const CourseClientPage = ({ id }: { id: string }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingModule, setGeneratingModule] = useState<number | null>(null);
   
-  // ✅ ADD: State for enrollmentId
+  
   const [enrollmentId, setEnrollmentId] = useState<string>("");
   const [enrollmentLoading, setEnrollmentLoading] = useState(true);
 

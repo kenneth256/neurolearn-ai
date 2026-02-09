@@ -110,7 +110,9 @@ export default function AdaptiveQuizGenerator({
             <div className="flex items-center justify-between">
               <h4 className="font-semibold">Quiz Details</h4>
               <span
-                className={`px-3 py-1 rounded-full text-xs font-medium ${getDifficultyColor(generatedQuiz.difficultyLevel)}`}
+                className={`px-3 py-1 rounded-full text-xs font-medium ${getDifficultyColor(
+                  generatedQuiz.difficultyLevel,
+                )}`}
               >
                 {generatedQuiz.difficultyLevel.replace("_", " ")}
               </span>
