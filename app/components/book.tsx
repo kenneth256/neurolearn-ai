@@ -158,7 +158,10 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
 
         if (response.ok) {
           const data = await response.json();
-          setUser(data.user);
+          setUser({
+            ...data.user,
+            userId: data.user.id,
+          });
         } else {
           setUser(null);
         }
@@ -835,6 +838,10 @@ const LessonSection: React.FC<LessonSectionProps> = ({
   };
 
   const handleOpenVideoTutor = () => {
+    if (!userId) {
+      toast.error("Please log in to generate video");
+      return;
+    }
     const scriptText =
       lesson.coreContent?.concepts
         ?.map((c: any) => `${c.title}\n${c.narrativeExplanation}`)
@@ -1099,7 +1106,7 @@ const LessonSection: React.FC<LessonSectionProps> = ({
           isGeneratingVideo={false}
           currentVideoUrl=""
           videoScript={currentLesson}
-          lessonContent={lesson.coreContent.concepts}
+          lessonContent={lesson.coreContent}
           userId={userId || ""}
           onClose={() => setShowVideoTutor(false)}
           onReplayAudio={handleReplayAudio}

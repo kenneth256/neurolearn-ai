@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Add job to queue
+  
     const job = await addVideoGenerationJob({
       promptId,
       userId,

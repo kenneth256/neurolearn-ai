@@ -4,23 +4,18 @@ import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
 
-/**
- * Extracts and verifies the user ID from the JWT token in cookies
- * @param req - The incoming Next.js request
- * @returns The user ID if valid, null otherwise
- */
+
 function extractUserIdFromToken(req: NextRequest): string | null {
   try {
-    // Try cookie first
+  
     let token = req.cookies.get("auth-token")?.value;
-    
-    // Fallback to Authorization header
+
     if (!token) {
       const authHeader = req.headers.get("authorization");
       token = authHeader?.replace("Bearer ", "");
     }
     
-    // Try localStorage token (from our auth system)
+ 
     if (!token) {
       token = req.cookies.get("authToken")?.value;
     }
@@ -38,13 +33,9 @@ function extractUserIdFromToken(req: NextRequest): string | null {
   }
 }
 
-/**
- * GET endpoint to fetch all available courses with enrollment and progress information
- * for the authenticated user. Frontend can filter by creator if needed.
- */
+
 export async function GET(req: NextRequest) {
   try {
-    // Extract and verify user ID from JWT token
     const userId = extractUserIdFromToken(req);
 
     if (!userId) {
@@ -57,8 +48,14 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Fetch all courses with user-specific enrollment and progress data
     const courses = await prisma.course.findMany({
+      where: {
+        enrollments: {
+          some: {
+            userId: userId,
+          },
+        },
+      },
       include: {
         creator: {
           select: {
@@ -97,7 +94,6 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // Transform courses with progress statistics and enrollment info
     const coursesWithDetails = courses.map((course) => {
       const totalModules = course.modules.length;
       const completedModules = course.modules.filter(
@@ -157,7 +153,7 @@ export async function GET(req: NextRequest) {
       success: true,
       courses: coursesWithDetails,
       count: coursesWithDetails.length,
-      userId, // Include userId so frontend can filter created courses
+      userId,
     });
   } catch (error) {
     console.error("Error fetching courses:", error);
