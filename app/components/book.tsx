@@ -552,7 +552,7 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
                       setShowMoodPanel(true);
                     }
                   }}
-                  triggerInterval={1}
+                  triggerInterval={15}
                 />
               </div>
             </div>
