@@ -463,52 +463,53 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
   };
 
   return (
-    <div className="min-h-screen relative bg-gradient-to-br from-slate-100 to-slate-200 dark:from-gray-950 dark:to-gray-900 text-gray-900 dark:text-gray-100 font-sans transition-colors">
+    <div className="min-h-screen relative bg-[#fcfcf9] dark:bg-[#020617] text-[#0f172a] dark:text-[#f8fafc] font-sans transition-colors">
       <Toaster
         position="top-center"
         toastOptions={{
           duration: 3000,
           style: {
-            background: "#363636",
-            color: "#fff",
+            background: "#0f172a",
+            color: "#f8fafc",
+            fontFamily: "inherit",
           },
           success: {
             duration: 3000,
             iconTheme: {
               primary: "#10b981",
-              secondary: "#fff",
+              secondary: "#f8fafc",
             },
           },
           error: {
             duration: 4000,
             iconTheme: {
               primary: "#ef4444",
-              secondary: "#fff",
+              secondary: "#f8fafc",
             },
           },
         }}
       />
 
-      <div className="fixed top-0 left-0 right-0 h-1 bg-gray-200 dark:bg-gray-800 z-50">
+      <div className="fixed top-0 left-0 right-0 h-1 bg-slate-200 dark:bg-slate-800 z-50">
         <motion.div
-          className="h-full bg-amber-500 dark:bg-amber-400"
+          className="h-full bg-[#f59e0b] dark:bg-[#fbbf24]"
           style={{ width: `${readingProgress}%` }}
         />
       </div>
 
       <div className="max-w-400 mx-auto flex flex-col lg:flex-row relative">
-        <aside className="w-full lg:w-[320px] lg:h-screen lg:sticky lg:top-0 bg-gray-900 dark:bg-black text-white z-40 flex flex-col shrink-0 border-r-2 border-gray-800 dark:border-gray-900">
-          <div className="p-10 border-b-2 border-gray-800 dark:border-gray-900 bg-gray-900 dark:bg-black z-50">
+        <aside className="w-full lg:w-[320px] lg:h-screen lg:sticky lg:top-0 bg-[#0f172a] dark:bg-black text-white z-40 flex flex-col shrink-0 border-r-2 border-slate-800 dark:border-slate-950">
+          <div className="p-10 border-b-2 border-slate-800 dark:border-slate-950 bg-[#0f172a] dark:bg-black z-50">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-500 dark:bg-amber-400 rounded-lg text-black">
+                <div className="p-2 bg-[#f59e0b] dark:bg-[#fbbf24] rounded-lg text-black">
                   <BookOpen size={20} />
                 </div>
                 <div>
                   <h2 className="font-serif italic text-lg text-white font-bold">
                     Index
                   </h2>
-                  <p className="text-[9px] uppercase tracking-[0.2em] text-gray-400">
+                  <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400">
                     Course Syllabus
                   </p>
                 </div>
@@ -560,14 +561,14 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
             <div className="relative mt-4">
               <Search
                 size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
               />
               <input
                 type="text"
                 placeholder="Search lessons..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-gray-800 dark:bg-gray-950 border-2 border-gray-700 dark:border-gray-800 rounded-lg text-sm text-white focus:border-amber-500 transition-colors"
+                className="w-full pl-10 pr-4 py-2 bg-slate-800 dark:bg-slate-950 border-2 border-slate-700 dark:border-slate-800 rounded-lg text-sm text-white placeholder:text-slate-500 focus:border-[#f59e0b] dark:focus:border-[#fbbf24] outline-none transition-colors"
               />
             </div>
           </div>
@@ -585,8 +586,8 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
                   className={cn(
                     "w-full text-left flex items-center gap-4 p-3 rounded-xl border-2 transition-all relative",
                     idx === currentPage
-                      ? "bg-amber-500 dark:bg-amber-600 text-black border-amber-400 shadow-lg font-bold"
-                      : "text-gray-400 hover:text-white border-transparent hover:bg-gray-800",
+                      ? "bg-[#f59e0b] dark:bg-[#fbbf24] text-black border-[#d97706] dark:border-[#f59e0b] shadow-lg font-bold"
+                      : "text-slate-400 hover:text-white border-transparent hover:bg-slate-800 dark:hover:bg-slate-900",
                     isLoading && "opacity-50 cursor-not-allowed",
                     hasError && "border-red-500/50",
                   )}
@@ -605,20 +606,20 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
               );
             })}
           </nav>
-          <div className="p-4 flex justify-between border-t-2 border-gray-100 dark:border-gray-800">
+          <div className="p-4 flex flex-col gap-2 border-t-2 border-slate-800 dark:border-slate-950">
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-[#f59e0b] dark:text-[#fbbf24] hover:bg-amber-950/20 rounded-xl transition-all"
+            >
+              <BookDashed size={18} />
+              Dashboard
+            </button>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-all"
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-950/20 rounded-xl transition-all"
             >
               <LogOut size={18} />
               Sign Out
-            </button>
-            <button
-              onClick={() => router.push("/dashboard")}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-amber-500 hover:bg-amber-50 dark:hover:bg-red-900/10 rounded-xl transition-all"
-            >
-              <BookDashed size={18} />
-              DashBoard
             </button>
           </div>
         </aside>
@@ -635,30 +636,33 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
               initial="initial"
               animate="animate"
               exit="exit"
-              className="relative w-full min-h-screen bg-white dark:bg-gray-900 shadow-2xl"
+              className="relative w-full min-h-screen bg-white dark:bg-[#0f172a] shadow-2xl"
               style={{
                 transformStyle: "preserve-3d",
                 backfaceVisibility: "hidden",
               }}
             >
               <div className="p-8 md:p-20 relative z-10 max-w-5xl mx-auto">
-                <header className="flex justify-between items-center mb-16 border-b-2 border-gray-200 dark:border-gray-800 pb-6">
-                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.5em] text-gray-600 dark:text-gray-400">
-                    <Target size={14} className="text-amber-500" />
+                <header className="flex justify-between items-center mb-16 border-b-2 border-slate-200 dark:border-slate-800 pb-6">
+                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.5em] text-slate-600 dark:text-slate-400">
+                    <Target
+                      size={14}
+                      className="text-[#f59e0b] dark:text-[#fbbf24]"
+                    />
                     Curriculum Folio
                   </div>
-                  <div className="font-serif italic text-gray-600 text-sm">
+                  <div className="font-serif italic text-slate-600 dark:text-slate-400 text-sm">
                     Page {currentPage + 1} of {totalPages}
                   </div>
                 </header>
 
                 {isLoadingCurrentModule && (
                   <div className="flex flex-col items-center justify-center py-32">
-                    <Loader2 className="w-16 h-16 text-amber-500 animate-spin mb-6" />
-                    <h3 className="text-2xl font-serif font-bold text-gray-900 dark:text-gray-100 mb-2">
+                    <Loader2 className="w-16 h-16 text-[#f59e0b] dark:text-[#fbbf24] animate-spin mb-6" />
+                    <h3 className="text-2xl font-serif font-bold text-[#0f172a] dark:text-[#f8fafc] mb-2">
                       Loading Module Content
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-slate-600 dark:text-slate-400">
                       Preparing lessons for {currentModule?.moduleName}...
                     </p>
                   </div>
@@ -666,18 +670,18 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
 
                 {currentModuleError && !isLoadingCurrentModule && (
                   <div className="flex flex-col items-center justify-center py-32">
-                    <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mb-6">
+                    <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-950/30 flex items-center justify-center mb-6">
                       <AlertCircle className="w-8 h-8 text-red-500" />
                     </div>
-                    <h3 className="text-2xl font-serif font-bold text-gray-900 dark:text-gray-100 mb-2">
+                    <h3 className="text-2xl font-serif font-bold text-[#0f172a] dark:text-[#f8fafc] mb-2">
                       Failed to Load Lessons
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-400 mb-6 text-center max-w-md">
+                    <p className="text-slate-600 dark:text-slate-400 mb-6 text-center max-w-md">
                       {currentModuleError}
                     </p>
                     <button
                       onClick={retryLoadLessons}
-                      className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-semibold transition-all shadow-lg"
+                      className="px-6 py-3 bg-[#f59e0b] dark:bg-[#fbbf24] hover:bg-[#d97706] dark:hover:bg-[#f59e0b] text-white rounded-xl font-semibold transition-all shadow-lg"
                     >
                       Try Again
                     </button>
@@ -686,25 +690,28 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
 
                 {!isLoadingCurrentModule && !currentModuleError && (
                   <div className="space-y-12">
-                    <div className="text-amber-600 font-mono text-[11px] font-black uppercase tracking-[0.3em]">
+                    <div className="text-[#f59e0b] dark:text-[#fbbf24] font-mono text-[11px] font-black uppercase tracking-[0.3em]">
                       Section {currentModule?.moduleNumber}
                     </div>
-                    <h1 className="text-5xl md:text-8xl font-serif font-bold leading-[1.05] text-gray-900 dark:text-gray-100">
+                    <h1 className="text-5xl md:text-8xl font-serif font-bold leading-[1.05] text-[#0f172a] dark:text-[#f8fafc]">
                       {currentModule?.moduleName}
                     </h1>
 
-                    <div className="bg-amber-50 dark:bg-amber-950/20 border-l-[6px] border-amber-500 p-10 rounded-r-3xl">
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-700 dark:text-gray-300 mb-8 flex items-center gap-2">
-                        <Award size={14} className="text-amber-500" />
+                    <div className="bg-[#fffbeb] dark:bg-amber-950/20 border-l-[6px] border-[#f59e0b] dark:border-[#fbbf24] p-10 rounded-r-3xl">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-8 flex items-center gap-2">
+                        <Award
+                          size={14}
+                          className="text-[#f59e0b] dark:text-[#fbbf24]"
+                        />
                         Key Objectives
                       </h4>
                       {currentModule?.learningObjectives?.map(
                         (obj: any, i: number) => (
                           <div key={i} className="flex gap-4 mb-4 items-start">
-                            <span className="text-amber-600 font-bold text-xl">
+                            <span className="text-[#f59e0b] dark:text-[#fbbf24] font-bold text-xl">
                               ❧
                             </span>
-                            <p className="text-xl leading-relaxed text-gray-800 dark:text-gray-200 font-serif italic">
+                            <p className="text-xl leading-relaxed text-slate-800 dark:text-slate-200 font-serif italic">
                               {typeof obj === "string" ? obj : obj.objective}
                             </p>
                           </div>
@@ -769,7 +776,7 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
                         )
                       ) : (
                         <div className="text-center py-16">
-                          <p className="text-gray-500 dark:text-gray-400">
+                          <p className="text-slate-500 dark:text-slate-400">
                             No lessons available yet for this module.
                           </p>
                         </div>
@@ -791,14 +798,17 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 0}
-              className="p-4 bg-white dark:bg-gray-900 border-2 border-gray-300 rounded-full shadow-2xl disabled:opacity-20 disabled:cursor-not-allowed hover:scale-105 transition-transform"
+              className="p-4 bg-white dark:bg-[#0f172a] border-2 border-slate-300 dark:border-slate-700 rounded-full shadow-2xl disabled:opacity-20 disabled:cursor-not-allowed hover:scale-105 hover:border-[#f59e0b] dark:hover:border-[#fbbf24] transition-all"
             >
-              <ChevronLeft size={24} />
+              <ChevronLeft
+                size={24}
+                className="text-[#0f172a] dark:text-[#f8fafc]"
+              />
             </button>
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages - 1}
-              className="p-5 bg-gray-900 dark:bg-amber-600 text-white rounded-full shadow-2xl scale-110 border-2 disabled:opacity-20 disabled:cursor-not-allowed hover:scale-115 transition-transform"
+              className="p-5 bg-[#0f172a] dark:bg-[#fbbf24] text-white dark:text-black rounded-full shadow-2xl scale-110 border-2 border-[#0f172a] dark:border-[#fbbf24] disabled:opacity-20 disabled:cursor-not-allowed hover:scale-115 transition-all"
             >
               <ChevronRight size={28} />
             </button>
@@ -1034,23 +1044,26 @@ const LessonSection: React.FC<LessonSectionProps> = ({
       <div className="mb-40 last:mb-0">
         <div className="flex items-center gap-8 mb-16 pb-8 border-b-4 border-double border-slate-200 dark:border-slate-800">
           <div className="shrink-0">
-            <div className="w-16 h-16 rounded-2xl bg-amber-500 flex items-center justify-center shadow-lg mb-2">
-              <span className="font-serif italic text-white text-2xl font-bold">
+            <div className="w-16 h-16 rounded-2xl bg-[#f59e0b] dark:bg-[#fbbf24] flex items-center justify-center shadow-lg mb-2">
+              <span className="font-serif italic text-white dark:text-black text-2xl font-bold">
                 {lesson.day}
               </span>
             </div>
-            <span className="block text-center text-[9px] font-black uppercase tracking-[0.2em] text-amber-600 dark:text-amber-500">
+            <span className="block text-center text-[9px] font-black uppercase tracking-[0.2em] text-[#f59e0b] dark:text-[#fbbf24]">
               Chapter
             </span>
           </div>
 
           <div className="flex-1 min-w-0">
-            <h2 className="text-5xl md:text-6xl font-serif font-bold text-gray-900 dark:text-gray-100 mb-3 leading-tight">
+            <h2 className="text-5xl md:text-6xl font-serif font-bold text-[#0f172a] dark:text-[#f8fafc] mb-3 leading-tight">
               {lesson.title}
             </h2>
             <div className="flex items-center gap-4 flex-wrap">
               <span className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg">
-                <Clock size={14} className="text-amber-500" />
+                <Clock
+                  size={14}
+                  className="text-[#f59e0b] dark:text-[#fbbf24]"
+                />
                 {lesson.duration}
               </span>
               {(isComplete || hasMarkedComplete) && (
@@ -1080,7 +1093,7 @@ const LessonSection: React.FC<LessonSectionProps> = ({
               "shrink-0 p-4 rounded-2xl transition-all border-2 shadow-md hover:shadow-lg",
               isComplete || hasMarkedComplete
                 ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-500 border-emerald-300 dark:border-emerald-800"
-                : "bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-700",
+                : "bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:border-[#f59e0b] dark:hover:border-[#fbbf24]",
             )}
             title={isComplete ? "Mark as incomplete" : "Mark as complete"}
           >
@@ -1159,7 +1172,7 @@ const LessonSection: React.FC<LessonSectionProps> = ({
           <div className="flex flex-col md:flex-row gap-4 items-center justify-center">
             <button
               onClick={handleOpenVideoTutor}
-              className="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:shadow-amber-500/50 flex items-center gap-3"
+              className="px-6 py-3 bg-gradient-to-r from-[#f59e0b] to-[#d97706] dark:from-[#fbbf24] dark:to-[#f59e0b] hover:from-[#d97706] hover:to-[#f59e0b] dark:hover:from-[#f59e0b] dark:hover:to-[#fbbf24] text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:shadow-amber-500/50 flex items-center gap-3"
             >
               <Play size={20} />
               Generate AI Video Lecture
@@ -1172,7 +1185,7 @@ const LessonSection: React.FC<LessonSectionProps> = ({
                 className={cn(
                   "px-8 py-3 rounded-xl font-semibold text-white transition-all shadow-lg",
                   completing || hasMarkedComplete
-                    ? "bg-gray-400 cursor-not-allowed"
+                    ? "bg-slate-400 dark:bg-slate-600 cursor-not-allowed"
                     : "bg-emerald-500 hover:bg-emerald-600 hover:shadow-xl hover:shadow-emerald-500/50",
                 )}
               >
@@ -1197,7 +1210,7 @@ const LessonSection: React.FC<LessonSectionProps> = ({
           </div>
 
           {timeSpent > 0 && (
-            <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+            <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
               <p>
                 You've spent{" "}
                 <strong>

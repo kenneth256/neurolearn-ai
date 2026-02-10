@@ -386,7 +386,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
             </span>
             <button
               onClick={() => copyToClipboard(code, blockIndex)}
-              className="flex items-center gap-1.5 px-2 py-1 text-xs text-slate-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors rounded hover:bg-slate-200 dark:hover:bg-slate-700"
+              className="flex items-center gap-1.5 px-2 py-1 text-xs text-slate-600 dark:text-slate-400 hover:text-[#f59e0b] dark:hover:text-[#fbbf24] transition-colors rounded hover:bg-slate-200 dark:hover:bg-slate-700"
             >
               {copiedCode === blockIndex ? (
                 <>
@@ -401,7 +401,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
               )}
             </button>
           </div>
-          <div className="bg-slate-50 dark:bg-slate-900 p-4 overflow-x-auto">
+          <div className="bg-slate-50 dark:bg-[#020617] p-4 overflow-x-auto">
             <pre className="text-sm text-slate-800 dark:text-slate-200 font-mono leading-relaxed">
               <code>{code}</code>
             </pre>
@@ -441,7 +441,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
         return (
           <code
             key={i}
-            className="px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/30 rounded text-sm font-mono text-amber-700 dark:text-amber-500 break-all border border-amber-200 dark:border-amber-800"
+            className="px-1.5 py-0.5 bg-[#fffbeb] dark:bg-amber-950/30 rounded text-sm font-mono text-[#d97706] dark:text-[#fbbf24] break-all border border-amber-200 dark:border-amber-800"
           >
             {part.slice(1, -1)}
           </code>
@@ -455,15 +455,15 @@ const TutorBot: React.FC<TutorBotProps> = ({
     <>
       {showScrollPrompt && !isOpen && (
         <div
-          className="fixed bottom-24 left-6 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border-2 border-amber-500 dark:border-amber-600 p-6 max-w-sm z-[100] animate-slideIn"
+          className="fixed bottom-24 left-6 bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl border-2 border-[#f59e0b] dark:border-[#fbbf24] p-6 max-w-sm z-[100] animate-slideIn"
           style={{ zIndex: 100 }}
         >
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-lg">
-              <BookOpen size={24} className="text-white" />
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#f59e0b] to-[#d97706] dark:from-[#fbbf24] dark:to-[#f59e0b] flex items-center justify-center flex-shrink-0 shadow-lg">
+              <BookOpen size={24} className="text-white dark:text-black" />
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="font-serif font-bold text-gray-900 dark:text-white text-base mb-2">
+              <h4 className="font-serif font-bold text-[#0f172a] dark:text-[#f8fafc] text-base mb-2">
                 Finished reading?
               </h4>
               <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">
@@ -473,7 +473,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
               <div className="flex gap-2">
                 <button
                   onClick={handleAcceptScrollPrompt}
-                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-md"
+                  className="px-4 py-2 bg-[#f59e0b] dark:bg-[#fbbf24] hover:bg-[#d97706] dark:hover:bg-[#f59e0b] text-white dark:text-black text-sm font-semibold rounded-lg transition-colors shadow-md"
                 >
                   Yes, quiz me!
                 </button>
@@ -497,7 +497,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
 
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 left-6 p-4 bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-2xl shadow-2xl hover:shadow-amber-500/50 hover:from-amber-600 hover:to-amber-700 transition-all flex items-center gap-3 group z-50 border-2 border-amber-400"
+        className="fixed bottom-6 left-6 p-4 bg-gradient-to-br from-[#f59e0b] to-[#d97706] dark:from-[#fbbf24] dark:to-[#f59e0b] text-white dark:text-black rounded-2xl shadow-2xl hover:shadow-amber-500/50 hover:from-[#d97706] hover:to-[#f59e0b] dark:hover:from-[#f59e0b] dark:hover:to-[#fbbf24] transition-all flex items-center gap-3 group z-50 border-2 border-[#d97706] dark:border-[#f59e0b]"
         style={{ display: isOpen ? "none" : "flex" }}
       >
         <BookOpen size={24} className="flex-shrink-0" />
@@ -512,16 +512,16 @@ const TutorBot: React.FC<TutorBotProps> = ({
             isExpanded
               ? "inset-4 w-auto h-auto"
               : "bottom-6 left-6 w-[480px] max-w-[calc(100vw-3rem)] h-[650px]"
-          } bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border-2 border-slate-200 dark:border-slate-800 flex flex-col z-50 overflow-hidden transition-all duration-300`}
+          } bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl border-2 border-slate-200 dark:border-slate-800 flex flex-col z-50 overflow-hidden transition-all duration-300`}
         >
-          <div className="p-6 bg-gradient-to-r from-amber-50 to-slate-50 dark:from-gray-900 dark:to-gray-900 border-b-2 border-slate-200 dark:border-slate-800 flex-shrink-0">
+          <div className="p-6 bg-gradient-to-r from-[#fffbeb] to-slate-50 dark:from-[#0f172a] dark:to-[#020617] border-b-2 border-slate-200 dark:border-slate-800 flex-shrink-0">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-4 min-w-0 flex-1">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                  <BookOpen size={20} className="text-white" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#f59e0b] to-[#d97706] dark:from-[#fbbf24] dark:to-[#f59e0b] flex items-center justify-center flex-shrink-0 shadow-md">
+                  <BookOpen size={20} className="text-white dark:text-black" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-base font-serif font-bold text-gray-900 dark:text-white truncate">
+                  <h3 className="text-base font-serif font-bold text-[#0f172a] dark:text-[#f8fafc] truncate">
                     AI Tutor
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-mono">
@@ -534,7 +534,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
                   onClick={() => setVoiceEnabled(!voiceEnabled)}
                   className={`p-2 rounded-lg transition-all ${
                     voiceEnabled
-                      ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-500"
+                      ? "bg-[#fffbeb] dark:bg-amber-900/30 text-[#d97706] dark:text-[#fbbf24]"
                       : "text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                   }`}
                   title={voiceEnabled ? "Voice ON" : "Voice OFF"}
@@ -556,7 +556,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
 
                 <button
                   onClick={handleGenerateVideo}
-                  className="p-2 text-slate-400 hover:text-amber-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                  className="p-2 text-slate-400 hover:text-[#f59e0b] dark:hover:text-[#fbbf24] hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                   title="Generate Video"
                 >
                   <svg
@@ -592,7 +592,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
                   onClick={() => setThinkingLevel(level)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all flex-shrink-0 ${
                     thinkingLevel === level
-                      ? "bg-amber-600 text-white shadow-md"
+                      ? "bg-[#f59e0b] dark:bg-[#fbbf24] text-white dark:text-black shadow-md"
                       : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
                   }`}
                 >
@@ -607,7 +607,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
                   type="checkbox"
                   checked={autoListen}
                   onChange={(e) => setAutoListen(e.target.checked)}
-                  className="rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                  className="rounded border-slate-300 text-[#f59e0b] focus:ring-[#f59e0b]"
                 />
                 Auto-listen after response
               </label>
@@ -626,20 +626,20 @@ const TutorBot: React.FC<TutorBotProps> = ({
 
           <div
             ref={scrollRef}
-            className="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-6 bg-white dark:bg-gray-900 min-h-0"
+            className="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-6 bg-white dark:bg-[#0f172a] min-h-0"
           >
             {cleanMessages.length === 0 && (
               <div className="text-center py-16 space-y-8">
-                <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-xl">
-                  <BookOpen className="text-white" size={40} />
+                <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-[#f59e0b] to-[#d97706] dark:from-[#fbbf24] dark:to-[#f59e0b] flex items-center justify-center shadow-xl">
+                  <BookOpen className="text-white dark:text-black" size={40} />
                 </div>
                 <div>
-                  <h4 className="text-xl font-serif font-bold text-gray-900 dark:text-white mb-3">
+                  <h4 className="text-xl font-serif font-bold text-[#0f172a] dark:text-[#f8fafc] mb-3">
                     How can I help you today?
                   </h4>
                   <p className="text-sm text-slate-600 dark:text-slate-400 px-6 leading-relaxed">
                     Ask me anything about{" "}
-                    <span className="font-semibold text-amber-600 dark:text-amber-500">
+                    <span className="font-semibold text-[#f59e0b] dark:text-[#fbbf24]">
                       {moduleName}
                     </span>
                   </p>
@@ -650,7 +650,7 @@ const TutorBot: React.FC<TutorBotProps> = ({
                       <button
                         key={i}
                         onClick={() => handleSend(q)}
-                        className="px-4 py-2 text-sm bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-slate-700 dark:hover:text-amber-500 transition-all border border-slate-200 dark:border-slate-700 font-medium"
+                        className="px-4 py-2 text-sm bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-[#fffbeb] hover:text-[#d97706] dark:hover:bg-slate-700 dark:hover:text-[#fbbf24] transition-all border border-slate-200 dark:border-slate-700 font-medium"
                       >
                         {q}
                       </button>
@@ -663,8 +663,11 @@ const TutorBot: React.FC<TutorBotProps> = ({
             {cleanMessages.map((m, i) => (
               <div key={i} className="flex gap-4 items-start">
                 {m.role === "model" && (
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                    <BookOpen size={18} className="text-white" />
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#f59e0b] to-[#d97706] dark:from-[#fbbf24] dark:to-[#f59e0b] flex items-center justify-center flex-shrink-0 shadow-md">
+                    <BookOpen
+                      size={18}
+                      className="text-white dark:text-black"
+                    />
                   </div>
                 )}
 
@@ -676,8 +679,8 @@ const TutorBot: React.FC<TutorBotProps> = ({
                   <div
                     className={`inline-block max-w-[85%] ${
                       m.role === "user"
-                        ? "bg-gradient-to-r from-slate-700 to-slate-800 dark:from-slate-800 dark:to-slate-900 text-white px-5 py-3 rounded-2xl rounded-tr-md shadow-md border border-slate-600 dark:border-slate-700"
-                        : "text-gray-800 dark:text-gray-200"
+                        ? "bg-gradient-to-r from-slate-700 to-slate-800 dark:from-slate-800 dark:to-[#020617] text-white px-5 py-3 rounded-2xl rounded-tr-md shadow-md border border-slate-600 dark:border-slate-700"
+                        : "text-[#0f172a] dark:text-slate-200"
                     }`}
                   >
                     {m.role === "user" ? (
@@ -719,15 +722,15 @@ const TutorBot: React.FC<TutorBotProps> = ({
 
             {isThinking && (
               <div className="flex gap-4 items-start">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-md">
-                  <BookOpen size={18} className="text-white" />
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#f59e0b] to-[#d97706] dark:from-[#fbbf24] dark:to-[#f59e0b] flex items-center justify-center shadow-md">
+                  <BookOpen size={18} className="text-white dark:text-black" />
                 </div>
                 <ThinkingIndicator />
               </div>
             )}
           </div>
 
-          <div className="p-5 bg-gradient-to-r from-slate-50 to-amber-50/30 dark:from-gray-900 dark:to-gray-900 border-t-2 border-slate-200 dark:border-slate-800 flex-shrink-0">
+          <div className="p-5 bg-gradient-to-r from-slate-50 to-[#fffbeb]/30 dark:from-[#0f172a] dark:to-[#020617] border-t-2 border-slate-200 dark:border-slate-800 flex-shrink-0">
             <div className="flex items-end gap-3">
               {voiceEnabled && (
                 <button
@@ -757,13 +760,13 @@ const TutorBot: React.FC<TutorBotProps> = ({
                   }
                   placeholder="Message AI Tutor..."
                   disabled={isThinking || isListening}
-                  className="w-full bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-3 pr-12 text-sm text-gray-900 dark:text-gray-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none disabled:opacity-50 resize-none transition-all"
+                  className="w-full bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-3 pr-12 text-sm text-[#0f172a] dark:text-[#f8fafc] placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-[#f59e0b] dark:focus:ring-[#fbbf24] focus:border-[#f59e0b] dark:focus:border-[#fbbf24] outline-none disabled:opacity-50 resize-none transition-all"
                 />
               </div>
               <button
                 onClick={() => handleSend()}
                 disabled={isThinking || !input.trim() || isListening}
-                className="p-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl hover:from-amber-600 hover:to-amber-700 transition-all disabled:from-slate-300 disabled:to-slate-400 dark:disabled:from-slate-700 dark:disabled:to-slate-800 disabled:cursor-not-allowed flex-shrink-0 shadow-md"
+                className="p-3 bg-gradient-to-r from-[#f59e0b] to-[#d97706] dark:from-[#fbbf24] dark:to-[#f59e0b] text-white dark:text-black rounded-xl hover:from-[#d97706] hover:to-[#f59e0b] dark:hover:from-[#f59e0b] dark:hover:to-[#fbbf24] transition-all disabled:from-slate-300 disabled:to-slate-400 dark:disabled:from-slate-700 dark:disabled:to-slate-800 disabled:cursor-not-allowed flex-shrink-0 shadow-md"
               >
                 <svg
                   width="20"
