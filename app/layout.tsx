@@ -1,22 +1,20 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: {
-    default: 'Neurolearn AI - AI-Powered Learning Platform',
-    template: '%s | Neurolearn AI',
-  },
-  description: 'Unlock your potential with Neurolearn AI, an innovative platform leveraging artificial intelligence to personalize your learning journey. Master new skills, understand complex concepts, and achieve your educational goals efficiently.',
+  title: 'NeuroLearn AI - Personalized Learning Powered by AI',
+  description: 'Unlock your full potential with AI-driven personalized learning. NeuroLearn AI adapts to your unique learning style and pace, making complex topics easy to understand and master.',
   openGraph: {
-    title: 'Neurolearn AI - AI-Powered Learning Platform',
-    description: 'Unlock your potential with Neurolearn AI, an innovative platform leveraging artificial intelligence to personalize your learning journey. Master new skills, understand complex concepts, and achieve your educational goals efficiently.',
+    title: 'NeuroLearn AI - Personalized Learning Powered by AI',
+    description: 'Unlock your full potential with AI-driven personalized learning. NeuroLearn AI adapts to your unique learning style and pace, making complex topics easy to understand and master.',
     url: 'https://neurolearn-ai.onrender.com',
-    siteName: 'Neurolearn AI',
+    siteName: 'NeuroLearn AI',
     images: [
       {
-        url: 'https://neurolearn-ai.onrender.com/og-image.jpg', // Placeholder: Ensure this image exists in your public directory
+        url: 'https://neurolearn-ai.onrender.com/og-image.jpg', // Ensure this image exists in your public folder (e.g., public/og-image.jpg)
         width: 1200,
         height: 630,
-        alt: 'Neurolearn AI Logo',
+        alt: 'NeuroLearn AI Logo and Slogan',
+        type: 'image/jpeg', // Adjust type if using PNG or other format
       },
     ],
     locale: 'en_US',
@@ -24,25 +22,29 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Neurolearn AI - AI-Powered Learning Platform',
-    description: 'Unlock your potential with Neurolearn AI, an innovative platform leveraging artificial intelligence to personalize your learning journey. Master new skills, understand complex concepts, and achieve your educational goals efficiently.',
-    images: ['https://neurolearn-ai.onrender.com/twitter-image.jpg'], // Placeholder: Ensure this image exists in your public directory
-    creator: '@neurolearnai', // Placeholder: Replace with your actual Twitter handle
+    title: 'NeuroLearn AI - Personalized Learning Powered by AI',
+    description: 'Unlock your full potential with AI-driven personalized learning. NeuroLearn AI adapts to your unique learning style and pace, making complex topics easy to understand and master.',
+    creator: '@NeuroLearnAI', // Replace with your actual Twitter handle if available
+    site: '@NeuroLearnAI',   // Replace with your actual Twitter handle if available
+    images: ['https://neurolearn-ai.onrender.com/og-image.jpg'],
   },
   alternates: {
     canonical: 'https://neurolearn-ai.onrender.com',
   },
+  // Add Google Search Console verification if you have the code
   // verification: {
-  //   google: 'your-google-verification-code', // Uncomment and replace with your Google Search Console verification code
-  //   yandex: 'your-yandex-verification-code',
-  //   baidu: 'your-baidu-verification-code',
-  //   facebook: 'your-facebook-verification-code',
-  // },
-  // alternates: {
-  //   canonical: 'https://neurolearn-ai.onrender.com',
-  //   languages: {
-  //     'en-US': 'https://neurolearn-ai.onrender.com/en-US',
-  //     'es-ES': 'https://neurolearn-ai.onrender.com/es-ES',
-  //   },
+  //   google: 'your-google-site-verification-code',
   // },
 };
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  );
+}
