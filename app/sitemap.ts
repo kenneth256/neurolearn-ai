@@ -1,28 +1,64 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const baseUrl = 'https://neurolearn-ai.onrender.com';
+
   return [
     {
-      url: 'https://neurolearn-ai.onrender.com',
+      url: baseUrl,
       lastModified: new Date(),
-      changeFrequency: 'weekly',
+      changeFrequency: 'yearly',
       priority: 1,
     },
-    // Add other static pages here, e.g.:
-    // {
-    //   url: 'https://neurolearn-ai.onrender.com/about',
-    //   lastModified: new Date(),
-    //   changeFrequency: 'monthly',
-    //   priority: 0.8,
-    // },
-    // For dynamic pages, you would fetch data and map it to sitemap entries:
-    // ...
-    // const posts = await getPosts();
+    {
+      url: `${baseUrl}/about`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/features`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/pricing`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/contact`,
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/blog`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/privacy`,
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/terms`,
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.5,
+    }
+    // Add more dynamic routes here if applicable, e.g., from a CMS or database
+    // Example for dynamic blog posts:
     // ...posts.map((post) => ({
-    //   url: `https://neurolearn-ai.onrender.com/blog/${post.slug}`,
+    //   url: `${baseUrl}/blog/${post.slug}`,
     //   lastModified: post.updatedAt,
     //   changeFrequency: 'weekly',
-    //   priority: 0.7,
+    //   priority: 0.8,
     // })),
   ];
 }
