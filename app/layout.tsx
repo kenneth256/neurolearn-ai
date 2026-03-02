@@ -1,17 +1,23 @@
-export const metadata = {
-  title: 'Neurolearn AI - AI-Powered Learning Platform',
-  description: 'Unlock your full learning potential with Neurolearn AI, an advanced AI-powered platform designed for personalized and efficient education. Master new concepts faster and achieve your academic and professional goals.',
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  metadataBase: new URL('https://neurolearn-ai.onrender.com/'),
+  title: {
+    default: 'Neurolearn AI - AI-Powered Learning Platform',
+    template: '%s | Neurolearn AI',
+  },
+  description: 'Unlock your potential with Neurolearn AI, an innovative platform leveraging artificial intelligence to personalize your learning journey. Master new skills efficiently.',
   openGraph: {
     title: 'Neurolearn AI - AI-Powered Learning Platform',
-    description: 'Unlock your full learning potential with Neurolearn AI, an advanced AI-powered platform designed for personalized and efficient education. Master new concepts faster and achieve your academic and professional goals.',
-    url: 'https://neurolearn-ai.onrender.com',
+    description: 'Unlock your potential with Neurolearn AI, an innovative platform leveraging artificial intelligence to personalize your learning journey. Master new skills efficiently.',
+    url: 'https://neurolearn-ai.onrender.com/',
     siteName: 'Neurolearn AI',
     images: [
       {
-        url: 'https://neurolearn-ai.onrender.com/og-image.jpg', // IMPORTANT: Replace with an actual, high-quality Open Graph image URL (e.g., 1200x630px)
+        url: '/og-image.jpg', // Placeholder: Ensure this image exists in your public directory
         width: 1200,
         height: 630,
-        alt: 'Neurolearn AI - AI-Powered Learning Platform',
+        alt: 'Neurolearn AI Open Graph Image',
       },
     ],
     locale: 'en_US',
@@ -20,15 +26,57 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Neurolearn AI - AI-Powered Learning Platform',
-    description: 'Unlock your full learning potential with Neurolearn AI, an advanced AI-powered platform designed for personalized and efficient education. Master new concepts faster and achieve your academic and professional goals.',
-    images: ['https://neurolearn-ai.onrender.com/twitter-image.jpg'], // IMPORTANT: Replace with an actual, high-quality Twitter Card image URL (e.g., 1200x675px)
+    description: 'Unlock your potential with Neurolearn AI, an innovative platform leveraging artificial intelligence to personalize your learning journey. Master new skills efficiently.',
+    images: ['/twitter-image.jpg'], // Placeholder: Ensure this image exists in your public directory
   },
   verification: {
-    google: 'YOUR_GOOGLE_SITE_VERIFICATION_CODE', // IMPORTANT: Replace with your actual Google Search Console verification code
+    google: 'YOUR_GOOGLE_SEARCH_CONSOLE_VERIFICATION_CODE', // Replace with your actual Google Search Console verification code
   },
   alternates: {
-    canonical: 'https://neurolearn-ai.onrender.com',
-    // No 'languages' property is added here because the site is explicitly stated as not multilingual (isMultilingual: false).
-    // hreflang tags are only necessary for multilingual sites to indicate alternate language versions to search engines.
+    canonical: 'https://neurolearn-ai.onrender.com/',
   },
 };
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <head>
+        {/* JSON-LD Schema Markup for Organization */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "name": "Neurolearn AI",
+              "url": "https://neurolearn-ai.onrender.com/",
+              "logo": "https://neurolearn-ai.onrender.com/logo.png", // Placeholder: Ensure this logo exists in your public directory
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+256775260196",
+                "contactType": "Customer Service"
+              },
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Kampala",
+                "addressRegion": "Uganda",
+                "addressCountry": "UG"
+              },
+              "sameAs": [
+                // Add social media profiles here if available, e.g.:
+                // "https://facebook.com/neurolearnai",
+                // "https://twitter.com/neurolearnai",
+                // "https://linkedin.com/company/neurolearnai"
+              ]
+            })
+          }}
+        />
+      </head>
+      <body>{children}</body>
+    </html>
+  );
+}
