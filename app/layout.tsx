@@ -1,12 +1,6 @@
-import './globals.css';
-import { Inter } from 'next/font/google';
-
-const inter = Inter({ subsets: ['latin'] });
-
-export const metadata = {
-  title: 'NeuroLearn AI',
-  description: 'NeuroLearn AI: Empowering the future of learning with artificial intelligence and neuroscience insights.',
-};
+import "./globals.css";
+import { ThemeProvider } from "./components/ui/theme";
+import { Toaster } from "react-hot-toast";
 
 export default function RootLayout({
   children,
@@ -15,7 +9,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body>
+        <ThemeProvider>{children}</ThemeProvider>
+        <Toaster position="top-right" />
+        <div id="modal-root"></div>
+      </body>
     </html>
   );
 }
