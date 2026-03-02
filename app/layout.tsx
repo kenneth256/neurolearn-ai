@@ -1,27 +1,23 @@
 import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
+
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'NeuroLearn AI: Personalized Learning Platform for Enhanced Education',
-  description: 'NeuroLearn AI: Personalized learning platform powered by advanced AI. Adapts to your unique style and pace, optimizing your educational journey for enhanced academic success.',
-  alternates: {
-    canonical: 'https://neurolearn-ai.onrender.com',
-    // If multiple languages were supported, hreflang would go here:
-    // hreflang: {
-    //   'en-US': 'https://neurolearn-ai.onrender.com/en-US',
-    //   'x-default': 'https://neurolearn-ai.onrender.com',
-    // },
-  },
+  title: 'NeuroLearn AI - Revolutionizing Education with AI',
+  description: 'NeuroLearn AI provides cutting-edge AI tools to personalize learning, boost engagement, and optimize teaching. Revolutionize education with AI-powered solutions for students and educators worldwide.',
   openGraph: {
-    title: 'NeuroLearn AI: Personalized Learning Platform for Enhanced Education',
-    description: 'NeuroLearn AI: Personalized learning platform powered by advanced AI. Adapts to your unique style and pace, optimizing your educational journey for enhanced academic success.',
+    title: 'NeuroLearn AI - Revolutionizing Education with AI',
+    description: 'NeuroLearn AI provides cutting-edge AI tools to personalize learning, boost engagement, and optimize teaching. Revolutionize education with AI-powered solutions for students and educators worldwide.',
     url: 'https://neurolearn-ai.onrender.com',
     siteName: 'NeuroLearn AI',
     images: [
       {
-        url: 'https://neurolearn-ai.onrender.com/og-image.jpg', // Ensure this image exists in your public directory
+        url: 'https://neurolearn-ai.onrender.com/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'NeuroLearn AI - Personalized Learning Platform',
+        alt: 'NeuroLearn AI',
       },
     ],
     locale: 'en_US',
@@ -29,13 +25,27 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'NeuroLearn AI: Personalized Learning Platform for Enhanced Education',
-    description: 'NeuroLearn AI: Personalized learning platform powered by advanced AI. Adapts to your unique style and pace, optimizing your educational journey for enhanced academic success.',
-    creator: '@NeuroLearnAI', // Replace with your actual Twitter handle
-    images: ['https://neurolearn-ai.onrender.com/twitter-image.jpg'], // Ensure this image exists in your public directory
+    title: 'NeuroLearn AI - Revolutionizing Education with AI',
+    description: 'NeuroLearn AI provides cutting-edge AI tools to personalize learning, boost engagement, and optimize teaching. Revolutionize education with AI-powered solutions for students and educators worldwide.',
+    creator: '@NeuroLearnAI',
+    images: ['https://neurolearn-ai.onrender.com/twitter-image.jpg'],
   },
   verification: {
-    google: 'YOUR_GOOGLE_VERIFICATION_CODE', // Replace with your actual Google Search Console verification code
-    // Other verification tags can be added here if needed (e.g., yandex, bing)
+    google: 'your-google-verification-code' // Placeholder: Replace with actual Google Search Console verification code
+  },
+  alternates: {
+    canonical: 'https://neurolearn-ai.onrender.com',
   },
 };
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <body className={inter.className}>{children}</body>
+    </html>
+  );
+}
