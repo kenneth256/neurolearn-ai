@@ -1,61 +1,38 @@
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
-
-const inter = Inter({ subsets: ['latin'] })
-
-export const metadata: Metadata = {
-  title: {
-    default: 'NeuronLearn-ai | AI-Powered Learning Solutions',
-    template: '%s | NeuronLearn-ai',
-  },
-  description: 'NeuronLearn-ai specializes in cutting-edge AI software for enhanced learning and educational solutions. Discover our innovative platforms.',
+export const metadata = {
+  title: 'NeuroLearn AI - Revolutionizing Personalized Learning with AI',
+  description: 'Unlock your full potential with NeuroLearn AI. Experience personalized learning paths, adaptive content, and AI-powered insights designed to optimize your educational journey.',
+  applicationName: 'NeuroLearn AI',
+  keywords: ['AI learning', 'personalized education', 'adaptive learning', 'AI tutor', 'online learning', 'education technology', 'neuroscience learning'],
+  authors: [{
+    name: 'NeuroLearn AI Team'
+  }],
+  creator: 'NeuroLearn AI Team',
+  publisher: 'NeuroLearn AI Team',
   openGraph: {
-    title: 'NeuronLearn-ai | AI-Powered Learning Solutions',
-    description: 'NeuronLearn-ai specializes in cutting-edge AI software for enhanced learning and educational solutions. Discover our innovative platforms.',
+    title: 'NeuroLearn AI - Revolutionizing Personalized Learning with AI',
+    description: 'Unlock your full potential with NeuroLearn AI. Experience personalized learning paths, adaptive content, and AI-powered insights designed to optimize your educational journey.',
     url: 'https://neurolearn-ai.onrender.com',
-    siteName: 'NeuronLearn-ai',
+    siteName: 'NeuroLearn AI',
+    images: [{
+      url: 'https://neurolearn-ai.onrender.com/og-image.jpg',
+      width: 1200,
+      height: 630,
+      alt: 'NeuroLearn AI - Personalized Learning Platform'
+    }],
     locale: 'en_US',
-    type: 'website',
+    type: 'website'
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'NeuronLearn-ai | AI-Powered Learning Solutions',
-    description: 'NeuronLearn-ai specializes in cutting-edge AI software for enhanced learning and educational solutions. Discover our innovative platforms.',
+    title: 'NeuroLearn AI - Revolutionizing Personalized Learning with AI',
+    description: 'Unlock your full potential with NeuroLearn AI. Experience personalized learning paths, adaptive content, and AI-powered insights designed to optimize your educational journey.',
+    images: ['https://neurolearn-ai.onrender.com/og-image.jpg'],
+    creator: '@NeuroLearnAI' // Replace with actual Twitter handle if available
   },
-}
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const localBusinessSchema = {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    "name": "NeuronLearn-ai",
-    "address": {
-      "@type": "PostalAddress",
-      "streetAddress": "123 lane line",
-      "addressLocality": "san Francisco",
-      "addressRegion": "CA",
-      "postalCode": "94107",
-      "addressCountry": "USA"
-    },
-    "telephone": "+256775260196",
-    "url": "https://neurolearn-ai.onrender.com",
-    "description": "NeuronLearn-ai is a software company specializing in AI-powered learning solutions."
-  };
-
-  return (
-    <html lang="en">
-      <body className={inter.className}>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
-        />
-        {children}
-      </body>
-    </html>
-  )
-}
+  alternates: {
+    canonical: 'https://neurolearn-ai.onrender.com'
+  },
+  verification: {
+    google: 'YOUR_GOOGLE_SITE_VERIFICATION_CODE' // Replace with your actual Google Search Console verification code
+  }
+};
