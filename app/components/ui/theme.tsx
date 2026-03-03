@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 
 type Theme = "light" | "dark";
@@ -18,31 +18,68 @@ export const useTheme = () => {
   return context;
 };
 
+/**
+ * Inline script in <head> — runs synchronously before first paint.
+ * Applies dark class immediately so there's no flash on load.
+ */
 export const ThemeScript: React.FC = () => (
   <script
     dangerouslySetInnerHTML={{
-      __html: `(function(){try{var s=localStorage.getItem('theme');var d=window.matchMedia('(prefers-color-scheme: dark)').matches;if(s==='dark'||(!s&&d)){document.documentElement.classList.add('dark');}}catch(e){}})();`,
+      __html: `(function(){try{
+        var s=localStorage.getItem('theme');
+        var sys=window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if(s==='dark'||(s===null&&sys)){
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      }catch(e){}})();`,
     }}
   />
 );
 
-function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "light";
-  const saved = localStorage.getItem("theme") as Theme | null;
-  if (saved === "light" || saved === "dark") return saved;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+/** Apply a theme directly to the DOM + persist it — safe to call anywhere */
+function applyTheme(next: Theme) {
+  if (next === "dark") {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+  try {
+    localStorage.setItem("theme", next);
+  } catch (_e) { }
 }
 
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  // Start with "light" — ThemeScript has already painted the page correctly,
+  // so this initial value is only used for React state; no visual flash occurs.
+  const [theme, setTheme] = useState<Theme>("light");
 
+  // On mount: read what ThemeScript actually applied and sync React state.
+  // We do NOT apply the theme here (ThemeScript already did it).
   useEffect(() => {
-    const root = document.documentElement;
-    theme === "dark" ? root.classList.add("dark") : root.classList.remove("dark");
-    localStorage.setItem("theme", theme);
-  }, [theme]);
+    const saved = localStorage.getItem("theme") as Theme | null;
+    const sys = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const initial: Theme = saved === "dark" || saved === "light"
+      ? saved
+      : sys ? "dark" : "light";
+    setTheme(initial);
+    // Ensure DOM matches (handles edge-cases like SSR mismatch)
+    applyTheme(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once on mount only
 
-  const toggleTheme = () => setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  // Toggle: update DOM synchronously then update React state.
+  // DOM-first means the visual change is instant, not delayed by a re-render cycle.
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => {
+      const next: Theme = prev === "light" ? "dark" : "light";
+      applyTheme(next); // ← synchronous DOM write, happens before React re-renders
+      return next;
+    });
+  }, []);
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
@@ -51,20 +88,55 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   );
 };
 
-export const ThemeToggle: React.FC = () => {
+export const ThemeToggle: React.FC<{ className?: string }> = ({
+  className = "",
+}) => {
   const { theme, toggleTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div
+        className={`w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 ${className}`}
+        aria-hidden="true"
+      />
+    );
+  }
+
+  const isDark = theme === "dark";
 
   return (
     <button
       onClick={toggleTheme}
-      className="p-3 rounded-full bg-white dark:bg-gray-900 border-2 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500 transition-all shadow-sm hover:shadow-md"
-      aria-label="Toggle theme"
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      className={`
+        relative w-10 h-10 flex items-center justify-center rounded-full
+        border border-slate-200 dark:border-slate-700
+        bg-slate-100 dark:bg-slate-800
+        hover:bg-slate-200 dark:hover:bg-slate-700
+        shadow-sm hover:shadow-md
+        transition-colors duration-200
+        focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2
+        ${className}
+      `}
     >
-      {theme === "light" ? (
-        <Moon size={20} className="text-gray-900" />
-      ) : (
-        <Sun size={20} className="text-yellow-400" />
-      )}
+      <Moon
+        size={18}
+        className={`absolute transition-all duration-200 text-slate-600
+          ${isDark ? "opacity-0 scale-50 rotate-90" : "opacity-100 scale-100 rotate-0"}
+        `}
+      />
+      <Sun
+        size={18}
+        className={`absolute transition-all duration-200 text-amber-400
+          ${isDark ? "opacity-100 scale-100 rotate-0" : "opacity-0 scale-50 -rotate-90"}
+        `}
+      />
     </button>
   );
 };

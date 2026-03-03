@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { toast } from "react-hot-toast";
+import { ThemeToggle } from "../components/ui/theme";
 import Link from "next/link";
 import {
   BookOpen,
@@ -109,11 +110,11 @@ const Dashboard = () => {
   const avgProgress =
     myCourses.length > 0
       ? Math.round(
-          myCourses.reduce(
-            (acc, course) => acc + (course.stats?.progressPercentage || 0),
-            0,
-          ) / myCourses.length,
-        )
+        myCourses.reduce(
+          (acc, course) => acc + (course.stats?.progressPercentage || 0),
+          0,
+        ) / myCourses.length,
+      )
       : 0;
 
   const completedCourses = myCourses.filter(
@@ -157,7 +158,7 @@ const Dashboard = () => {
         router.refresh();
         router.push("/");
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const navItems = [
@@ -168,9 +169,9 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="max-h-screen overflow-hidden h-screen bg-gradient-to-br from-slate-100 to-slate-200 dark:from-gray-950 dark:to-gray-900 flex transition-colors">
-      <aside className="w-72 shrink-0 h-full border-r-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-gray-900 hidden lg:flex flex-col shadow-xl">
-        <div className="p-8 border-b-2 border-slate-200 dark:border-slate-800">
+    <div className="max-h-screen overflow-hidden h-screen bg-gradient-to-br from-slate-100 to-slate-200 dark:from-[#070a0f] dark:to-[#0a0c10] flex">
+      <aside className="w-72 shrink-0 h-full border-r border-slate-200 dark:border-[var(--sidebar-border)] bg-white dark:bg-[var(--sidebar)] hidden lg:flex flex-col shadow-xl">
+        <div className="p-8 border-b border-slate-200 dark:border-[var(--sidebar-border)]">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center shadow-lg">
               <LayoutDashboard size={24} className="text-white" />
@@ -185,26 +186,29 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-        <nav className="flex-1 p-6 space-y-2">
+        <nav className="flex-1 p-6 space-y-1.5">
           {navItems.map((item) => (
             <button
               key={item.label}
               onClick={() => setActiveTab(item.label)}
-              className={`w-full flex items-center gap-4 px-5 py-3.5 text-sm font-serif font-semibold rounded-xl transition-all ${
-                activeTab === item.label
-                  ? "text-white bg-amber-500 shadow-lg"
-                  : "text-slate-600 dark:text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-slate-800"
-              }`}
+              className={`w-full flex items-center gap-4 px-5 py-3.5 text-sm font-serif font-semibold rounded-xl transition-all ${activeTab === item.label
+                ? "text-white bg-amber-500 shadow-lg shadow-amber-500/25"
+                : "text-slate-600 dark:text-[var(--sidebar-muted)] hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-[var(--sidebar-active)]"
+                }`}
             >
               <item.icon size={20} />
               {item.label}
             </button>
           ))}
         </nav>
-        <div className="p-6 border-t-2 border-slate-200 dark:border-slate-800">
+        <div className="p-6 border-t border-slate-200 dark:border-[var(--sidebar-border)] space-y-2">
+          <div className="flex items-center justify-between px-2 py-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-[var(--sidebar-muted)]">Appearance</span>
+            <ThemeToggle />
+          </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-4 px-5 py-3.5 text-sm font-serif font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-all"
+            className="w-full flex items-center gap-4 px-5 py-3.5 text-sm font-serif font-semibold text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/15 rounded-xl transition-all"
           >
             <LogOut size={20} />
             Sign Out
@@ -215,7 +219,7 @@ const Dashboard = () => {
       <main className="flex-1 h-full p-8 lg:p-12 overflow-y-auto">
         {activeTab === "Statistics" ? (
           loading ? (
-            <div className="flex flex-col items-center justify-center py-24 bg-white dark:bg-gray-900 rounded-2xl border-2 border-slate-200 dark:border-slate-800">
+            <div className="flex flex-col items-center justify-center py-24 bg-white dark:bg-[var(--card)] rounded-2xl border border-slate-200 dark:border-[var(--card-border)]">
               <Loader2 className="animate-spin text-amber-500 mb-4" size={48} />
               <p className="text-slate-600 dark:text-slate-400 font-medium">
                 Loading your analytics...
@@ -224,7 +228,7 @@ const Dashboard = () => {
           ) : user ? (
             <EnhancedAnalyticsDashboard userId={user?.id} />
           ) : (
-            <div className="text-center py-24 bg-white dark:bg-gray-900 rounded-2xl border-2 border-slate-200 dark:border-slate-800">
+            <div className="text-center py-24 bg-white dark:bg-[var(--card)] rounded-2xl border border-slate-200 dark:border-[var(--card-border)]">
               <div className="w-16 h-16 bg-amber-100 dark:bg-amber-950/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <BarChart3 className="text-amber-500" size={40} />
               </div>
@@ -267,7 +271,7 @@ const Dashboard = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  className="bg-white dark:bg-gray-900 p-7 rounded-2xl border-2 border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl transition-all"
+                  className="bg-white dark:bg-[var(--card)] p-7 rounded-2xl border border-slate-200 dark:border-[var(--card-border)] shadow-lg hover:shadow-xl transition-all"
                 >
                   <div className="flex items-center justify-between mb-5">
                     <div
@@ -291,7 +295,7 @@ const Dashboard = () => {
 
             <section>
               {isLoading ? (
-                <div className="flex flex-col items-center justify-center py-24 bg-white dark:bg-gray-900 rounded-2xl border-2 border-slate-200 dark:border-slate-800">
+                <div className="flex flex-col items-center justify-center py-24 bg-white dark:bg-[var(--card)] rounded-2xl border border-slate-200 dark:border-[var(--card-border)]">
                   <Loader2
                     className="animate-spin text-amber-500 mb-4"
                     size={48}
@@ -326,7 +330,7 @@ const Dashboard = () => {
                           <Link href={`/courses/${course.id}`}>
                             <motion.div
                               whileHover={{ x: 8 }}
-                              className="bg-white dark:bg-gray-900 p-8 rounded-2xl border-2 border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:border-amber-300 dark:hover:border-amber-700 transition-all flex items-center justify-between group cursor-pointer"
+                              className="bg-white dark:bg-[var(--card)] p-8 rounded-2xl border border-slate-200 dark:border-[var(--card-border)] shadow-lg hover:shadow-xl hover:border-amber-300 dark:hover:border-amber-700 transition-all flex items-center justify-between group cursor-pointer"
                             >
                               <div className="flex items-center gap-6 flex-1">
                                 <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-amber-500 group-hover:bg-amber-500 group-hover:text-white transition-all shadow-md">
@@ -352,10 +356,9 @@ const Dashboard = () => {
                                       <div
                                         className="h-full bg-amber-500 transition-all duration-1000"
                                         style={{
-                                          width: `${
-                                            course.stats?.progressPercentage ||
+                                          width: `${course.stats?.progressPercentage ||
                                             0
-                                          }%`,
+                                            }%`,
                                         }}
                                       />
                                     </div>
@@ -375,7 +378,7 @@ const Dashboard = () => {
                           // Not enrolled - show enroll button
                           <motion.div
                             whileHover={{ x: 8 }}
-                            className="bg-white dark:bg-gray-900 p-8 rounded-2xl border-2 border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:border-amber-300 dark:hover:border-amber-700 transition-all flex items-center justify-between group"
+                            className="bg-white dark:bg-[var(--card)] p-8 rounded-2xl border border-slate-200 dark:border-[var(--card-border)] shadow-lg hover:shadow-xl hover:border-amber-300 dark:hover:border-amber-700 transition-all flex items-center justify-between group"
                           >
                             <div className="flex items-center gap-6 flex-1">
                               <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-amber-500 group-hover:bg-amber-500 group-hover:text-white transition-all shadow-md">
@@ -424,7 +427,7 @@ const Dashboard = () => {
                   })}
                 </div>
               ) : (
-                <div className="text-center py-24 bg-white dark:bg-gray-900 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700">
+                <div className="text-center py-24 bg-white dark:bg-[var(--card)] rounded-2xl border-2 border-dashed border-slate-300 dark:border-[var(--border)]">
                   <div className="w-20 h-20 bg-amber-100 dark:bg-amber-950/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
                     <BookOpen className="text-amber-500" size={40} />
                   </div>

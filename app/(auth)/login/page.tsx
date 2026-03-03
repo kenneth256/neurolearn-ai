@@ -14,6 +14,7 @@ import {
   Loader2,
   Sparkles,
 } from "lucide-react";
+import { ThemeToggle } from "../../components/ui/theme";
 
 const LoginPage = () => {
   const router = useRouter();
@@ -53,7 +54,11 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-gray-950 flex items-center justify-center p-6 transition-colors">
+    <div className="min-h-screen bg-[var(--background-subtle)] dark:bg-[var(--background)] flex items-center justify-center p-6 relative">
+      {/* Theme toggle in top-right corner */}
+      <div className="absolute top-5 right-5">
+        <ThemeToggle />
+      </div>
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}

@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { ThemeToggle } from "./components/ui/theme";
 import {
   BookOpen,
   Sparkles,
@@ -28,9 +29,12 @@ import {
 const LandingPage = () => {
   return (
     <div className="min-h-screen bg-[#fcfcf9] dark:bg-[#020617] text-[#0f172a] dark:text-[#f8fafc] font-sans selection:bg-amber-200 overflow-x-hidden">
+
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 bg-[#fcfcf9]/70 dark:bg-[#020617]/70 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+
+          {/* Logo */}
           <div className="flex items-center gap-3">
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-br from-[#f59e0b] to-[#d97706] rounded-2xl blur-md opacity-75"></div>
@@ -38,22 +42,26 @@ const LandingPage = () => {
                 <BrainCircuit size={26} strokeWidth={2.5} />
               </div>
             </div>
-            <div>
+            {/* Changed from h1 to div — nav logo should not be an h1 */}
+            <div className="flex flex-col">
               <span className="font-bold text-2xl tracking-tight bg-gradient-to-r from-[#f59e0b] to-[#d97706] bg-clip-text text-transparent">
                 NeuronLearn
               </span>
-              <div className="text-[9px] font-semibold uppercase tracking-widest text-slate-400 -mt-1">
+              <span className="text-[9px] font-semibold uppercase tracking-widest text-slate-400 -mt-1">
                 AI Education
-              </div>
+              </span>
             </div>
           </div>
-          <div className="flex items-center gap-6">
+
+          {/* Nav Actions — must be INSIDE the max-w-7xl div */}
+          <div className="flex items-center gap-4">
             <Link
               href="/login"
               className="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-[#f59e0b] dark:hover:text-[#fbbf24] transition-colors"
             >
               Sign In
             </Link>
+            <ThemeToggle />
             <Link
               href="/generate"
               className="relative group px-6 py-3 bg-gradient-to-r from-[#f59e0b] to-[#d97706] text-white rounded-xl font-semibold text-sm hover:shadow-xl hover:shadow-amber-500/50 transition-all duration-300 overflow-hidden"
@@ -62,6 +70,7 @@ const LandingPage = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-[#d97706] to-[#f59e0b] opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </Link>
           </div>
+
         </div>
       </nav>
 
@@ -73,6 +82,7 @@ const LandingPage = () => {
 
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
+
             {/* Left: Hero Content */}
             <div className="space-y-8">
               {/* Badge */}
@@ -81,16 +91,13 @@ const LandingPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-[#fffbeb] dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-full"
               >
-                <Sparkles
-                  size={16}
-                  className="text-[#f59e0b] dark:text-[#fbbf24]"
-                />
+                <Sparkles size={16} className="text-[#f59e0b] dark:text-[#fbbf24]" />
                 <span className="text-sm font-semibold text-[#0f172a] dark:text-amber-200">
                   AI-Powered Personalized Learning
                 </span>
               </motion.div>
 
-              {/* Main Headline */}
+              {/* Main Headline — h1 lives here, not in the nav */}
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -117,8 +124,7 @@ const LandingPage = () => {
                 Tell us what you want to learn. Our AI instantly generates a
                 complete, adaptive course—complete with{" "}
                 <span className="font-semibold text-[#0f172a] dark:text-[#f8fafc]">
-                  video lessons, interactive quizzes, AI tutors, and
-                  personalized practice
+                  video lessons, interactive quizzes, AI tutors, and personalized practice
                 </span>
                 —tailored to how you learn best.
               </motion.p>
@@ -141,10 +147,7 @@ const LandingPage = () => {
                   <div className="absolute inset-0 bg-gradient-to-r from-[#d97706] to-[#f59e0b] dark:from-[#f59e0b] dark:to-[#fbbf24] opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 </Link>
                 <button className="px-8 py-4 bg-white dark:bg-[#0f172a] text-[#0f172a] dark:text-[#f8fafc] border-2 border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-lg hover:border-[#f59e0b] dark:hover:border-[#fbbf24] transition-all flex items-center justify-center gap-3 group">
-                  <Play
-                    size={20}
-                    className="group-hover:scale-110 transition-transform"
-                  />
+                  <Play size={20} className="group-hover:scale-110 transition-transform" />
                   Watch Demo
                 </button>
               </motion.div>
@@ -167,12 +170,8 @@ const LandingPage = () => {
                   ))}
                 </div>
                 <div className="text-sm">
-                  <div className="font-semibold text-[#0f172a] dark:text-[#f8fafc]">
-                    50,000+ learners
-                  </div>
-                  <div className="text-slate-500 dark:text-slate-400">
-                    generating courses daily
-                  </div>
+                  <div className="font-semibold text-[#0f172a] dark:text-[#f8fafc]">50,000+ learners</div>
+                  <div className="text-slate-500 dark:text-slate-400">generating courses daily</div>
                 </div>
               </motion.div>
             </div>
@@ -199,10 +198,7 @@ const LandingPage = () => {
                       disabled
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <Sparkles
-                        size={20}
-                        className="text-[#f59e0b] dark:text-[#fbbf24] animate-pulse"
-                      />
+                      <Sparkles size={20} className="text-[#f59e0b] dark:text-[#fbbf24] animate-pulse" />
                     </div>
                   </div>
                 </div>
@@ -213,29 +209,15 @@ const LandingPage = () => {
                     <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       AI Generating...
                     </span>
-                    <span className="text-xs font-mono text-[#f59e0b] dark:text-[#fbbf24]">
-                      2.3s
-                    </span>
+                    <span className="text-xs font-mono text-[#f59e0b] dark:text-[#fbbf24]">2.3s</span>
                   </div>
 
                   {/* Module Cards */}
                   <div className="space-y-2">
                     {[
-                      {
-                        icon: Video,
-                        title: "Introduction to ML",
-                        type: "12 min video",
-                      },
-                      {
-                        icon: FileText,
-                        title: "Key Concepts & Theory",
-                        type: "Reading",
-                      },
-                      {
-                        icon: Target,
-                        title: "Practice Quiz (15Q)",
-                        type: "Interactive",
-                      },
+                      { icon: Video, title: "Introduction to ML", type: "12 min video" },
+                      { icon: FileText, title: "Key Concepts & Theory", type: "Reading" },
+                      { icon: Target, title: "Practice Quiz (15Q)", type: "Interactive" },
                       { icon: MessageSquare, title: "AI Tutor", type: "24/7" },
                     ].map((item, i) => (
                       <motion.div
@@ -252,14 +234,9 @@ const LandingPage = () => {
                           <div className="font-semibold text-sm text-[#0f172a] dark:text-[#f8fafc] truncate">
                             {item.title}
                           </div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400">
-                            {item.type}
-                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">{item.type}</div>
                         </div>
-                        <CheckCircle2
-                          size={16}
-                          className="text-green-500 flex-shrink-0"
-                        />
+                        <CheckCircle2 size={16} className="text-green-500 flex-shrink-0" />
                       </motion.div>
                     ))}
                   </div>
@@ -268,12 +245,8 @@ const LandingPage = () => {
                 {/* Progress Indicator */}
                 <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
-                      Course Progress
-                    </span>
-                    <span className="text-xs font-mono font-bold text-[#f59e0b] dark:text-[#fbbf24]">
-                      0%
-                    </span>
+                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Course Progress</span>
+                    <span className="text-xs font-mono font-bold text-[#f59e0b] dark:text-[#fbbf24]">0%</span>
                   </div>
                   <div className="h-2 bg-slate-100 dark:bg-[#020617] rounded-full overflow-hidden">
                     <div className="h-full w-0 bg-gradient-to-r from-[#f59e0b] to-[#d97706] dark:from-[#fbbf24] dark:to-[#f59e0b] rounded-full animate-pulse"></div>
@@ -293,9 +266,7 @@ const LandingPage = () => {
                     <Zap size={20} className="text-green-600" />
                   </div>
                   <div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                      Engagement
-                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">Engagement</div>
                     <div className="font-bold text-green-600">98%</div>
                   </div>
                 </div>
@@ -312,9 +283,7 @@ const LandingPage = () => {
                     <BarChart3 size={20} className="text-blue-600" />
                   </div>
                   <div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                      Mastery
-                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">Mastery</div>
                     <div className="font-bold text-blue-600">Advanced</div>
                   </div>
                 </div>
@@ -335,8 +304,7 @@ const LandingPage = () => {
               </span>
             </h2>
             <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              Our AI analyzes your learning style and generates a complete
-              educational experience in seconds
+              Our AI analyzes your learning style and generates a complete educational experience in seconds
             </p>
           </div>
 
@@ -346,22 +314,19 @@ const LandingPage = () => {
                 step: "01",
                 icon: Lightbulb,
                 title: "Describe What You Want",
-                description:
-                  "Simply type what you want to learn. 'Web Development', 'Quantum Physics', 'Spanish for Travel'—anything.",
+                description: "Simply type what you want to learn. 'Web Development', 'Quantum Physics', 'Spanish for Travel'—anything.",
               },
               {
                 step: "02",
                 icon: BrainCircuit,
                 title: "AI Generates Your Course",
-                description:
-                  "Our AI creates a complete curriculum with video lessons, interactive content, quizzes, and practice exercises—all personalized to your level.",
+                description: "Our AI creates a complete curriculum with video lessons, interactive content, quizzes, and practice exercises—all personalized to your level.",
               },
               {
                 step: "03",
                 icon: Rocket,
                 title: "Learn & Adapt in Real-Time",
-                description:
-                  "Your AI tutor monitors your progress, adjusts difficulty, provides instant feedback, and ensures you actually master the material.",
+                description: "Your AI tutor monitors your progress, adjusts difficulty, provides instant feedback, and ensures you actually master the material.",
               },
             ].map((item, i) => (
               <div
@@ -375,12 +340,8 @@ const LandingPage = () => {
                   <div className="w-14 h-14 bg-gradient-to-br from-[#f59e0b] to-[#d97706] dark:from-[#fbbf24] dark:to-[#f59e0b] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-amber-500/50">
                     <item.icon size={28} strokeWidth={2} />
                   </div>
-                  <h3 className="text-2xl font-bold font-serif">
-                    {item.title}
-                  </h3>
-                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                    {item.description}
-                  </p>
+                  <h3 className="text-2xl font-bold font-serif">{item.title}</h3>
+                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{item.description}</p>
                 </div>
               </div>
             ))}
@@ -399,8 +360,7 @@ const LandingPage = () => {
               </span>
             </h2>
             <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              Not just content delivery. A complete adaptive learning ecosystem
-              powered by AI.
+              Not just content delivery. A complete adaptive learning ecosystem powered by AI.
             </p>
           </div>
 
@@ -473,9 +433,7 @@ const LandingPage = () => {
                 <div className="text-sm font-semibold uppercase tracking-wider mb-1 text-[#0f172a] dark:text-[#f8fafc]">
                   {stat.label}
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">
-                  {stat.desc}
-                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">{stat.desc}</div>
               </div>
             ))}
           </div>
@@ -499,18 +457,9 @@ const LandingPage = () => {
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {[
-              "Web Development",
-              "Machine Learning",
-              "Digital Marketing",
-              "Photography",
-              "Spanish Language",
-              "Music Theory",
-              "Quantum Physics",
-              "Creative Writing",
-              "Data Science",
-              "UI/UX Design",
-              "Blockchain",
-              "Psychology",
+              "Web Development", "Machine Learning", "Digital Marketing", "Photography",
+              "Spanish Language", "Music Theory", "Quantum Physics", "Creative Writing",
+              "Data Science", "UI/UX Design", "Blockchain", "Psychology",
             ].map((subject, i) => (
               <button
                 key={i}
@@ -525,7 +474,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Final CTA - Hero Style */}
+      {/* Final CTA */}
       <section className="relative py-32 px-6 overflow-hidden bg-white dark:bg-[#0f172a]/50 border-y border-slate-200 dark:border-slate-800">
         {/* Animated Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#fffbeb]/50 via-[#fcfcf9] to-[#fffbeb]/50 dark:from-[#0f172a] dark:via-[#020617] dark:to-[#0f172a]"></div>
@@ -544,16 +493,13 @@ const LandingPage = () => {
               viewport={{ once: true }}
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#fffbeb] dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-full"
             >
-              <Sparkles
-                size={18}
-                className="text-[#f59e0b] dark:text-[#fbbf24]"
-              />
+              <Sparkles size={18} className="text-[#f59e0b] dark:text-[#fbbf24]" />
               <span className="text-sm font-semibold text-[#0f172a] dark:text-amber-200">
                 50,000+ courses generated this week
               </span>
             </motion.div>
 
-            {/* Main Headline */}
+            {/* Headline */}
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -576,8 +522,7 @@ const LandingPage = () => {
               transition={{ delay: 0.2 }}
               className="text-xl md:text-2xl text-slate-600 dark:text-slate-400 max-w-3xl mx-auto font-light"
             >
-              Type what you want to learn. Get a complete course with videos,
-              quizzes, and AI tutoring{" "}
+              Type what you want to learn. Get a complete course with videos, quizzes, and AI tutoring{" "}
               <span className="font-bold underline decoration-[#f59e0b]/50 dark:decoration-[#fbbf24]/50 underline-offset-4 text-[#0f172a] dark:text-[#f8fafc]">
                 in under 3 seconds
               </span>
@@ -614,38 +559,19 @@ const LandingPage = () => {
               className="grid md:grid-cols-3 gap-6 pt-8 max-w-4xl mx-auto"
             >
               {[
-                {
-                  icon: Zap,
-                  title: "Instant Generation",
-                  desc: "Course ready in 2-3 seconds",
-                },
-                {
-                  icon: CheckCircle2,
-                  title: "No Credit Card",
-                  desc: "Start learning for free",
-                },
-                {
-                  icon: Award,
-                  title: "Proven Results",
-                  desc: "4.5x better retention",
-                },
+                { icon: Zap, title: "Instant Generation", desc: "Course ready in 2-3 seconds" },
+                { icon: CheckCircle2, title: "No Credit Card", desc: "Start learning for free" },
+                { icon: Award, title: "Proven Results", desc: "4.5x better retention" },
               ].map((item, i) => (
                 <div
                   key={i}
                   className="p-6 bg-white dark:bg-[#0f172a] backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-2xl hover:border-[#f59e0b] dark:hover:border-[#fbbf24] transition-all"
                 >
                   <div className="w-12 h-12 bg-[#fffbeb] dark:bg-amber-950/30 rounded-xl flex items-center justify-center mb-4 mx-auto">
-                    <item.icon
-                      size={24}
-                      className="text-[#f59e0b] dark:text-[#fbbf24]"
-                    />
+                    <item.icon size={24} className="text-[#f59e0b] dark:text-[#fbbf24]" />
                   </div>
-                  <div className="font-bold mb-1 text-[#0f172a] dark:text-[#f8fafc]">
-                    {item.title}
-                  </div>
-                  <div className="text-sm text-slate-600 dark:text-slate-400">
-                    {item.desc}
-                  </div>
+                  <div className="font-bold mb-1 text-[#0f172a] dark:text-[#f8fafc]">{item.title}</div>
+                  <div className="text-sm text-slate-600 dark:text-slate-400">{item.desc}</div>
                 </div>
               ))}
             </motion.div>
@@ -670,28 +596,18 @@ const LandingPage = () => {
                   ))}
                 </div>
                 <div className="text-left text-sm">
-                  <div className="font-bold text-[#0f172a] dark:text-[#f8fafc]">
-                    2,847 people
-                  </div>
-                  <div className="text-slate-600 dark:text-slate-400">
-                    started learning today
-                  </div>
+                  <div className="font-bold text-[#0f172a] dark:text-[#f8fafc]">2,847 people</div>
+                  <div className="text-slate-600 dark:text-slate-400">started learning today</div>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#0f172a] backdrop-blur-sm rounded-full border border-slate-200 dark:border-slate-700">
                 <div className="flex gap-0.5">
                   {[1, 2, 3, 4, 5].map((i) => (
-                    <Award
-                      key={i}
-                      size={16}
-                      className="text-[#f59e0b] dark:text-[#fbbf24] fill-[#f59e0b] dark:fill-[#fbbf24]"
-                    />
+                    <Award key={i} size={16} className="text-[#f59e0b] dark:text-[#fbbf24] fill-[#f59e0b] dark:fill-[#fbbf24]" />
                   ))}
                 </div>
-                <span className="text-sm font-semibold text-[#0f172a] dark:text-[#f8fafc]">
-                  4.9/5 rating
-                </span>
+                <span className="text-sm font-semibold text-[#0f172a] dark:text-[#f8fafc]">4.9/5 rating</span>
               </div>
             </motion.div>
           </div>
@@ -721,6 +637,7 @@ const LandingPage = () => {
           </div>
         </div>
       </footer>
+
     </div>
   );
 };
@@ -737,19 +654,13 @@ const FeatureCard = ({
   gradient: string;
 }) => (
   <div className="group relative p-8 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-2xl hover:border-[#f59e0b] dark:hover:border-[#fbbf24] transition-all hover:shadow-xl">
-    <div
-      className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity`}
-    ></div>
+    <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity`}></div>
     <div className="relative space-y-4">
       <div className="w-12 h-12 bg-slate-100 dark:bg-[#020617] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
         {icon}
       </div>
-      <h4 className="text-xl font-bold text-[#0f172a] dark:text-[#f8fafc] font-serif">
-        {title}
-      </h4>
-      <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-        {description}
-      </p>
+      <h4 className="text-xl font-bold text-[#0f172a] dark:text-[#f8fafc] font-serif">{title}</h4>
+      <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{description}</p>
     </div>
   </div>
 );
