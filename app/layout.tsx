@@ -1,52 +1,39 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { ThemeProvider } from "./components/ui/theme";
+import { ThemeProvider, ThemeScript } from "./components/ui/theme";
 import { Toaster } from "react-hot-toast";
 
 export const metadata: Metadata = {
-  title: 'NeuroLearn AI - Personalized Learning & AI Tutoring',
-  description: 'Unlock your potential with NeuroLearn AI. Personalized learning paths, AI-powered tutoring, and adaptive education for students and professionals.',
+  title: "NeuroLearn AI - Personalized AI & Mastery Learning",
+  description:
+    "Unlock your potential with NeuroLearn AI. Comprehensive courses, cutting-edge tools, and expert guidance in AI and machine learning.",
   openGraph: {
-    title: 'NeuroLearn AI - Personalized Learning & AI Tutoring',
-    description: 'Unlock your potential with NeuroLearn AI. Personalized learning paths, AI-powered tutoring, and adaptive education for students and professionals.',
-    url: 'https://neurolearn-ai.onrender.com',
-    siteName: 'NeuroLearn AI',
-    images: [
-      {
-        url: "/og-image.jpg", // Add this image to your /public folder
-        width: 1200,
-        height: 630,
-        alt: 'NeuroLearn AI',
-      },
-    ],
-    locale: 'en_US',
-    type: 'website',
+    title: "NeuroLearn AI - Personalized AI & Mastery Learning",
+    description:
+      "Unlock your potential with NeuroLearn AI. Comprehensive courses, cutting-edge tools, and expert guidance in AI and machine learning.",
+    url: "https://neurolearn-ai.onrender.com",
+    siteName: "NeuroLearn AI",
+    images: [{ url: "/og-image.jpg", width: 1200, height: 630, alt: "NeuroLearn AI" }],
+    locale: "en_US",
+    type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "NeuroLearn AI - AI-Powered Learning Platform",
+    title: "NeuroLearn AI - Personalized AI & Mastery Learning",
     description:
-      "Unlock your potential with NeuroLearn AI — personalized AI-powered learning.",
-    images: ["/og-image.jpg"], // Reuses same image, add /twitter-image.jpg if you have a separate one
+      "Unlock your potential with NeuroLearn AI. Comprehensive courses, cutting-edge tools, and expert guidance in AI and machine learning.",
+    creator: "@neurolearnai",
+    images: ["/twitter-image.jpg"],
   },
-  alternates: {
-    canonical: "https://neurolearn-ai.onrender.com",
-  },
-  // Uncomment and add your real code once you verify in Google Search Console:
-  // verification: {
-  //   google: "YOUR_GOOGLE_SEARCH_CONSOLE_VERIFICATION_CODE",
-  // },
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
-        {/* JSON-LD Schema Markup */}
+        <ThemeScript />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -55,8 +42,7 @@ export default function RootLayout({
               "@type": "Organization",
               name: "NeuroLearn AI",
               url: "https://neurolearn-ai.onrender.com",
-              logo: "https://neurolearn-ai.onrender.com/logo.png", // Add logo.png to /public
-
+              logo: "https://neurolearn-ai.onrender.com/logo.png",
               contactPoint: {
                 "@type": "ContactPoint",
                 telephone: "+256775260196",
@@ -80,4 +66,3 @@ export default function RootLayout({
     </html>
   );
 }
-test

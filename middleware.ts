@@ -5,8 +5,6 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get("auth-token")?.value;
   const { pathname } = request.nextUrl;
 
-
-  // These are accessible only when NOT logged in
   const authRoutes = ["/", "/login", "/register"];
 
  
