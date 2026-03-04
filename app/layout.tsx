@@ -1,77 +1,55 @@
-import "./globals.css";
 import type { Metadata } from "next";
-import { GoogleAnalytics, GoogleTagManager } from "@next/third-parties/google";
-import { ThemeProvider, ThemeScript } from "./components/ui/theme";
-import { Toaster } from "react-hot-toast";
+import { Inter } from "next/font/google";
+import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "NeuroLearn AI - Revolutionizing AI-Powered Education",
-  description:
-    "Unlock your potential with NeuroLearn AI. Comprehensive courses, cutting-edge tools, and expert guidance in AI and machine learning.",
+  title: "NeuroLearn-ai: Your gateway to personalized learning",
+  description: "Revolutionize education with AI. NeuroLearn-ai offers personalized learning experiences, adaptive content, and AI-powered insights for students and educators.",
   openGraph: {
-    title: "NeuroLearn AI - Revolutionizing AI-Powered Education",
-    description:
-      "Unlock your potential with NeuroLearn AI. Comprehensive courses, cutting-edge tools, and expert guidance in AI and machine learning.",
+    title: "NeuroLearn-ai: Your gateway to personalized learning",
+    description: "Revolutionize education with AI. NeuroLearn-ai offers personalized learning experiences, adaptive content, and AI-powered insights for students and educators.",
     url: "https://neurolearn-ai.onrender.com",
-    siteName: "NeuroLearn AI",
-    images: [{ url: "https://neurolearn-ai.onrender.com/og-image.jpg", width: 1200, height: 630, alt: "NeuroLearn AI" }],
+    siteName: "NeuroLearn-ai",
+    images: [
+      {
+        url: "https://neurolearn-ai.onrender.com/og-image.jpg", // Replace with your actual OG image path
+        width: 1200,
+        height: 630,
+        alt: "NeuroLearn-ai: AI-Powered Personalized Learning",
+      },
+    ],
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "NeuroLearn AI - Revolutionizing AI-Powered Education",
-    description:
-      "Unlock your potential with NeuroLearn AI. Comprehensive courses, cutting-edge tools, and expert guidance in AI and machine learning.",
-    creator: "@neurolearnai",
-    images: ["https://neurolearn-ai.onrender.com/twitter-image.jpg"],
+    title: "NeuroLearn-ai: Your gateway to personalized learning",
+    description: "Revolutionize education with AI. NeuroLearn-ai offers personalized learning experiences, adaptive content, and AI-powered insights for students and educators.",
+    images: ["https://neurolearn-ai.onrender.com/twitter-image.jpg"], // Replace with your actual Twitter image path
+    creator: "@NeuroLearnAI", // Replace with your Twitter handle
   },
   verification: {
-    google: "lVxgtF-nQXKZjok-QcQBEGJb59PhuWhlTfYXb2eJbbA",
+    google: "your-google-site-verification-code", // Replace with your actual Google Search Console verification code
   },
   alternates: {
     canonical: "https://neurolearn-ai.onrender.com",
+    languages: {
+      'en-US': 'https://neurolearn-ai.onrender.com/en-US',
+      // Add other language alternatives if applicable
+    },
   },
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <ThemeScript />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Organization",
-              name: "NeuroLearn AI",
-              url: "https://neurolearn-ai.onrender.com",
-              logo: "https://neurolearn-ai.onrender.com/logo.png",
-              contactPoint: {
-                "@type": "ContactPoint",
-                telephone: "+256775260196",
-                contactType: "Customer Service",
-              },
-              address: {
-                "@type": "PostalAddress",
-                addressLocality: "Kampala",
-                addressRegion: "Uganda",
-                addressCountry: "UG",
-              },
-            }),
-          }}
-        />
-      </head>
-      <body>
-        <GoogleTagManager gtmId="GTM-N6QCVGRM" />
-        <ThemeProvider>{children}</ThemeProvider>
-        <Toaster position="top-right" />
-        <div id="modal-root" />
-      </body>
-      <GoogleAnalytics gaId="G-NKCGPKJTF7" />
+    <html lang="en">
+      <body className={inter.className}>{children}</body>
     </html>
   );
 }
