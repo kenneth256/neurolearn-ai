@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     images: ["https://neurolearn-ai.onrender.com/twitter-image.jpg"],
   },
   verification: {
-    google: "google3dd2543cf95002a6",
+    google: "lVxgtF-nQXKZjok-QcQBEGJb59PhuWhlTfYXb2eJbbA",
   },
   alternates: {
     canonical: "https://neurolearn-ai.onrender.com",
