@@ -1,19 +1,16 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: {
-    default: 'NeuroLearn AI - AI-Powered Learning',
-    template: '%s | NeuroLearn AI',
-  },
-  description: 'Unlock your potential with NeuroLearn AI\'s innovative, AI-powered learning platform for enhanced education and skill development.',
+  title: 'NeuroLearn AI - Personalized Learning & AI Tutoring',
+  description: 'Unlock your potential with NeuroLearn AI. Personalized learning paths, AI-powered tutoring, and adaptive education for all ages and subjects.',
   openGraph: {
-    title: 'NeuroLearn AI - AI-Powered Learning',
-    description: 'Unlock your potential with NeuroLearn AI\'s innovative, AI-powered learning platform for enhanced education and skill development.',
+    title: 'NeuroLearn AI - Personalized Learning & AI Tutoring',
+    description: 'Unlock your potential with NeuroLearn AI. Personalized learning paths, AI-powered tutoring, and adaptive education for all ages and subjects.',
     url: 'https://neurolearn-ai.onrender.com',
     siteName: 'NeuroLearn AI',
     images: [
       {
-        url: 'https://neurolearn-ai.onrender.com/og-image.jpg', // Consider replacing with your actual Open Graph image URL
+        url: 'https://neurolearn-ai.onrender.com/og-image.jpg', // Ensure this image exists in your public folder
         width: 1200,
         height: 630,
         alt: 'NeuroLearn AI Logo',
@@ -24,34 +21,15 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'NeuroLearn AI - AI-Powered Learning',
-    description: 'Unlock your potential with NeuroLearn AI\'s innovative, AI-powered learning platform for enhanced education and skill development.',
-    images: ['https://neurolearn-ai.onrender.com/twitter-image.jpg'], // Consider replacing with your actual Twitter Card image URL
+    title: 'NeuroLearn AI - Personalized Learning & AI Tutoring',
+    description: 'Unlock your potential with NeuroLearn AI. Personalized learning paths, AI-powered tutoring, and adaptive education for all ages and subjects.',
+    creator: '@NeuroLearnAI', // Replace with actual Twitter handle if available
+    images: ['https://neurolearn-ai.onrender.com/twitter-image.jpg'], // Ensure this image exists in your public folder
+  },
+  verification: {
+    google: 'YOUR_GOOGLE_SEARCH_CONSOLE_VERIFICATION_CODE', // Replace with your actual Google Search Console verification code
   },
   alternates: {
     canonical: 'https://neurolearn-ai.onrender.com',
   },
-  verification: {
-    google: 'YOUR_GOOGLE_VERIFICATION_CODE', // IMPORTANT: Replace with your actual Google Search Console verification code
-  },
-  script: [
-    {
-      id: 'website-schema',
-      type: 'application/ld+json',
-      innerHTML: JSON.stringify({
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "NeuroLearn AI",
-        "url": "https://neurolearn-ai.onrender.com",
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": {
-            "@type": "EntryPoint",
-            "urlTemplate": "https://neurolearn-ai.onrender.com/search?q={search_term_string}"
-          },
-          "query-input": "required name=search_term_string"
-        }
-      }),
-    },
-  ],
 };
