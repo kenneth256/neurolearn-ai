@@ -443,8 +443,8 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
               className="relative w-full min-h-screen bg-white dark:bg-[#0f172a] shadow-2xl"
               style={{ transformStyle: "preserve-3d", backfaceVisibility: "hidden" }}
             >
-              <div className="p-8 md:p-20 relative z-10 max-w-5xl mx-auto">
-                <header className="flex justify-between items-center mb-16 border-b-2 border-slate-200 dark:border-slate-800 pb-6">
+              <div className="p-4 sm:p-8 md:p-20 relative z-10 max-w-5xl mx-auto">
+                <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-8 sm:mb-16 border-b-2 border-slate-200 dark:border-slate-800 pb-4 sm:pb-6">
                   <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.5em] text-slate-600 dark:text-slate-400">
                     <Target size={14} className="text-[#f59e0b] dark:text-[#fbbf24]" aria-hidden="true" />
                     Curriculum Folio
@@ -485,19 +485,19 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
                     <div className="text-[#f59e0b] dark:text-[#fbbf24] font-mono text-[11px] font-black uppercase tracking-[0.3em]">
                       Section {currentModule?.moduleNumber}
                     </div>
-                    <h1 className="text-5xl md:text-8xl font-serif font-bold leading-[1.05] text-[#0f172a] dark:text-[#f8fafc]">
+                    <h1 className="text-4xl sm:text-5xl md:text-8xl font-serif font-bold leading-[1.05] text-[#0f172a] dark:text-[#f8fafc] break-words">
                       {currentModule?.moduleName}
                     </h1>
 
-                    <div className="bg-[#fffbeb] dark:bg-amber-950/20 border-l-[6px] border-[#f59e0b] dark:border-[#fbbf24] p-10 rounded-r-3xl">
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-8 flex items-center gap-2">
+                    <div className="bg-[#fffbeb] dark:bg-amber-950/20 border-l-[4px] sm:border-l-[6px] border-[#f59e0b] dark:border-[#fbbf24] p-6 sm:p-10 rounded-r-2xl sm:rounded-r-3xl">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-6 sm:mb-8 flex items-center gap-2">
                         <Award size={14} className="text-[#f59e0b] dark:text-[#fbbf24]" aria-hidden="true" />
                         Key Objectives
                       </h4>
                       {currentModule?.learningObjectives?.map((obj: any, i: number) => (
                         <div key={i} className="flex gap-4 mb-4 items-start">
-                          <span className="text-[#f59e0b] dark:text-[#fbbf24] font-bold text-xl" aria-hidden="true">❧</span>
-                          <p className="text-xl leading-relaxed text-slate-800 dark:text-slate-200 font-serif italic">
+                          <span className="text-[#f59e0b] dark:text-[#fbbf24] font-bold text-lg sm:text-xl shrink-0" aria-hidden="true">❧</span>
+                          <p className="text-base sm:text-xl leading-relaxed text-slate-800 dark:text-slate-200 font-serif italic">
                             {typeof obj === "string" ? obj : obj.objective}
                           </p>
                         </div>
@@ -541,7 +541,7 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
                       )}
 
                       {data && (
-                        <div className="mt-24 pt-24 border-t-4 border-double border-amber-200 dark:border-amber-900/30">
+                        <div className="mt-16 sm:mt-24 pt-16 sm:pt-24 border-t-4 border-double border-amber-200 dark:border-amber-900/30">
                           <CapstoneProject data={data} />
                         </div>
                       )}
@@ -552,28 +552,28 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
             </motion.div>
           </AnimatePresence>
 
-          <div className="fixed bottom-10 right-10 flex gap-4 z-50">
+          <div className="fixed bottom-6 right-6 sm:bottom-10 sm:right-10 flex gap-3 sm:gap-4 z-50">
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 0}
               aria-label="Previous module"
-              className="p-4 bg-white dark:bg-[#0f172a] border-2 border-slate-300 dark:border-slate-700 rounded-full shadow-2xl disabled:opacity-20 disabled:cursor-not-allowed hover:scale-105 hover:border-[#f59e0b] dark:hover:border-[#fbbf24] transition-all"
+              className="p-3 sm:p-4 bg-white dark:bg-[#0f172a] border-2 border-slate-300 dark:border-slate-700 rounded-full shadow-2xl disabled:opacity-20 disabled:cursor-not-allowed hover:scale-105 hover:border-[#f59e0b] dark:hover:border-[#fbbf24] transition-all"
             >
-              <ChevronLeft size={24} className="text-[#0f172a] dark:text-[#f8fafc]" aria-hidden="true" />
+              <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-[#0f172a] dark:text-[#f8fafc]" aria-hidden="true" />
             </button>
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages - 1}
               aria-label="Next module"
-              className="p-5 bg-[#0f172a] dark:bg-[#fbbf24] text-white dark:text-black rounded-full shadow-2xl scale-110 border-2 border-[#0f172a] dark:border-[#fbbf24] disabled:opacity-20 disabled:cursor-not-allowed hover:scale-115 transition-all"
+              className="p-3.5 sm:p-5 bg-[#0f172a] dark:bg-[#fbbf24] text-white dark:text-black rounded-full shadow-2xl sm:scale-110 border-2 border-[#0f172a] dark:border-[#fbbf24] disabled:opacity-20 disabled:cursor-not-allowed hover:scale-105 sm:hover:scale-115 transition-all"
             >
-              <ChevronRight size={28} aria-hidden="true" />
+              <ChevronRight className="w-6 h-6 sm:w-7 sm:h-7" aria-hidden="true" />
             </button>
           </div>
         </main>
       </div>
 
-      <div className="fixed bottom-24 right-6 z-[60]">
+      <div className="fixed bottom-20 right-6 sm:bottom-24 sm:right-6 z-[60]">
         <TutorBot
           moduleName={currentModule?.moduleName || "Course Folio"}
           lessonContext={JSON.stringify(currentModule)}
@@ -752,20 +752,20 @@ const LessonSection: React.FC<LessonSectionProps> = ({
 
   return (
     <>
-      <div className="mb-40 last:mb-0">
-        <div className="flex items-center gap-8 mb-16 pb-8 border-b-4 border-double border-slate-200 dark:border-slate-800">
-          <div className="shrink-0">
-            <div className="w-16 h-16 rounded-2xl bg-[#f59e0b] dark:bg-[#fbbf24] flex items-center justify-center shadow-lg mb-2">
-              <span className="font-serif italic text-white dark:text-black text-2xl font-bold">{lesson.day}</span>
+      <div className="mb-24 sm:mb-40 last:mb-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8 mb-8 sm:mb-16 pb-6 sm:pb-8 border-b-4 border-double border-slate-200 dark:border-slate-800">
+          <div className="shrink-0 flex items-center gap-4 sm:block">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-[#f59e0b] dark:bg-[#fbbf24] flex items-center justify-center shadow-lg sm:mb-2">
+              <span className="font-serif italic text-white dark:text-black text-xl sm:text-2xl font-bold">{lesson.day}</span>
             </div>
-            <span className="block text-center text-[9px] font-black uppercase tracking-[0.2em] text-[#f59e0b] dark:text-[#fbbf24]">Chapter</span>
+            <span className="hidden sm:block text-center text-[9px] font-black uppercase tracking-[0.2em] text-[#f59e0b] dark:text-[#fbbf24]">Chapter</span>
           </div>
 
-          <div className="flex-1 min-w-0">
-            <h2 className="text-5xl md:text-6xl font-serif font-bold text-[#0f172a] dark:text-[#f8fafc] mb-3 leading-tight">
+          <div className="flex-1 min-w-0 w-full">
+            <h2 className="text-3xl sm:text-5xl md:text-6xl font-serif font-bold text-[#0f172a] dark:text-[#f8fafc] mb-3 leading-tight break-words">
               {lesson.title}
             </h2>
-            <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
               <span className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg">
                 <Clock size={14} className="text-[#f59e0b] dark:text-[#fbbf24]" aria-hidden="true" />
                 {lesson.duration}
@@ -790,13 +790,13 @@ const LessonSection: React.FC<LessonSectionProps> = ({
             aria-label={isComplete || hasMarkedComplete ? "Mark lesson as incomplete" : "Mark lesson as complete"}
             aria-pressed={isComplete || hasMarkedComplete}
             className={cn(
-              "shrink-0 p-4 rounded-2xl transition-all border-2 shadow-md hover:shadow-lg",
+              "shrink-0 p-3 sm:p-4 rounded-xl sm:rounded-2xl transition-all border-2 shadow-md hover:shadow-lg self-end sm:self-center mt-4 sm:mt-0",
               isComplete || hasMarkedComplete
                 ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-500 border-emerald-300 dark:border-emerald-800"
                 : "bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:border-[#f59e0b] dark:hover:border-[#fbbf24]",
             )}
           >
-            <Award size={28} aria-hidden="true" />
+            <Award className="w-6 h-6 sm:w-7 sm:h-7" aria-hidden="true" />
           </button>
         </div>
 
@@ -806,7 +806,7 @@ const LessonSection: React.FC<LessonSectionProps> = ({
 
         {spacedRepition && <SpacedRepetition data={spacedRepition} />}
 
-        <div className="space-y-32">
+        <div className="space-y-16 sm:space-y-32">
           {lesson.coreContent?.concepts?.map((concept: any, idx: number) => {
             const isLastConcept = idx === lesson.coreContent.concepts.length - 1;
             const exercises =
@@ -836,7 +836,7 @@ const LessonSection: React.FC<LessonSectionProps> = ({
         </div>
 
         {lesson.knowledgeChecks?.questions && (
-          <div className="my-32">
+          <div className="my-16 sm:my-32">
             <InteractiveQuiz
               questions={lesson.knowledgeChecks.questions.map((q: any) => ({
                 question: q.question,
@@ -861,12 +861,12 @@ const LessonSection: React.FC<LessonSectionProps> = ({
 
         {exitCriteria && <ExitCriteria criteria={exitCriteria} />}
 
-        <div className="mt-32 pt-16 border-t-4 border-double border-slate-200 dark:border-slate-800">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-center">
+        <div className="mt-16 sm:mt-32 pt-12 sm:pt-16 border-t-4 border-double border-slate-200 dark:border-slate-800">
+          <div className="flex flex-col md:flex-row gap-3 sm:gap-4 items-center justify-center">
             <button
               onClick={handleOpenVideoTutor}
               aria-label="Generate AI video lecture for this lesson"
-              className="px-6 py-3 bg-gradient-to-r from-[#f59e0b] to-[#d97706] dark:from-[#fbbf24] dark:to-[#f59e0b] hover:from-[#d97706] hover:to-[#f59e0b] dark:hover:from-[#f59e0b] dark:hover:to-[#fbbf24] text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:shadow-amber-500/50 flex items-center gap-3"
+              className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-[#f59e0b] to-[#d97706] dark:from-[#fbbf24] dark:to-[#f59e0b] hover:from-[#d97706] hover:to-[#f59e0b] dark:hover:from-[#f59e0b] dark:hover:to-[#fbbf24] text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:shadow-amber-500/50 flex items-center justify-center gap-3"
             >
               <Play size={20} aria-hidden="true" />
               Generate AI Video Lecture
@@ -879,7 +879,7 @@ const LessonSection: React.FC<LessonSectionProps> = ({
                 aria-label={hasMarkedComplete ? "Lesson already completed" : "Mark this lesson as complete"}
                 aria-disabled={completing || hasMarkedComplete}
                 className={cn(
-                  "px-8 py-3 rounded-xl font-semibold text-white transition-all shadow-lg",
+                  "w-full md:w-auto px-6 sm:px-8 py-3 rounded-xl font-semibold text-white transition-all shadow-lg flex items-center justify-center",
                   completing || hasMarkedComplete
                     ? "bg-slate-400 dark:bg-slate-600 cursor-not-allowed"
                     : "bg-emerald-500 hover:bg-emerald-600 hover:shadow-xl hover:shadow-emerald-500/50",

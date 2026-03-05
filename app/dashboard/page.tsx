@@ -61,24 +61,24 @@ const CourseCard = ({
         <Link href={`/courses/${course.id}`}>
           <motion.div
             whileHover={{ x: 8 }}
-            className="bg-white dark:bg-[var(--card)] p-8 rounded-2xl border border-slate-200 dark:border-[var(--card-border)] shadow-lg hover:shadow-xl hover:border-amber-300 dark:hover:border-amber-700 transition-all flex items-center justify-between group cursor-pointer"
+            className="bg-white dark:bg-[var(--card)] p-4 sm:p-8 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-[var(--card-border)] shadow-lg hover:shadow-xl hover:border-amber-300 dark:hover:border-amber-700 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 group cursor-pointer"
           >
-            <div className="flex items-center gap-6 flex-1">
-              <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-amber-500 group-hover:bg-amber-500 group-hover:text-white transition-all shadow-md">
-                <PlayCircle size={32} />
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 flex-1 w-full relative">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-amber-500 group-hover:bg-amber-500 group-hover:text-white transition-all shadow-md shrink-0">
+                <PlayCircle className="w-6 h-6 sm:w-8 sm:h-8" />
               </div>
-              <div className="flex-1">
-                <h3 className="font-serif font-bold text-xl text-gray-900 dark:text-white mb-2">
+              <div className="flex-1 w-full">
+                <h3 className="font-serif font-bold text-lg sm:text-xl text-gray-900 dark:text-white mb-2 line-clamp-2">
                   {course.title}
                 </h3>
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="text-xs font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-lg">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
+                  <span className="text-[10px] sm:text-xs font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 sm:px-3 py-1 rounded-md sm:rounded-lg truncate max-w-[120px] sm:max-w-none">
                     {course.subject}
                   </span>
-                  <span className="text-xs font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <span className="text-[10px] sm:text-xs font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     {course.level}
                   </span>
-                  <span className="text-xs font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <span className="text-[10px] sm:text-xs font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     {course.stats?.totalModules || 0} modules
                   </span>
                 </div>
@@ -96,36 +96,35 @@ const CourseCard = ({
               </div>
             </div>
             <ChevronRight
-              className="text-slate-300 dark:text-slate-700 group-hover:text-amber-500 transition-colors"
-              size={28}
+              className="absolute right-4 top-1/2 -translate-y-1/2 sm:static sm:translate-y-0 text-slate-300 dark:text-slate-700 group-hover:text-amber-500 transition-colors w-6 h-6 sm:w-7 sm:h-7"
             />
           </motion.div>
         </Link>
       ) : (
         <motion.div
           whileHover={{ x: 8 }}
-          className="bg-white dark:bg-[var(--card)] p-8 rounded-2xl border border-slate-200 dark:border-[var(--card-border)] shadow-lg hover:shadow-xl hover:border-amber-300 dark:hover:border-amber-700 transition-all flex items-center justify-between group"
+          className="bg-white dark:bg-[var(--card)] p-4 sm:p-8 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-[var(--card-border)] shadow-lg hover:shadow-xl hover:border-amber-300 dark:hover:border-amber-700 transition-all flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-6 group"
         >
-          <div className="flex items-center gap-6 flex-1">
-            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-amber-500 group-hover:bg-amber-500 group-hover:text-white transition-all shadow-md">
-              <PlayCircle size={32} />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 flex-1">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-amber-500 group-hover:bg-amber-500 group-hover:text-white transition-all shadow-md shrink-0">
+              <PlayCircle className="w-6 h-6 sm:w-8 sm:h-8" />
             </div>
-            <div className="flex-1">
-              <h3 className="font-serif font-bold text-xl text-gray-900 dark:text-white mb-2">
+            <div className="flex-1 w-full">
+              <h3 className="font-serif font-bold text-lg sm:text-xl text-gray-900 dark:text-white mb-2 line-clamp-2">
                 {course.title}
               </h3>
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-xs font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-lg">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
+                <span className="text-[10px] sm:text-xs font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 sm:px-3 py-1 rounded-md sm:rounded-lg truncate max-w-[120px] sm:max-w-none">
                   {course.subject}
                 </span>
-                <span className="text-xs font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <span className="text-[10px] sm:text-xs font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   {course.level}
                 </span>
-                <span className="text-xs font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <span className="text-[10px] sm:text-xs font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   {course.stats?.totalModules || 0} modules
                 </span>
               </div>
-              <p className="text-sm text-slate-500 dark:text-slate-400 font-serif italic">
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-serif italic">
                 Not enrolled yet
               </p>
             </div>
@@ -420,31 +419,31 @@ const Dashboard = () => {
     return (
       <>
         <DailyReviewWidget />
-        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-12 pb-8 border-b-2 border-slate-200 dark:border-slate-800">
-          <div>
-            <h1 className="text-4xl lg:text-5xl font-serif font-bold text-gray-900 dark:text-white mb-2">
+        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 lg:gap-6 mb-8 lg:mb-12 pb-6 lg:pb-8 border-b-2 border-slate-200 dark:border-slate-800">
+          <div className="w-full">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-gray-900 dark:text-white mb-2 break-words">
               Welcome back{user?.firstName ? `, ${user.firstName}` : ""}
             </h1>
-            <p className="text-slate-600 dark:text-slate-400 text-base">
+            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
               Ready to continue your AI-powered learning journey?
             </p>
           </div>
-          <Link href="/generate">
-            <button className="flex items-center gap-3 bg-amber-500 hover:bg-slate-900 dark:hover:bg-amber-600 text-white px-8 py-4 rounded-xl font-serif font-bold transition-all shadow-lg hover:shadow-xl">
+          <Link href="/generate" className="w-full lg:w-auto">
+            <button className="w-full lg:w-auto flex items-center justify-center gap-2 sm:gap-3 bg-amber-500 hover:bg-slate-900 dark:hover:bg-amber-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-serif font-bold transition-all shadow-lg hover:shadow-xl">
               <PlusCircle size={22} />
               New Course
             </button>
           </Link>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-8 lg:mb-12">
           {stats.map((stat, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
-              className="bg-white dark:bg-[var(--card)] p-7 rounded-2xl border border-slate-200 dark:border-[var(--card-border)] shadow-lg hover:shadow-xl transition-all"
+              className="bg-white dark:bg-[var(--card)] p-4 sm:p-7 rounded-lg sm:rounded-2xl border border-slate-200 dark:border-[var(--card-border)] shadow-md sm:shadow-lg hover:shadow-xl transition-all"
             >
               <div className="flex items-center justify-between mb-5">
                 <div
@@ -456,10 +455,10 @@ const Dashboard = () => {
                   Lifetime
                 </span>
               </div>
-              <div className="text-3xl font-serif font-bold text-gray-900 dark:text-white mb-1">
+              <div className="text-2xl sm:text-3xl font-serif font-bold text-gray-900 dark:text-white mb-1">
                 {stat.value}
               </div>
-              <div className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+              <div className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
                 {stat.label}
               </div>
             </motion.div>
@@ -578,18 +577,18 @@ const Dashboard = () => {
       </div>
 
       {/* Mobile bottom nav — visible below lg */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[var(--sidebar)] border-t border-slate-200 dark:border-[var(--sidebar-border)] flex items-center justify-around px-2 py-2 shadow-2xl">
+      <nav className="lg:hidden fixed bottom-1 left-0 right-0 z-50 bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-lg border-t border-slate-200/50 dark:border-slate-800/50 flex items-center justify-around px-2 py-1.5 sm:py-2.5 shadow-2xl safe-area-pb">
         {navItems.map((item) => (
           <button
             key={item.label}
             onClick={() => setActiveTab(item.label)}
             aria-label={item.label}
-            className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all text-xs font-semibold ${activeTab === item.label
+            className={`flex flex-col items-center gap-0.5 sm:gap-1 px-2 p-1.5 sm:px-3 sm:py-2 rounded-xl transition-all text-[10px] sm:text-xs font-semibold ${activeTab === item.label
               ? "text-amber-500"
               : "text-slate-500 dark:text-slate-400"
               }`}
           >
-            <item.icon size={22} />
+            <item.icon className="w-5 h-5 sm:w-6 sm:h-6" />
             <span className="hidden xs:block">{item.label}</span>
           </button>
         ))}
