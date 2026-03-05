@@ -150,10 +150,10 @@ export const StudySession: React.FC = () => {
     if (currentIndex >= queue.length && queue.length > 0) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] text-center max-w-md mx-auto animate-in zoom-in duration-500">
-                <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-6">
-                    <CheckCircle2 size={40} className="text-green-600 dark:text-green-400" />
+                <div className="w-16 h-16 border border-slate-200 dark:border-slate-800 rounded-2xl flex items-center justify-center mb-8 bg-white dark:bg-slate-950 shadow-sm">
+                    <CheckCircle2 size={32} className="text-slate-800 dark:text-slate-200" strokeWidth={1.5} />
                 </div>
-                <h2 className="text-3xl font-serif font-bold text-slate-800 dark:text-slate-100 mb-2">
+                <h2 className="text-3xl font-serif text-slate-800 dark:text-slate-100 mb-3 tracking-tight">
                     Review Complete!
                 </h2>
                 <p className="text-slate-500 dark:text-slate-400 mb-8">
@@ -173,10 +173,10 @@ export const StudySession: React.FC = () => {
     if (queue.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] text-center max-w-md mx-auto">
-                <div className="w-20 h-20 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mb-6">
-                    <Sparkles size={40} className="text-amber-600 dark:text-amber-400" />
+                <div className="w-16 h-16 border border-slate-200 dark:border-slate-800 rounded-2xl flex items-center justify-center mb-8 bg-white dark:bg-slate-950 shadow-sm">
+                    <Sparkles size={32} className="text-slate-800 dark:text-slate-200" strokeWidth={1.5} />
                 </div>
-                <h2 className="text-3xl font-serif font-bold text-slate-800 dark:text-slate-100 mb-2">
+                <h2 className="text-3xl font-serif text-slate-800 dark:text-slate-100 mb-3 tracking-tight">
                     You're all caught up!
                 </h2>
                 <p className="text-slate-500 dark:text-slate-400">
@@ -212,18 +212,18 @@ export const StudySession: React.FC = () => {
     return (
         <div className="w-full max-w-4xl mx-auto py-8">
             {/* Progress Bar Header */}
-            <div className="flex items-center justify-between mb-8 px-4">
+            <div className="flex items-center justify-between mb-12 px-2">
                 <div>
-                    <h2 className="text-xl font-serif font-bold text-slate-800 dark:text-slate-200">
+                    <h2 className="text-lg font-serif text-slate-800 dark:text-slate-200 tracking-tight">
                         {currentItem.enrollment?.course?.subject || "Daily Review"}
                     </h2>
-                    <p className="text-sm text-slate-500 uppercase tracking-wider font-bold mt-1">
+                    <p className="text-xs text-slate-400 dark:text-slate-500 font-medium uppercase tracking-widest mt-1">
                         Card {currentIndex + 1} of {queue.length}
                     </p>
                 </div>
-                <div className="w-32 md:w-48 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div className="w-32 md:w-48 h-1 bg-slate-100 dark:bg-slate-800/50 rounded-full overflow-hidden">
                     <div
-                        className="h-full bg-amber-500 rounded-full transition-all duration-500 ease-out"
+                        className="h-full bg-slate-800 dark:bg-slate-200 rounded-full transition-all duration-500 ease-out"
                         style={{ width: `${(currentIndex / queue.length) * 100}%` }}
                     />
                 </div>
@@ -252,8 +252,8 @@ export const StudySession: React.FC = () => {
 
             {/* Keyboard Hint (shows before flipping) */}
             {!isFlipped && (
-                <div className="text-center text-slate-400 dark:text-slate-500 text-sm font-medium uppercase tracking-widest mt-4 animate-pulse">
-                    Press <kbd className="px-2 py-1 mx-1 bg-slate-100 dark:bg-slate-800 border-b-2 border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200">Space</kbd> to flip
+                <div className="text-center text-slate-400 dark:text-slate-500 text-xs font-semibold uppercase tracking-widest mt-8 animate-pulse">
+                    Press <kbd className="px-2 py-1 mx-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md text-slate-600 dark:text-slate-300 shadow-sm">Space</kbd> to flip
                 </div>
             )}
 
