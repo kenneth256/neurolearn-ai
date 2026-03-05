@@ -36,13 +36,13 @@ export interface InterventionResponse {
       analogy?: string;
     };
   };
-  estimatedTime: number; 
+  estimatedTime: number;
 }
 
 export async function generateMoodIntervention(
   request: InterventionRequest
 ): Promise<InterventionResponse> {
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
   const prompt = buildInterventionPrompt(request);
 
@@ -60,7 +60,7 @@ export async function generateMoodIntervention(
     return parsed;
   } catch (parseError) {
     console.error("Failed to parse Gemini response:", text);
-    
+
     return {
       type: "ENCOURAGEMENT",
       content: {
@@ -77,7 +77,7 @@ export async function generateMoodIntervention(
 function buildInterventionPrompt(request: InterventionRequest): string {
   const { mood, intensity, lessonContent, learnerContext } = request;
 
-  
+
   let strategy = "";
 
   if (mood === "FRUSTRATED" || mood === "OVERWHELMED") {
@@ -125,7 +125,7 @@ Generate a REINFORCING intervention that:
 Focus on validation and progression.
 `;
   } else {
-   
+
     strategy = `
 The learner has neutral mood (intensity ${intensity}/5).
 Generate a STANDARD intervention that:
