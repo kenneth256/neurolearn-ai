@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ThemeToggle } from "./components/ui/theme";
 import {
-  BookOpen,
   Sparkles,
   ArrowRight,
   BrainCircuit,
@@ -17,132 +16,12 @@ import {
   Video,
   FileText,
   BarChart3,
-  Users,
-  Clock,
   CheckCircle2,
   Lightbulb,
   Rocket,
-  Globe,
   Layers,
   Play,
 } from "lucide-react";
-
-const pageJsonLd = [
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: [
-      {
-        "@type": "Question",
-        name: "What is Neurolearn AI?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Neurolearn AI is a free AI-powered tutoring platform that generates personalized lessons, quizzes, video content, and learning paths on any subject from a single prompt.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "Is Neurolearn AI free to use?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Yes. Neurolearn AI offers a free plan that lets you start generating full AI courses immediately — no credit card required.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "How does Neurolearn AI work?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Type any subject or topic into Neurolearn AI and it instantly generates a complete course: structured lessons, video content, interactive quizzes, and a personalized learning path — all in under 3 seconds.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "What subjects can I learn with Neurolearn AI?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Neurolearn AI supports any subject — from web development, machine learning, and data science to Spanish, music theory, creative writing, and quantum physics.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "How is Neurolearn AI different from other AI tutors?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Unlike general-purpose AI chatbots, Neurolearn AI is purpose-built for education. It generates structured multi-module courses, tracks learning progress, adapts difficulty in real-time, and provides a 24/7 AI tutor — not just answers.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "How long does it take to generate a course?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Neurolearn AI generates a complete course with video lessons, quizzes, and a personalized learning path in 2–3 seconds.",
-        },
-      },
-    ],
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "HowTo",
-    name: "How to generate a free AI course with Neurolearn AI",
-    description: "Generate a complete personalized course on any subject in seconds using Neurolearn AI.",
-    totalTime: "PT3S",
-    image: {
-      "@type": "ImageObject",
-      url: "https://neurolearn-ai.onrender.com/og-image.png",
-      width: 1200,
-      height: 630,
-    },
-    step: [
-      {
-        "@type": "HowToStep",
-        position: 1,
-        name: "Enter your topic",
-        text: "Type any subject, skill, or concept you want to learn into the Neurolearn AI prompt — e.g. 'Machine Learning for Beginners' or 'Conversational Spanish'.",
-        url: "https://neurolearn-ai.onrender.com/generate",
-        image: "https://neurolearn-ai.onrender.com/og-image.png",
-      },
-      {
-        "@type": "HowToStep",
-        position: 2,
-        name: "AI generates your course",
-        text: "Neurolearn AI instantly builds a complete multi-module course: video lessons, reading material, interactive quizzes, and a 24/7 AI tutor — personalized to your level.",
-        image: "https://neurolearn-ai.onrender.com/og-image.png",
-      },
-      {
-        "@type": "HowToStep",
-        position: 3,
-        name: "Test your knowledge",
-        text: "Take adaptive AI-generated quizzes that adjust difficulty based on your performance to reinforce learning.",
-        image: "https://neurolearn-ai.onrender.com/og-image.png",
-      },
-      {
-        "@type": "HowToStep",
-        position: 4,
-        name: "Track your progress",
-        text: "Follow your personalized learning path, monitor mastery scores, and let the AI adapt the course as you improve.",
-        image: "https://neurolearn-ai.onrender.com/og-image.png",
-      },
-    ],
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    name: "Best subjects to learn with Neurolearn AI",
-    description: "Popular subjects and courses available on the Neurolearn AI platform.",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Web Development", url: "https://neurolearn-ai.onrender.com/generate?topic=Web+Development" },
-      { "@type": "ListItem", position: 2, name: "Machine Learning", url: "https://neurolearn-ai.onrender.com/generate?topic=Machine+Learning" },
-      { "@type": "ListItem", position: 3, name: "Data Science", url: "https://neurolearn-ai.onrender.com/generate?topic=Data+Science" },
-      { "@type": "ListItem", position: 4, name: "Digital Marketing", url: "https://neurolearn-ai.onrender.com/generate?topic=Digital+Marketing" },
-      { "@type": "ListItem", position: 5, name: "Spanish Language", url: "https://neurolearn-ai.onrender.com/generate?topic=Spanish+Language" },
-      { "@type": "ListItem", position: 6, name: "UI/UX Design", url: "https://neurolearn-ai.onrender.com/generate?topic=UI+UX+Design" },
-      { "@type": "ListItem", position: 7, name: "Quantum Physics", url: "https://neurolearn-ai.onrender.com/generate?topic=Quantum+Physics" },
-      { "@type": "ListItem", position: 8, name: "Music Theory", url: "https://neurolearn-ai.onrender.com/generate?topic=Music+Theory" },
-    ],
-  },
-];
 
 const LandingPage = () => {
   const router = useRouter();
@@ -159,11 +38,6 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-[#fcfcf9] dark:bg-[#020617] text-[#0f172a] dark:text-[#f8fafc] font-sans selection:bg-amber-200 overflow-x-hidden">
-
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(pageJsonLd) }}
-      />
 
       <nav aria-label="Main navigation" className="fixed top-0 w-full z-50 bg-[#fcfcf9]/70 dark:bg-[#020617]/70 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">

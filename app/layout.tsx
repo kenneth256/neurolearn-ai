@@ -2,15 +2,16 @@ import React from 'react';
 import './globals.css';
 import type { Metadata } from 'next';
 import Script from 'next/script';
+import { ThemeProvider, ThemeScript } from '@/app/components/ui/theme';
 
 export const metadata: Metadata = {
-  title: 'Best AI Tutor | Neurolearn AI — Learn Anything From a Single Prompt',
+  title: 'Best AI Tutor | Neurolearn AI — Learn Anything Fast',
   description: 'Unlock your potential with Neurolearn AI. The best AI-powered tutor to learn anything, boost productivity, and personalize your educational journey for free.',
   alternates: {
     canonical: 'https://neurolearn-ai.onrender.com',
   },
   openGraph: {
-    title: 'Best AI Tutor | Neurolearn AI — Learn Anything From a Single Prompt',
+    title: 'Best AI Tutor | Neurolearn AI — Learn Anything Fast',
     description: 'Unlock your potential with Neurolearn AI. The best AI-powered tutor to learn anything, boost productivity, and personalize your educational journey for free.',
     url: 'https://neurolearn-ai.onrender.com',
     siteName: 'Neurolearn AI',
@@ -28,13 +29,11 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@neurolearnai',
-    title: 'Best AI Tutor | Neurolearn AI — Learn Anything From a Single Prompt',
+    title: 'Best AI Tutor | Neurolearn AI — Learn Anything Fast',
     description: 'Unlock your potential with Neurolearn AI. The best AI-powered tutor to learn anything, boost productivity, and personalize your educational journey for free.',
     images: ['https://neurolearn-ai.onrender.com/og-image.png'],
   },
 };
-
-import { ThemeProvider, ThemeScript } from '@/app/components/ui/theme';
 
 const jsonLd = [
   {
@@ -149,30 +148,41 @@ const jsonLd = [
     '@type': 'HowTo',
     name: 'How to learn any topic with Neurolearn AI',
     description: 'Use Neurolearn AI to generate a personalized lesson on any subject in seconds.',
+    totalTime: 'PT3S',
+    image: {
+      '@type': 'ImageObject',
+      url: 'https://neurolearn-ai.onrender.com/og-image.png',
+      width: 1200,
+      height: 630,
+    },
     step: [
       {
         '@type': 'HowToStep',
         position: 1,
         name: 'Enter your topic',
         text: 'Type any subject, question, or concept into the Neurolearn AI prompt box.',
+        image: 'https://neurolearn-ai.onrender.com/og-image.png',
       },
       {
         '@type': 'HowToStep',
         position: 2,
         name: 'Get your AI lesson',
         text: 'Neurolearn AI instantly generates a structured lesson with explanations, examples, and key takeaways.',
+        image: 'https://neurolearn-ai.onrender.com/og-image.png',
       },
       {
         '@type': 'HowToStep',
         position: 3,
         name: 'Test your knowledge',
         text: 'Take an AI-generated quiz to reinforce what you learned and identify gaps.',
+        image: 'https://neurolearn-ai.onrender.com/og-image.png',
       },
       {
         '@type': 'HowToStep',
         position: 4,
         name: 'Continue your learning path',
         text: 'Follow the personalized learning path Neurolearn AI builds based on your progress.',
+        image: 'https://neurolearn-ai.onrender.com/og-image.png',
       },
     ],
   },
@@ -229,12 +239,29 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <ThemeScript />
-        <meta name="theme-color" content="#4F46E5" />
+        <meta name="theme-color" content="#f59e0b" />
         <meta name="format-detection" content="telephone=no" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-5RHBNTX8LT"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-5RHBNTX8LT');
+            `,
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       </head>
       <body>
-        {/* GTM noscript fallback */}
         <noscript>
           <iframe
             src="https://www.googletagmanager.com/ns.html?id=GTM-N6QCVGRM"
@@ -246,13 +273,6 @@ export default function RootLayout({
 
         <a href="#main-content" className="sr-only focus:not-sr-only">Skip to content</a>
 
-        {/* Structured data */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-
-        {/* Google Tag Manager */}
         <Script id="gtm-init" strategy="afterInteractive">
           {`
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
