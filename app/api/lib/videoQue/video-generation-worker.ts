@@ -2,10 +2,10 @@
 import { Worker, Job } from 'bullmq';
 import { getRedisClient } from '../redis/client';
 import { prisma } from '../../lib/prisma';
-import { VeoClient } from '../veo/client'; 
-import { VideoCompiler } from '../veo/video-compiler'; 
-import { CloudinaryUploader } from '../cloudinary/cloudinary-uploader'; 
-import type { VideoGenerationJobData, VideoGenerationJobResult } from './videoque'; 
+import { VeoClient } from '../veo/client';
+import { VideoCompiler } from '../veo/video-compiler';
+import { CloudinaryUploader } from '../cloudinary/cloudinary-uploader';
+import type { VideoGenerationJobData, VideoGenerationJobResult } from './videoque';
 
 const connection = getRedisClient();
 
@@ -73,7 +73,7 @@ async function processVideoGeneration(
     for (let i = 0; i < videoPrompt.segments.length; i++) {
       const segment = videoPrompt.segments[i];
       const progressPercent = 20 + ((i / totalSegments) * 60); // 20-80%
-      
+
       await job.updateProgress(progressPercent);
 
       console.log(`🎬 [Job ${job.id}] Segment ${segment.segmentNumber}/${totalSegments}`);
@@ -196,7 +196,7 @@ async function processVideoGeneration(
 
   } catch (error) {
     console.error(`❌ [Job ${job.id}] Video generation failed:`, error);
-    
+
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -209,7 +209,7 @@ export const videoGenerationWorker = new Worker<VideoGenerationJobData, VideoGen
   'video-generation',
   processVideoGeneration,
   {
-    connection,
+    connection: connection as any,
     concurrency: 2, // Process 2 videos at a time
     limiter: {
       max: 10, // Max 10 jobs
