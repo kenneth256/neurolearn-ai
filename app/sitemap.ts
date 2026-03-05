@@ -34,15 +34,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.8,
     }
-    // For dynamic pages (e.g., blog posts, product pages), you would fetch them
-    // from your data source (e.g., API, database) and map them to sitemap entries.
-    // Example for dynamic blog posts:
-    // const posts = await fetch('YOUR_API_ENDPOINT/posts').then(res => res.json());
-    // ...posts.map(post => ({
-    //   url: `${baseUrl}/blog/${post.slug}`,
-    //   lastModified: new Date(post.updatedAt),
-    //   changeFrequency: 'weekly',
-    //   priority: 0.6,
-    // })),
+  
   ];
 }

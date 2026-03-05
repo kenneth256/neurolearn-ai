@@ -285,6 +285,8 @@ model ReviewItem {
   conceptId      String
   dueDate         DateTime
   repetitionCount Int      @default(0)
+  easinessFactor  Float    @default(2.5)
+  interval        Int      @default(0)
   lastReviewed    DateTime?
   completed       Boolean  @default(false)
   createdAt DateTime @default(now())

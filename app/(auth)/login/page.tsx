@@ -98,7 +98,7 @@ const LoginPage = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 ml-1">
+              <label htmlFor="email" className="text-[10px] font-bold uppercase tracking-wider text-gray-400 ml-1">
                 Email Address
               </label>
               <div className="relative">
@@ -107,6 +107,7 @@ const LoginPage = () => {
                   size={18}
                 />
                 <input
+                  id="email"
                   required
                   type="email"
                   placeholder="name@example.com"
@@ -120,7 +121,7 @@ const LoginPage = () => {
 
             <div className="space-y-1.5">
               <div className="flex justify-between items-center ml-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                <label htmlFor="password" className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
                   Password
                 </label>
                 <Link
@@ -136,6 +137,7 @@ const LoginPage = () => {
                   size={18}
                 />
                 <input
+                  id="password"
                   required
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"

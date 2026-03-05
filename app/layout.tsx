@@ -1,3 +1,5 @@
+import React from 'react';
+import './globals.css';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -15,7 +17,7 @@ export const metadata: Metadata = {
     type: 'website',
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'Neurolearn AI | Empowering Education with Intelligent Tools',
     description: 'Unlock your potential with Neurolearn AI. We provide cutting-edge AI tools to enhance learning, boost productivity, and personalize your educational journey.',
   },

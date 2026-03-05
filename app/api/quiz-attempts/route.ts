@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
 
     const quiz = await prisma.adaptiveQuiz.findUnique({
       where: { id: adaptiveQuizId },
-      select: { questions: true, totalQuestions: true }
+      select: { questions: true, totalQuestions: true, enrollmentId: true }
     });
 
     if (!quiz) {
@@ -75,6 +75,33 @@ export async function POST(req: NextRequest) {
         }
       }
     });
+
+    // --- SPACED REPETITION INTEGRATION ---
+    // If the user struggled with any concepts, schedule them for a Spaced Repetition review tomorrow.
+    if (struggledQuestions && Array.isArray(struggledQuestions) && struggledQuestions.length > 0) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      // Create a ReviewItem for each struggled concept
+      const reviewItemsToCreate = struggledQuestions.map((questionId: string) => ({
+        enrollmentId: quiz.enrollmentId, // Make sure we grab enrollmentId from the quiz query
+        moduleNumber: 1, // Fallback; would ideally pull from quiz.courseModule.moduleNumber
+        conceptId: questionId,
+        dueDate: tomorrow,
+        repetitionCount: 0,
+        easinessFactor: 2.5,
+        interval: 1,
+        completed: false
+      }));
+
+      if (quiz.enrollmentId) {
+        await prisma.reviewItem.createMany({
+          data: reviewItemsToCreate
+        });
+        console.log(`[SpacedRepetition] Scheduled ${reviewItemsToCreate.length} reviews for user ${user.userId}`);
+      }
+    }
+    // -------------------------------------
 
     return createSuccessResponse(quizAttempt, 201);
   } catch (error) {

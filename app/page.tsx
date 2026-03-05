@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ThemeToggle } from "./components/ui/theme";
 import {
@@ -27,6 +28,18 @@ import {
 } from "lucide-react";
 
 const LandingPage = () => {
+  const router = useRouter();
+  const [ctaTopic, setCtaTopic] = useState("");
+
+  const handleCtaGenerate = () => {
+    const topic = ctaTopic.trim();
+    if (topic) {
+      router.push(`/generate?topic=${encodeURIComponent(topic)}`);
+    } else {
+      router.push("/generate");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#fcfcf9] dark:bg-[#020617] text-[#0f172a] dark:text-[#f8fafc] font-sans selection:bg-amber-200 overflow-x-hidden">
 
@@ -135,10 +148,13 @@ const LandingPage = () => {
                   </span>
                   <div className="absolute inset-0 bg-gradient-to-r from-[#d97706] to-[#f59e0b] dark:from-[#f59e0b] dark:to-[#fbbf24] opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 </Link>
-                <button className="px-8 py-4 bg-white dark:bg-[#0f172a] text-[#0f172a] dark:text-[#f8fafc] border-2 border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-lg hover:border-[#f59e0b] dark:hover:border-[#fbbf24] transition-all flex items-center justify-center gap-3 group">
+                <a
+                  href="#how-it-works"
+                  className="px-8 py-4 bg-white dark:bg-[#0f172a] text-[#0f172a] dark:text-[#f8fafc] border-2 border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-lg hover:border-[#f59e0b] dark:hover:border-[#fbbf24] transition-all flex items-center justify-center gap-3 group"
+                >
                   <Play size={20} className="group-hover:scale-110 transition-transform" />
                   Watch Demo
-                </button>
+                </a>
               </motion.div>
 
               {/* Trust Indicators */}
@@ -149,12 +165,12 @@ const LandingPage = () => {
                 className="flex items-center gap-6 pt-4"
               >
                 <div className="flex -space-x-3">
-                  {[1, 2, 3, 4].map((i) => (
+                  {["AK", "MJ", "RL", "SP"].map((initials, i) => (
                     <div
                       key={i}
-                      className="w-10 h-10 rounded-full bg-gradient-to-br from-[#f59e0b] to-[#d97706] dark:from-[#fbbf24] dark:to-[#f59e0b] border-2 border-[#fcfcf9] dark:border-[#020617] flex items-center justify-center text-white font-bold text-sm"
+                      className="w-10 h-10 rounded-full bg-gradient-to-br from-[#f59e0b] to-[#d97706] dark:from-[#fbbf24] dark:to-[#f59e0b] border-2 border-[#fcfcf9] dark:border-[#020617] flex items-center justify-center text-white font-bold text-xs"
                     >
-                      {i}k
+                      {initials}
                     </div>
                   ))}
                 </div>
@@ -282,7 +298,7 @@ const LandingPage = () => {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-24 px-6 bg-white dark:bg-[#0f172a]/50 border-y border-slate-200 dark:border-slate-800">
+      <section id="how-it-works" className="py-24 px-6 bg-white dark:bg-[#0f172a]/50 border-y border-slate-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4 font-serif">
@@ -531,9 +547,15 @@ const LandingPage = () => {
                   type="text"
                   aria-label="Course Topic"
                   placeholder="e.g., Machine Learning for Beginners..."
+                  value={ctaTopic}
+                  onChange={(e) => setCtaTopic(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleCtaGenerate()}
                   className="w-full px-8 py-6 text-lg bg-white/95 backdrop-blur-sm text-[#0f172a] rounded-2xl border-2 border-white/50 focus:border-white outline-none shadow-2xl placeholder:text-slate-400"
                 />
-                <button className="absolute right-2 top-1/2 -translate-y-1/2 px-8 py-4 bg-gradient-to-r from-[#f59e0b] to-[#d97706] text-white rounded-xl font-bold hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2">
+                <button
+                  onClick={handleCtaGenerate}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-8 py-4 bg-gradient-to-r from-[#f59e0b] to-[#d97706] text-white rounded-xl font-bold hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2"
+                >
                   Generate Course
                   <ArrowRight size={20} />
                 </button>
@@ -659,7 +681,7 @@ const LandingPage = () => {
               <h3 className="font-semibold text-[#0f172a] dark:text-[#f8fafc]">Find Us</h3>
               <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm h-40 relative bg-slate-100 dark:bg-slate-800">
                 <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1m3!1d100939.98555098464!2d-122.507640204439!3d37.757814996609724!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x80859a6d00690021%3A0x4a501367f076adff!2sSan%20Francisco%2C%20CA!5e0!3m2!1sen!2sus!4v1709664687000!5m2!1sen!2sus"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d100939.98555098464!2d-122.507640204439!3d37.757814996609724!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x80859a6d00690021%3A0x4a501367f076adff!2sSan%20Francisco%2C%20CA!5e0!3m2!1sen!2sus!4v1709664687000!5m2!1sen!2sus"
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}
