@@ -58,5 +58,10 @@
     "tailwindcss": "^4.1.18",
     "tsx": "^4.21.0",
     "typescript": "^5"
+  },
+  "pnpm": {
+    "overrides": {
+      "ioredis": "5.10.0"
+    }
   }
 }
