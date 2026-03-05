@@ -6,7 +6,6 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-import debounce from "lodash.debounce";
 import {
   BookOpen,
   ChevronLeft,
@@ -157,9 +156,7 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [loadingLessons, setLoadingLessons] = useState<Record<number, boolean>>(
-    {},
-  );
+  const [loadingLessons, setLoadingLessons] = useState<Record<number, boolean>>({});
   const [lessonErrors, setLessonErrors] = useState<Record<number, string>>({});
 
   const loadingModulesRef = useRef<Set<number>>(new Set());
@@ -190,13 +187,9 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
           method: "GET",
           credentials: "include",
         });
-
         if (response.ok) {
           const data = await response.json();
-          setUser({
-            ...data.user,
-            userId: data.user.id,
-          });
+          setUser({ ...data.user, userId: data.user.id });
         } else {
           setUser(null);
         }
@@ -207,40 +200,32 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
         setLoading(false);
       }
     };
-
     fetchUser();
   }, []);
 
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      const winScroll = document.documentElement.scrollTop;
-      const height = document.documentElement.scrollHeight - window.innerHeight;
-      const scrolled = (winScroll / height) * 100;
-      setReadingProgress(scrolled);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const winScroll = document.documentElement.scrollTop;
+          const height = document.documentElement.scrollHeight - window.innerHeight;
+          setReadingProgress(height > 0 ? (winScroll / height) * 100 : 0);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
-
-    const debouncedScroll = debounce(handleScroll, 50);
-    window.addEventListener("scroll", debouncedScroll);
-    return () => window.removeEventListener("scroll", debouncedScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const loadModuleLessons = useCallback(
     async (module: any) => {
       if (!module || typeof module.moduleNumber !== "number") return;
-
       const modNum = module.moduleNumber;
-
-      if (loadingModulesRef.current.has(modNum)) {
-        console.log(`Module ${modNum} is already being loaded, skipping...`);
-        return;
-      }
-
-      if (lessons[modNum]) {
-        console.log(`Module ${modNum} lessons already loaded`);
-        return;
-      }
-
-      console.log(`Loading lessons for module ${modNum}:`, module.moduleName);
+      if (loadingModulesRef.current.has(modNum)) return;
+      if (lessons[modNum]) return;
 
       loadingModulesRef.current.add(modNum);
       setLoadingLessons((prev) => ({ ...prev, [modNum]: true }));
@@ -248,11 +233,8 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
 
       try {
         await onModuleSelect(module);
-        console.log(`Successfully loaded lessons for module ${modNum}`);
       } catch (err) {
-        const errorMsg =
-          err instanceof Error ? err.message : "Failed to load lessons";
-        console.error(`Error loading lessons for module ${modNum}:`, errorMsg);
+        const errorMsg = err instanceof Error ? err.message : "Failed to load lessons";
         setLessonErrors((prev) => ({ ...prev, [modNum]: errorMsg }));
       } finally {
         setLoadingLessons((prev) => ({ ...prev, [modNum]: false }));
@@ -270,24 +252,18 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
       if (!moduleData && !loadingModulesRef.current.has(modNum)) {
         loadModuleLessons(currentModule);
       } else if (moduleData) {
-        console.log("Module data already loaded:", moduleData);
         const blueprint = (moduleData[modNum] as any)?.assessmentBlueprint;
-
         if (blueprint?.finalProject) {
           setData({
             projectTitle: `Capstone: ${currentModule.moduleName}`,
             description: blueprint.finalProject.prompt,
             requirements: blueprint.finalProject.requirements,
-            assessmentRubric: blueprint.finalProject.rubric.map(
-              (item: string) => ({
-                criterion: item.split(":")[0] || "Criteria",
-                excellent:
-                  "Full implementation exceeding all baseline requirements with optimized logic",
-                satisfactory: item.split(":")[1] || item,
-                needsWork:
-                  "Missing core logic or fails to meet the specified implementation criteria",
-              }),
-            ),
+            assessmentRubric: blueprint.finalProject.rubric.map((item: string) => ({
+              criterion: item.split(":")[0] || "Criteria",
+              excellent: "Full implementation exceeding all baseline requirements with optimized logic",
+              satisfactory: item.split(":")[1] || item,
+              needsWork: "Missing core logic or fails to meet the specified implementation criteria",
+            })),
           });
         } else {
           setData(undefined);
@@ -304,18 +280,10 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
         !lessons[nextModule.moduleNumber] &&
         !loadingModulesRef.current.has(nextModule.moduleNumber)
       ) {
-        console.log("Prefetching next module:", nextModule.moduleName);
         loadModuleLessons(nextModule);
       }
     }
-  }, [
-    readingProgress,
-    currentPage,
-    totalPages,
-    modules,
-    lessons,
-    loadModuleLessons,
-  ]);
+  }, [readingProgress, currentPage, totalPages, modules, lessons, loadModuleLessons]);
 
   const handlePageChange = (index: number) => {
     if (index === currentPage || index < 0 || index >= totalPages) return;
@@ -326,125 +294,18 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
 
   const filteredLessons = searchQuery
     ? dailyLessons.filter((lesson: any) =>
-        lesson.title.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
+      lesson.title.toLowerCase().includes(searchQuery.toLowerCase()),
+    )
     : dailyLessons;
 
-  const getMoodColor = (mood: string) => {
-    const colors: Record<string, string> = {
-      ENGAGED: "bg-green-400",
-      NEUTRAL: "bg-gray-400",
-      BORED: "bg-yellow-400",
-      FRUSTRATED: "bg-red-400",
-      CONFUSED: "bg-orange-400",
-      EXCITED: "bg-purple-400",
-      OVERWHELMED: "bg-pink-400",
-    };
-    return colors[mood] || "bg-gray-300";
-  };
-
-  const generateInterventionFromMood = (
-    mood: any,
-    currentLesson: any,
-  ): InterventionData => {
-    if (mood.mood === "FRUSTRATED" || mood.mood === "CONFUSED") {
-      return {
-        id: `intervention-${Date.now()}`,
-        type: "ENCOURAGEMENT",
-        content: {
-          encouragement: {
-            message:
-              "It's okay to feel stuck! Learning new concepts takes time.",
-            actionItems: [
-              "Take a 2-minute break and come back fresh",
-              "Re-read the previous section slowly",
-              "Try explaining the concept out loud to yourself",
-              "Ask the AI tutor for help",
-            ],
-          },
-        },
-        estimatedTime: 3,
-      };
-    }
-
-    if (mood.mood === "OVERWHELMED") {
-      return {
-        id: `intervention-${Date.now()}`,
-        type: "BREAK_SUGGESTION",
-        content: {},
-        estimatedTime: 5,
-      };
-    }
-
-    if (mood.mood === "BORED") {
-      return {
-        id: `intervention-${Date.now()}`,
-        type: "ENCOURAGEMENT",
-        content: {
-          encouragement: {
-            message: "Let's make this more interesting!",
-            actionItems: [
-              "Try the hands-on exercises",
-              "Challenge yourself with the quiz",
-              "Explore a real-world application of this concept",
-            ],
-          },
-        },
-        estimatedTime: 2,
-      };
-    }
-
-    if (currentLesson?.knowledgeChecks?.questions?.[0]) {
-      const q = currentLesson.knowledgeChecks.questions[0];
-      return {
-        id: `intervention-${Date.now()}`,
-        type: "ADAPTIVE_QUESTION",
-        content: {
-          question: {
-            text: q.question,
-            options: q.options.map((opt: string) => ({
-              text: opt,
-              correct: opt === q.correctAnswer,
-              explanation:
-                opt === q.correctAnswer
-                  ? q.feedback
-                  : "Try again! Review the concept and give it another shot.",
-            })),
-            difficulty: "medium",
-          },
-        },
-        estimatedTime: 2,
-      };
-    }
-
-    return {
-      id: `intervention-${Date.now()}`,
-      type: "ENCOURAGEMENT",
-      content: {
-        encouragement: {
-          message: "You're doing great! Keep up the excellent work.",
-          actionItems: [
-            "Continue to the next section",
-            "Review key concepts if needed",
-          ],
-        },
-      },
-      estimatedTime: 1,
-    };
-  };
-
   const router = useRouter();
+
   const handleLogout = async () => {
     try {
-      const response = await fetch("/api/auth/logout", {
-        method: "POST",
-      });
-
+      const response = await fetch("/api/auth/logout", { method: "POST" });
       if (response.ok) {
         router.refresh();
         router.push("/");
-      } else {
-        console.error("Logout failed");
       }
     } catch (error) {
       console.error("Network error during logout:", error);
@@ -453,10 +314,7 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
 
   const retryLoadLessons = () => {
     if (currentModule) {
-      setLessonErrors((prev) => ({
-        ...prev,
-        [currentModule.moduleNumber]: "",
-      }));
+      setLessonErrors((prev) => ({ ...prev, [currentModule.moduleNumber]: "" }));
       loadingModulesRef.current.delete(currentModule.moduleNumber);
       loadModuleLessons(currentModule);
     }
@@ -468,29 +326,13 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
         position="top-center"
         toastOptions={{
           duration: 3000,
-          style: {
-            background: "#0f172a",
-            color: "#f8fafc",
-            fontFamily: "inherit",
-          },
-          success: {
-            duration: 3000,
-            iconTheme: {
-              primary: "#10b981",
-              secondary: "#f8fafc",
-            },
-          },
-          error: {
-            duration: 4000,
-            iconTheme: {
-              primary: "#ef4444",
-              secondary: "#f8fafc",
-            },
-          },
+          style: { background: "#0f172a", color: "#f8fafc", fontFamily: "inherit" },
+          success: { duration: 3000, iconTheme: { primary: "#10b981", secondary: "#f8fafc" } },
+          error: { duration: 4000, iconTheme: { primary: "#ef4444", secondary: "#f8fafc" } },
         }}
       />
 
-      <div className="fixed top-0 left-0 right-0 h-1 bg-slate-200 dark:bg-slate-800 z-50">
+      <div className="fixed top-0 left-0 right-0 h-1 bg-slate-200 dark:bg-slate-800 z-50" role="progressbar" aria-valuenow={Math.round(readingProgress)} aria-valuemin={0} aria-valuemax={100} aria-label="Reading progress">
         <motion.div
           className="h-full bg-[#f59e0b] dark:bg-[#fbbf24]"
           style={{ width: `${readingProgress}%` }}
@@ -498,20 +340,16 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
       </div>
 
       <div className="max-w-400 mx-auto flex flex-col lg:flex-row relative">
-        <aside className="w-full lg:w-[320px] lg:h-screen lg:sticky lg:top-0 bg-[#0f172a] dark:bg-black text-white z-40 flex flex-col shrink-0 border-r-2 border-slate-800 dark:border-slate-950">
+        <aside className="w-full lg:w-[320px] lg:h-screen lg:sticky lg:top-0 bg-[#0f172a] dark:bg-black text-white z-40 flex flex-col shrink-0 border-r-2 border-slate-800 dark:border-slate-950" aria-label="Course navigation">
           <div className="p-10 border-b-2 border-slate-800 dark:border-slate-950 bg-[#0f172a] dark:bg-black z-50">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#f59e0b] dark:bg-[#fbbf24] rounded-lg text-black">
+                <div className="p-2 bg-[#f59e0b] dark:bg-[#fbbf24] rounded-lg text-black" aria-hidden="true">
                   <BookOpen size={20} />
                 </div>
                 <div>
-                  <h2 className="font-serif italic text-lg text-white font-bold">
-                    Index
-                  </h2>
-                  <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400">
-                    Course Syllabus
-                  </p>
+                  <h2 className="font-serif italic text-lg text-white font-bold">Index</h2>
+                  <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400">Course Syllabus</p>
                 </div>
               </div>
 
@@ -523,33 +361,7 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
                   lessonModuleId={filteredLessons[0]?.id}
                   onMoodDetected={(moodResponse) => {
                     setDetectedMood(moodResponse);
-
                     if (moodResponse.intervention) {
-                      const intervention = {
-                        id: moodResponse.intervention.id,
-                        type: moodResponse.intervention.interventionType,
-                        content: {
-                          question: moodResponse.intervention.adaptiveQuestion,
-                          encouragement: moodResponse.intervention.encouragement
-                            ? {
-                                message:
-                                  moodResponse.intervention.encouragement,
-                                actionItems: [],
-                              }
-                            : undefined,
-                          hint: moodResponse.intervention.hint
-                            ? {
-                                level: "moderate",
-                                text: moodResponse.intervention.hint,
-                                relatedConcepts: [],
-                              }
-                            : undefined,
-                          simplification:
-                            moodResponse.intervention.simplification,
-                        },
-                        estimatedTime: 2,
-                      };
-
                       setShowMoodPanel(true);
                     }
                   }}
@@ -559,13 +371,11 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
             </div>
 
             <div className="relative mt-4">
-              <Search
-                size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-              />
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
               <input
                 type="text"
                 placeholder="Search lessons..."
+                aria-label="Search lessons"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-slate-800 dark:bg-slate-950 border-2 border-slate-700 dark:border-slate-800 rounded-lg text-sm text-white placeholder:text-slate-500 focus:border-[#f59e0b] dark:focus:border-[#fbbf24] outline-none transition-colors"
@@ -573,7 +383,7 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
             </div>
           </div>
 
-          <nav className="flex-1 overflow-y-auto p-6 space-y-2 justify-between">
+          <nav className="flex-1 overflow-y-auto p-6 space-y-2" aria-label="Course modules">
             {modules.map((mod: any, idx: number) => {
               const isLoading = loadingLessons[mod.moduleNumber];
               const hasError = lessonErrors[mod.moduleNumber];
@@ -583,6 +393,8 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
                   key={idx}
                   onClick={() => handlePageChange(idx)}
                   disabled={isLoading}
+                  aria-current={idx === currentPage ? "page" : undefined}
+                  aria-label={`Module ${idx + 1}: ${mod.moduleName}`}
                   className={cn(
                     "w-full text-left flex items-center gap-4 p-3 rounded-xl border-2 transition-all relative",
                     idx === currentPage
@@ -592,42 +404,34 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
                     hasError && "border-red-500/50",
                   )}
                 >
-                  <span className="font-mono text-[10px]">
-                    {String(idx + 1).padStart(2, "0")}
-                  </span>
-                  <span className="text-[11px] font-black uppercase tracking-widest flex-1">
-                    {mod.moduleName}
-                  </span>
-                  {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {hasError && !isLoading && (
-                    <AlertCircle className="w-4 h-4 text-red-500" />
-                  )}
+                  <span className="font-mono text-[10px]">{String(idx + 1).padStart(2, "0")}</span>
+                  <span className="text-[11px] font-black uppercase tracking-widest flex-1">{mod.moduleName}</span>
+                  {isLoading && <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />}
+                  {hasError && !isLoading && <AlertCircle className="w-4 h-4 text-red-500" aria-hidden="true" />}
                 </button>
               );
             })}
           </nav>
+
           <div className="p-4 flex flex-col gap-2 border-t-2 border-slate-800 dark:border-slate-950">
             <button
               onClick={() => router.push("/dashboard")}
               className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-[#f59e0b] dark:text-[#fbbf24] hover:bg-amber-950/20 rounded-xl transition-all"
             >
-              <BookDashed size={18} />
+              <BookDashed size={18} aria-hidden="true" />
               Dashboard
             </button>
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-950/20 rounded-xl transition-all"
             >
-              <LogOut size={18} />
+              <LogOut size={18} aria-hidden="true" />
               Sign Out
             </button>
           </div>
         </aside>
 
-        <main
-          className="flex-1 relative bg-transparent min-h-screen"
-          style={{ perspective: "2000px" }}
-        >
+        <main className="flex-1 relative bg-transparent min-h-screen" style={{ perspective: "2000px" }}>
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={currentPage}
@@ -637,56 +441,44 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
               animate="animate"
               exit="exit"
               className="relative w-full min-h-screen bg-white dark:bg-[#0f172a] shadow-2xl"
-              style={{
-                transformStyle: "preserve-3d",
-                backfaceVisibility: "hidden",
-              }}
+              style={{ transformStyle: "preserve-3d", backfaceVisibility: "hidden" }}
             >
               <div className="p-8 md:p-20 relative z-10 max-w-5xl mx-auto">
                 <header className="flex justify-between items-center mb-16 border-b-2 border-slate-200 dark:border-slate-800 pb-6">
                   <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.5em] text-slate-600 dark:text-slate-400">
-                    <Target
-                      size={14}
-                      className="text-[#f59e0b] dark:text-[#fbbf24]"
-                    />
+                    <Target size={14} className="text-[#f59e0b] dark:text-[#fbbf24]" aria-hidden="true" />
                     Curriculum Folio
                   </div>
-                  <div className="font-serif italic text-slate-600 dark:text-slate-400 text-sm">
+                  <div className="font-serif italic text-slate-600 dark:text-slate-400 text-sm" aria-live="polite">
                     Page {currentPage + 1} of {totalPages}
                   </div>
                 </header>
 
-                {isLoadingCurrentModule && (
-                  <div className="flex flex-col items-center justify-center py-32">
-                    <Loader2 className="w-16 h-16 text-[#f59e0b] dark:text-[#fbbf24] animate-spin mb-6" />
-                    <h3 className="text-2xl font-serif font-bold text-[#0f172a] dark:text-[#f8fafc] mb-2">
-                      Loading Module Content
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-400">
-                      Preparing lessons for {currentModule?.moduleName}...
-                    </p>
-                  </div>
-                )}
-
-                {currentModuleError && !isLoadingCurrentModule && (
-                  <div className="flex flex-col items-center justify-center py-32">
-                    <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-950/30 flex items-center justify-center mb-6">
-                      <AlertCircle className="w-8 h-8 text-red-500" />
+                <div aria-live="polite" aria-busy={!!isLoadingCurrentModule}>
+                  {isLoadingCurrentModule && (
+                    <div className="flex flex-col items-center justify-center py-32" role="status">
+                      <Loader2 className="w-16 h-16 text-[#f59e0b] dark:text-[#fbbf24] animate-spin mb-6" aria-hidden="true" />
+                      <h3 className="text-2xl font-serif font-bold text-[#0f172a] dark:text-[#f8fafc] mb-2">Loading Module Content</h3>
+                      <p className="text-slate-600 dark:text-slate-400">Preparing lessons for {currentModule?.moduleName}...</p>
                     </div>
-                    <h3 className="text-2xl font-serif font-bold text-[#0f172a] dark:text-[#f8fafc] mb-2">
-                      Failed to Load Lessons
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-400 mb-6 text-center max-w-md">
-                      {currentModuleError}
-                    </p>
-                    <button
-                      onClick={retryLoadLessons}
-                      className="px-6 py-3 bg-[#f59e0b] dark:bg-[#fbbf24] hover:bg-[#d97706] dark:hover:bg-[#f59e0b] text-white rounded-xl font-semibold transition-all shadow-lg"
-                    >
-                      Try Again
-                    </button>
-                  </div>
-                )}
+                  )}
+
+                  {currentModuleError && !isLoadingCurrentModule && (
+                    <div className="flex flex-col items-center justify-center py-32" role="alert">
+                      <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-950/30 flex items-center justify-center mb-6">
+                        <AlertCircle className="w-8 h-8 text-red-500" aria-hidden="true" />
+                      </div>
+                      <h3 className="text-2xl font-serif font-bold text-[#0f172a] dark:text-[#f8fafc] mb-2">Failed to Load Lessons</h3>
+                      <p className="text-slate-600 dark:text-slate-400 mb-6 text-center max-w-md">{currentModuleError}</p>
+                      <button
+                        onClick={retryLoadLessons}
+                        className="px-6 py-3 bg-[#f59e0b] dark:bg-[#fbbf24] hover:bg-[#d97706] dark:hover:bg-[#f59e0b] text-white rounded-xl font-semibold transition-all shadow-lg"
+                      >
+                        Try Again
+                      </button>
+                    </div>
+                  )}
+                </div>
 
                 {!isLoadingCurrentModule && !currentModuleError && (
                   <div className="space-y-12">
@@ -699,86 +491,52 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
 
                     <div className="bg-[#fffbeb] dark:bg-amber-950/20 border-l-[6px] border-[#f59e0b] dark:border-[#fbbf24] p-10 rounded-r-3xl">
                       <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-8 flex items-center gap-2">
-                        <Award
-                          size={14}
-                          className="text-[#f59e0b] dark:text-[#fbbf24]"
-                        />
+                        <Award size={14} className="text-[#f59e0b] dark:text-[#fbbf24]" aria-hidden="true" />
                         Key Objectives
                       </h4>
-                      {currentModule?.learningObjectives?.map(
-                        (obj: any, i: number) => (
-                          <div key={i} className="flex gap-4 mb-4 items-start">
-                            <span className="text-[#f59e0b] dark:text-[#fbbf24] font-bold text-xl">
-                              ❧
-                            </span>
-                            <p className="text-xl leading-relaxed text-slate-800 dark:text-slate-200 font-serif italic">
-                              {typeof obj === "string" ? obj : obj.objective}
-                            </p>
-                          </div>
-                        ),
-                      )}
+                      {currentModule?.learningObjectives?.map((obj: any, i: number) => (
+                        <div key={i} className="flex gap-4 mb-4 items-start">
+                          <span className="text-[#f59e0b] dark:text-[#fbbf24] font-bold text-xl" aria-hidden="true">❧</span>
+                          <p className="text-xl leading-relaxed text-slate-800 dark:text-slate-200 font-serif italic">
+                            {typeof obj === "string" ? obj : obj.objective}
+                          </p>
+                        </div>
+                      ))}
                     </div>
 
-                    {moduleNumber !== undefined &&
-                      currentLessons?.[moduleNumber]
-                        ?.differentiatedLearning && (
-                        <LearningPath
-                          data={
-                            currentLessons[moduleNumber].differentiatedLearning
-                          }
-                        />
-                      )}
+                    {moduleNumber !== undefined && currentLessons?.[moduleNumber]?.differentiatedLearning && (
+                      <LearningPath data={currentLessons[moduleNumber].differentiatedLearning} />
+                    )}
 
-                    {moduleNumber !== undefined &&
-                      currentLessons?.[moduleNumber]?.weeklyMilestones && (
-                        <Milestones
-                          milestones={
-                            currentLessons[moduleNumber].weeklyMilestones
-                          }
-                        />
-                      )}
+                    {moduleNumber !== undefined && currentLessons?.[moduleNumber]?.weeklyMilestones && (
+                      <Milestones milestones={currentLessons[moduleNumber].weeklyMilestones} />
+                    )}
 
                     <article className="prose prose-slate dark:prose-invert max-w-none pt-12">
                       {filteredLessons.length > 0 ? (
-                        filteredLessons.map(
-                          (lesson: any, lessonIndex: number) => {
-                            const lessonId = lesson.id;
-
-                            if (!lessonId) {
-                              console.error(
-                                "❌ Missing lesson.id for:",
-                                lesson.title,
-                              );
-                              return null;
-                            }
-
-                            return (
-                              <LessonSection
-                                key={lessonIndex}
-                                lesson={lesson}
-                                lessonIndex={lessonIndex}
-                                enrollmentId={enrollmentId || ""}
-                                showAnswers={showAnswers}
-                                setShowAnswers={setShowAnswers}
-                                moduleResources={currentModule?.resources}
-                                exitCriteria={
-                                  currentModule?.masteryRequirements
-                                }
-                                spacedRepition={
-                                  currentModule?.weeklyLearningPlan
-                                }
-                                userId={user?.userId}
-                                currentModule={currentModule}
-                                lessonModuleId={lessonId}
-                              />
-                            );
-                          },
-                        )
+                        filteredLessons.map((lesson: any, lessonIndex: number) => {
+                          const lessonId = lesson.id;
+                          if (!lessonId) return null;
+                          return (
+                            <LessonSection
+                              key={lessonIndex}
+                              lesson={lesson}
+                              lessonIndex={lessonIndex}
+                              enrollmentId={enrollmentId || ""}
+                              showAnswers={showAnswers}
+                              setShowAnswers={setShowAnswers}
+                              moduleResources={currentModule?.resources}
+                              exitCriteria={currentModule?.masteryRequirements}
+                              spacedRepition={currentModule?.weeklyLearningPlan}
+                              userId={user?.userId}
+                              currentModule={currentModule}
+                              lessonModuleId={lessonId}
+                            />
+                          );
+                        })
                       ) : (
                         <div className="text-center py-16">
-                          <p className="text-slate-500 dark:text-slate-400">
-                            No lessons available yet for this module.
-                          </p>
+                          <p className="text-slate-500 dark:text-slate-400">No lessons available yet for this module.</p>
                         </div>
                       )}
 
@@ -798,19 +556,18 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 0}
+              aria-label="Previous module"
               className="p-4 bg-white dark:bg-[#0f172a] border-2 border-slate-300 dark:border-slate-700 rounded-full shadow-2xl disabled:opacity-20 disabled:cursor-not-allowed hover:scale-105 hover:border-[#f59e0b] dark:hover:border-[#fbbf24] transition-all"
             >
-              <ChevronLeft
-                size={24}
-                className="text-[#0f172a] dark:text-[#f8fafc]"
-              />
+              <ChevronLeft size={24} className="text-[#0f172a] dark:text-[#f8fafc]" aria-hidden="true" />
             </button>
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages - 1}
+              aria-label="Next module"
               className="p-5 bg-[#0f172a] dark:bg-[#fbbf24] text-white dark:text-black rounded-full shadow-2xl scale-110 border-2 border-[#0f172a] dark:border-[#fbbf24] disabled:opacity-20 disabled:cursor-not-allowed hover:scale-115 transition-all"
             >
-              <ChevronRight size={28} />
+              <ChevronRight size={28} aria-hidden="true" />
             </button>
           </div>
         </main>
@@ -834,17 +591,10 @@ const CourseBookUI: React.FC<CourseBookUIProps> = ({
             content: {
               question: detectedMood.intervention.adaptiveQuestion,
               encouragement: detectedMood.intervention.encouragement
-                ? {
-                    message: detectedMood.intervention.encouragement,
-                    actionItems: [],
-                  }
+                ? { message: detectedMood.intervention.encouragement, actionItems: [] }
                 : undefined,
               hint: detectedMood.intervention.hint
-                ? {
-                    level: "moderate",
-                    text: detectedMood.intervention.hint,
-                    relatedConcepts: [],
-                  }
+                ? { level: "moderate", text: detectedMood.intervention.hint, relatedConcepts: [] }
                 : undefined,
               simplification: detectedMood.intervention.simplification,
             },
@@ -875,10 +625,7 @@ const LessonSection: React.FC<LessonSectionProps> = ({
   setShowAnswers,
 }) => {
   const lessonId = `lesson-${lessonIndex}`;
-  const { isComplete, toggleComplete } = useLessonProgress(
-    lessonId,
-    lesson.day,
-  );
+  const { isComplete, toggleComplete } = useLessonProgress(lessonId, lesson.day);
   const { completeLesson, loading: completing } = useLessonCompletion();
 
   const [showVideoTutor, setShowVideoTutor] = useState(false);
@@ -896,19 +643,13 @@ const LessonSection: React.FC<LessonSectionProps> = ({
         setIsCheckingCompletion(false);
         return;
       }
-
       try {
         const response = await fetch(
           `/api/courses/lesson/progress?enrollmentId=${enrollmentId}&lessonModuleId=${lessonModuleId}`,
-          {
-            method: "GET",
-            credentials: "include",
-          },
+          { method: "GET", credentials: "include" },
         );
-
         if (response.ok) {
           const data = await response.json();
-
           if (data.lessonProgress?.status === "COMPLETED") {
             setHasMarkedComplete(true);
             hasAutoCompletedRef.current = true;
@@ -920,57 +661,40 @@ const LessonSection: React.FC<LessonSectionProps> = ({
         setIsCheckingCompletion(false);
       }
     };
-
     checkExistingCompletion();
   }, [enrollmentId, lessonModuleId, lesson.title]);
 
   useEffect(() => {
     startTimeRef.current = Date.now();
-
     const interval = setInterval(() => {
       const elapsedMs = Date.now() - startTimeRef.current;
-      const elapsedMinutes = Math.floor(elapsedMs / 60000);
-      setTimeSpent(elapsedMinutes);
+      setTimeSpent(Math.floor(elapsedMs / 60000));
     }, 10000);
-
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    if (
-      !lessonEndRef.current ||
-      hasAutoCompletedRef.current ||
-      isCheckingCompletion
-    ) {
-      return;
-    }
+    if (!lessonEndRef.current || hasAutoCompletedRef.current || isCheckingCompletion) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
-            console.log("🎯 Reached bottom of lesson - auto-completing...");
             hasAutoCompletedRef.current = true;
             handleCompleteLesson(true);
           }
         });
       },
-      {
-        threshold: 0.5,
-        rootMargin: "0px 0px -100px 0px",
-      },
+      { threshold: 0.5, rootMargin: "0px 0px -100px 0px" },
     );
 
     observer.observe(lessonEndRef.current);
-
     return () => observer.disconnect();
   }, [enrollmentId, lessonModuleId, hasMarkedComplete, isCheckingCompletion]);
 
   const handleReplayAudio = () => {
     const utterance = new SpeechSynthesisUtterance(
-      lesson.coreContent?.concepts
-        ?.map((c: any) => c.narrativeExplanation)
-        .join(" ") || "",
+      lesson.coreContent?.concepts?.map((c: any) => c.narrativeExplanation).join(" ") || "",
     );
     speechSynthesis.cancel();
     speechSynthesis.speak(utterance);
@@ -990,31 +714,22 @@ const LessonSection: React.FC<LessonSectionProps> = ({
   };
 
   const handleCompleteLesson = async (isAutoComplete = false) => {
-    const finalTimeSpent = Math.max(
-      1,
-      Math.floor((Date.now() - startTimeRef.current) / 60000),
-    );
+    const finalTimeSpent = Math.max(1, Math.floor((Date.now() - startTimeRef.current) / 60000));
 
     if (!enrollmentId) {
       if (!isAutoComplete) toast.error("Missing enrollment information");
       return;
     }
-
     if (!lessonModuleId) {
       if (!isAutoComplete) toast.error("Missing lesson module ID");
       return;
     }
-
     if (hasMarkedComplete) {
-      if (!isAutoComplete) {
-        toast("This lesson is already completed", { icon: "✅" });
-      }
+      if (!isAutoComplete) toast("This lesson is already completed", { icon: "✅" });
       return;
     }
 
     try {
-      console.log("📤 Calling completeLesson API...");
-
       await completeLesson({
         enrollmentId,
         lessonModuleId,
@@ -1023,18 +738,14 @@ const LessonSection: React.FC<LessonSectionProps> = ({
         totalExercises: 0,
       });
 
-      console.log("✅ Lesson marked complete");
-
       setHasMarkedComplete(true);
       hasAutoCompletedRef.current = true;
 
-      if (!isComplete) {
-        toggleComplete();
-      }
+      if (!isComplete) toggleComplete();
 
       window.dispatchEvent(new CustomEvent("progressUpdated"));
     } catch (error) {
-      console.error("❌ Failed to complete lesson:", error);
+      console.error("Failed to complete lesson:", error);
       hasAutoCompletedRef.current = false;
     }
   };
@@ -1045,13 +756,9 @@ const LessonSection: React.FC<LessonSectionProps> = ({
         <div className="flex items-center gap-8 mb-16 pb-8 border-b-4 border-double border-slate-200 dark:border-slate-800">
           <div className="shrink-0">
             <div className="w-16 h-16 rounded-2xl bg-[#f59e0b] dark:bg-[#fbbf24] flex items-center justify-center shadow-lg mb-2">
-              <span className="font-serif italic text-white dark:text-black text-2xl font-bold">
-                {lesson.day}
-              </span>
+              <span className="font-serif italic text-white dark:text-black text-2xl font-bold">{lesson.day}</span>
             </div>
-            <span className="block text-center text-[9px] font-black uppercase tracking-[0.2em] text-[#f59e0b] dark:text-[#fbbf24]">
-              Chapter
-            </span>
+            <span className="block text-center text-[9px] font-black uppercase tracking-[0.2em] text-[#f59e0b] dark:text-[#fbbf24]">Chapter</span>
           </div>
 
           <div className="flex-1 min-w-0">
@@ -1060,27 +767,18 @@ const LessonSection: React.FC<LessonSectionProps> = ({
             </h2>
             <div className="flex items-center gap-4 flex-wrap">
               <span className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg">
-                <Clock
-                  size={14}
-                  className="text-[#f59e0b] dark:text-[#fbbf24]"
-                />
+                <Clock size={14} className="text-[#f59e0b] dark:text-[#fbbf24]" aria-hidden="true" />
                 {lesson.duration}
               </span>
               {(isComplete || hasMarkedComplete) && (
                 <span className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                  <Award
-                    size={14}
-                    className="text-emerald-600 dark:text-emerald-500"
-                  />
+                  <Award size={14} className="text-emerald-600 dark:text-emerald-500" aria-hidden="true" />
                   Completed
                 </span>
               )}
               {timeSpent > 0 && (
                 <span className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 px-3 py-1.5 rounded-lg">
-                  <Clock
-                    size={14}
-                    className="text-blue-600 dark:text-blue-500"
-                  />
+                  <Clock size={14} className="text-blue-600 dark:text-blue-500" aria-hidden="true" />
                   {timeSpent} min
                 </span>
               )}
@@ -1089,31 +787,28 @@ const LessonSection: React.FC<LessonSectionProps> = ({
 
           <button
             onClick={toggleComplete}
+            aria-label={isComplete || hasMarkedComplete ? "Mark lesson as incomplete" : "Mark lesson as complete"}
+            aria-pressed={isComplete || hasMarkedComplete}
             className={cn(
               "shrink-0 p-4 rounded-2xl transition-all border-2 shadow-md hover:shadow-lg",
               isComplete || hasMarkedComplete
                 ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-500 border-emerald-300 dark:border-emerald-800"
                 : "bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:border-[#f59e0b] dark:hover:border-[#fbbf24]",
             )}
-            title={isComplete ? "Mark as incomplete" : "Mark as complete"}
           >
-            <Award size={28} />
+            <Award size={28} aria-hidden="true" />
           </button>
         </div>
 
         {lesson.learningObjectives && lesson.learningObjectives.length > 0 && (
-          <PreLessonCheck
-            checks={lesson.learningObjectives.map((obj: any) => obj.objective)}
-          />
+          <PreLessonCheck checks={lesson.learningObjectives.map((obj: any) => obj.objective)} />
         )}
 
         {spacedRepition && <SpacedRepetition data={spacedRepition} />}
 
         <div className="space-y-32">
           {lesson.coreContent?.concepts?.map((concept: any, idx: number) => {
-            const isLastConcept =
-              idx === lesson.coreContent.concepts.length - 1;
-
+            const isLastConcept = idx === lesson.coreContent.concepts.length - 1;
             const exercises =
               isLastConcept && lesson.handsOnPractice?.exercises
                 ? Array.isArray(lesson.handsOnPractice.exercises)
@@ -1146,9 +841,7 @@ const LessonSection: React.FC<LessonSectionProps> = ({
               questions={lesson.knowledgeChecks.questions.map((q: any) => ({
                 question: q.question,
                 options: q.options,
-                correctAnswer: q.options.findIndex(
-                  (opt: string) => opt === q.correctAnswer,
-                ),
+                correctAnswer: q.options.findIndex((opt: string) => opt === q.correctAnswer),
                 explanation: q.feedback,
               }))}
               lessonTitle={lesson.title}
@@ -1172,9 +865,10 @@ const LessonSection: React.FC<LessonSectionProps> = ({
           <div className="flex flex-col md:flex-row gap-4 items-center justify-center">
             <button
               onClick={handleOpenVideoTutor}
+              aria-label="Generate AI video lecture for this lesson"
               className="px-6 py-3 bg-gradient-to-r from-[#f59e0b] to-[#d97706] dark:from-[#fbbf24] dark:to-[#f59e0b] hover:from-[#d97706] hover:to-[#f59e0b] dark:hover:from-[#f59e0b] dark:hover:to-[#fbbf24] text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:shadow-amber-500/50 flex items-center gap-3"
             >
-              <Play size={20} />
+              <Play size={20} aria-hidden="true" />
               Generate AI Video Lecture
             </button>
 
@@ -1182,6 +876,8 @@ const LessonSection: React.FC<LessonSectionProps> = ({
               <button
                 onClick={() => handleCompleteLesson(false)}
                 disabled={completing || hasMarkedComplete}
+                aria-label={hasMarkedComplete ? "Lesson already completed" : "Mark this lesson as complete"}
+                aria-disabled={completing || hasMarkedComplete}
                 className={cn(
                   "px-8 py-3 rounded-xl font-semibold text-white transition-all shadow-lg",
                   completing || hasMarkedComplete
@@ -1191,17 +887,17 @@ const LessonSection: React.FC<LessonSectionProps> = ({
               >
                 {completing ? (
                   <>
-                    <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
+                    <Loader2 className="w-5 h-5 animate-spin inline mr-2" aria-hidden="true" />
                     Saving Progress...
                   </>
                 ) : hasMarkedComplete ? (
                   <>
-                    <Award className="w-5 h-5 inline mr-2" />
+                    <Award className="w-5 h-5 inline mr-2" aria-hidden="true" />
                     Lesson Complete ✓
                   </>
                 ) : (
                   <>
-                    <Award className="w-5 h-5 inline mr-2" />
+                    <Award className="w-5 h-5 inline mr-2" aria-hidden="true" />
                     Mark Lesson as Complete
                   </>
                 )}
@@ -1213,19 +909,13 @@ const LessonSection: React.FC<LessonSectionProps> = ({
             <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
               <p>
                 You've spent{" "}
-                <strong>
-                  {timeSpent} minute{timeSpent !== 1 ? "s" : ""}
-                </strong>{" "}
+                <strong>{timeSpent} minute{timeSpent !== 1 ? "s" : ""}</strong>{" "}
                 on this lesson
               </p>
             </div>
           )}
 
-          <div
-            ref={lessonEndRef}
-            className="h-1 w-full mt-16"
-            aria-hidden="true"
-          />
+          <div ref={lessonEndRef} className="h-1 w-full mt-16" aria-hidden="true" />
         </div>
       </div>
 
