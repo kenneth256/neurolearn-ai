@@ -16,7 +16,7 @@ const connection = getRedisClient();
 
 // Create the daily cron queue
 export const spacedRepetitionQueue = new Queue<SpacedRepetitionJobData>('spaced-repetition', {
-    connection,
+    connection: connection as any,
     defaultJobOptions: {
         attempts: 3,
         backoff: {
@@ -34,7 +34,7 @@ export const spacedRepetitionQueue = new Queue<SpacedRepetitionJobData>('spaced-
 });
 
 export const spacedRepetitionEvents = new QueueEvents('spaced-repetition', {
-    connection,
+    connection: connection as any,
 });
 
 /**

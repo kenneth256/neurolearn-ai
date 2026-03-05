@@ -81,7 +81,7 @@ export const spacedRepetitionWorker = new Worker<SpacedRepetitionJobData, Spaced
     'spaced-repetition',
     processSpacedRepetitionSweep,
     {
-        connection,
+        connection: connection as any,
         concurrency: 1, // Sweeps only need 1 active processor to avoid race conditions
     }
 );
