@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    
+
     const levelMap: Record<string, CourseLevel> = {
       Beginner: CourseLevel.BEGINNER,
       Intermediate: CourseLevel.INTERMEDIATE,
@@ -102,6 +102,44 @@ export async function POST(req: NextRequest) {
         { status: 409 }
       );
     }
+
+    // --- FLASHCARD POLISH: Pre-parse objectives using Gemini ---
+    const rawObjectives: { moduleNumber: number, text: string }[] = [];
+    generationParams.modules.forEach((mod: any) => {
+      const concepts = Array.isArray(mod.learningObjectives) && mod.learningObjectives.length > 0
+        ? mod.learningObjectives
+        : [`Concept from Module ${mod.moduleNumber}`];
+      concepts.forEach((c: any) => {
+        rawObjectives.push({
+          moduleNumber: mod.moduleNumber,
+          text: typeof c === 'string' ? c : JSON.stringify(c)
+        });
+      });
+    });
+
+    let parsedFlashcards: any[] = [];
+    try {
+      const { GoogleGenerativeAI } = await import("@google/generative-ai");
+      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+      const model = genAI.getGenerativeModel({
+        model: "gemini-3-flash-preview",
+        generationConfig: { responseMimeType: "application/json" }
+      });
+      const prompt = `Convert the following learning objectives into flashcards. Return a valid JSON array of objects. Schema: [{"moduleNumber": number, "term": "string", "def": "string", "analogy": "string"}]. Objectives: ${JSON.stringify(rawObjectives)}`;
+      const result = await model.generateContent(prompt);
+      const textResponse = result.response.text();
+      parsedFlashcards = JSON.parse(textResponse);
+    } catch (err) {
+      console.error("Gemini flashcard parsing error:", err);
+      // Fallback
+      parsedFlashcards = rawObjectives.map(o => ({
+        moduleNumber: o.moduleNumber,
+        term: o.text.length > 50 ? o.text.substring(0, 50) + "..." : o.text,
+        def: o.text,
+        analogy: "Think of this in the context of the module."
+      }));
+    }
+    // -----------------------------------------------------------
 
     // Create course with all related data in a transaction
     const course = await prisma.$transaction(
@@ -165,11 +203,42 @@ export async function POST(req: NextRequest) {
             courseModuleId: module.id,
             status: module.moduleNumber === 1 ? "IN_PROGRESS" : "LOCKED",
             lessonsCompleted: 0,
-            totalLessons: 0, 
+            totalLessons: 0,
             masteryScore: 0,
             timeSpentMinutes: 0,
           })),
         });
+
+        // --- PILLAR 1: AI AUTO-DECK GENERATION ---
+        const reviewItemsToCreate: any[] = [];
+        const today = new Date();
+
+        parsedFlashcards.forEach((fc: any) => {
+          // Serialize to valid JSON, keeping lengths in check just in case
+          const safeJson = JSON.stringify({
+            term: (fc.term || "Concept").substring(0, 100),
+            def: (fc.def || "Definition waiting").substring(0, 300),
+            analogy: (fc.analogy || "").substring(0, 200)
+          });
+
+          reviewItemsToCreate.push({
+            enrollmentId: enrollment.id,
+            moduleNumber: fc.moduleNumber || 1,
+            conceptId: safeJson,
+            dueDate: today,       // Due immediately to start the habit loop
+            repetitionCount: 0,
+            easinessFactor: 2.5,
+            interval: 1,
+            completed: false
+          });
+        });
+
+        if (reviewItemsToCreate.length > 0) {
+          await tx.reviewItem.createMany({
+            data: reviewItemsToCreate
+          });
+        }
+        // -----------------------------------------
 
         // Log enrollment activity
         await tx.userActivity.create({

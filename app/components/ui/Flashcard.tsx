@@ -8,6 +8,8 @@ export interface FlashcardProps {
     definition: string;
     analogy?: string;
     example?: string;
+    isFlipped: boolean;
+    onFlip: () => void;
 }
 
 export const Flashcard: React.FC<FlashcardProps> = ({
@@ -15,14 +17,14 @@ export const Flashcard: React.FC<FlashcardProps> = ({
     definition,
     analogy,
     example,
+    isFlipped,
+    onFlip,
 }) => {
-    const [isFlipped, setIsFlipped] = useState(false);
-
     return (
         <div className="relative w-full aspect-[4/3] max-w-2xl mx-auto perspective-1000">
             <motion.div
                 className="w-full h-full relative preserve-3d cursor-pointer"
-                onClick={() => setIsFlipped(!isFlipped)}
+                onClick={onFlip}
                 animate={{ rotateY: isFlipped ? 180 : 0 }}
                 transition={{ duration: 0.6, type: "spring", stiffness: 260, damping: 20 }}
             >

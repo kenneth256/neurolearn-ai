@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Flashcard } from "./Flashcard";
 import { SpacedRepetitionControls } from "./SpacedRepetitionControls";
 import { CheckCircle2, Loader2, Sparkles } from "lucide-react";
@@ -20,20 +21,13 @@ interface ReviewItem {
 export const StudySession: React.FC = () => {
     const [queue, setQueue] = useState<ReviewItem[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [isFlipped, setIsFlipped] = useState(false);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // MOCK DATA FOR CONCEPT EXPLANATIONS (Since our DB just stores conceptId)
-    // In a real app, the API would join the ReviewItem with the actual Concept from the CourseModule
-    const mockConceptDictionary: Record<string, { term: string; def: string; analogy: string }> = {
-        "concept-1": {
-            term: "Gradient Descent",
-            def: "An optimization algorithm used to minimize the cost function by iteratively moving in the direction of steepest descent.",
-            analogy: "Like walking down a mountain blindfolded, taking steps in the direction that slopes downward the most.",
-        },
-        // We will use a fallback for any unknown ids during testing
-    };
+    // In a real app, the API would join the ReviewItem with the actual Concept from the CourseModule.
+    // However, our new AI Auto-Deck generator injects the text string directly into the ConceptId.
 
     useEffect(() => {
         fetchPendingReviews();
@@ -77,6 +71,7 @@ export const StudySession: React.FC = () => {
             // Move to next card
             setTimeout(() => {
                 setCurrentIndex((prev) => prev + 1);
+                setIsFlipped(false); // Reset flip state for the next card
                 setSubmitting(false);
             }, 400); // Small delay for the animation
 
@@ -86,6 +81,47 @@ export const StudySession: React.FC = () => {
             setSubmitting(false);
         }
     };
+
+    // Keyboard Shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // If we are loading, submitting, or finished, ignore keystrokes
+            if (loading || submitting || currentIndex >= queue.length) return;
+
+            // SAFEGUARD: Ignore shortcuts if the user is typing in an input, textarea, or contenteditable
+            if (
+                e.target instanceof HTMLInputElement ||
+                e.target instanceof HTMLTextAreaElement ||
+                (e.target as HTMLElement).isContentEditable
+            ) {
+                return;
+            }
+
+            // Prevent default scrolling for Spacebar when studying
+            if (e.code === "Space") {
+                e.preventDefault();
+            }
+
+            // Flip Card: Space or Enter
+            if (e.code === "Space" || e.key === "Enter") {
+                setIsFlipped((prev) => !prev);
+                return;
+            }
+
+            // Rate Card: 1, 2, 3, 4 (only if flipped)
+            if (isFlipped) {
+                switch (e.key) {
+                    case "1": handleRate(0); break; // Again
+                    case "2": handleRate(2); break; // Hard
+                    case "3": handleRate(4); break; // Good
+                    case "4": handleRate(5); break; // Easy
+                }
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isFlipped, loading, submitting, currentIndex, queue.length]);
 
     if (loading) {
         return (
@@ -151,10 +187,26 @@ export const StudySession: React.FC = () => {
     }
 
     // Active Flashcard State
-    const conceptDetails = mockConceptDictionary[currentItem.conceptId] || {
-        term: `Concept: ${currentItem.conceptId.split('-')[0] || 'Unknown'}`,
-        def: "Definition pending: This concept was loaded from the SM-2 database but lacks detailed text in the mock dictionary.",
-        analogy: "Think of this as a placeholder waiting for Real data.",
+    // Pillar 1: Parse the JSON string stored in conceptId (Format: {term, def, analogy})
+    let parsedConcept = { term: "Concept", def: currentItem.conceptId, analogy: "" };
+    try {
+        if (currentItem.conceptId.startsWith("{")) {
+            parsedConcept = JSON.parse(currentItem.conceptId);
+        } else {
+            // Fallback for older string data
+            parsedConcept.term = currentItem.conceptId.length > 50
+                ? currentItem.conceptId.substring(0, 50) + "..."
+                : currentItem.conceptId;
+        }
+    } catch (e) {
+        // Safe fallback
+        parsedConcept.term = "Concept";
+    }
+
+    const conceptDetails = {
+        term: parsedConcept.term,
+        def: parsedConcept.def || currentItem.conceptId,
+        analogy: parsedConcept.analogy || "Think about how this connects to the broader lesson topic.",
     };
 
     return (
@@ -179,20 +231,41 @@ export const StudySession: React.FC = () => {
 
             {/* The Flashcard */}
             <div className="mb-12">
-                <Flashcard
-                    term={conceptDetails.term}
-                    definition={conceptDetails.def}
-                    analogy={conceptDetails.analogy}
-                />
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={currentItem.id}
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -50 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <Flashcard
+                            term={conceptDetails.term}
+                            definition={conceptDetails.def}
+                            analogy={conceptDetails.analogy}
+                            isFlipped={isFlipped}
+                            onFlip={() => setIsFlipped(!isFlipped)}
+                        />
+                    </motion.div>
+                </AnimatePresence>
             </div>
 
-            {/* Spaced Repetition Rating Buttons */}
-            <div className="opacity-0 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300 fill-mode-forwards">
-                <SpacedRepetitionControls
-                    onRate={handleRate}
-                    disabled={submitting}
-                />
-            </div>
+            {/* Keyboard Hint (shows before flipping) */}
+            {!isFlipped && (
+                <div className="text-center text-slate-400 dark:text-slate-500 text-sm font-medium uppercase tracking-widest mt-4 animate-pulse">
+                    Press <kbd className="px-2 py-1 mx-1 bg-slate-100 dark:bg-slate-800 border-b-2 border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200">Space</kbd> to flip
+                </div>
+            )}
+
+            {/* Spaced Repetition Rating Buttons (shows after flip) */}
+            {isFlipped && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-forwards">
+                    <SpacedRepetitionControls
+                        onRate={handleRate}
+                        disabled={submitting}
+                    />
+                </div>
+            )}
         </div>
     );
 };
